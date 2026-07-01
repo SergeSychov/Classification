@@ -1,0 +1,541 @@
+{
+  "name": "classification-stage2-prepare-for-llm",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        -192
+      ],
+      "id": "1b588ccf-1a86-4559-82f5-b51b0cf33ea2",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select\n  p.product_id,\n  p.product_raw_id,\n  p.rule_top_category_id,\n  p.rule_top_score,\n  p.rule_shortlist_id,\n  p.rule_decision_status,\n  p.decision_status,\n  s.product_type_guess,\n  s.shortlist_count,\n  s.shortlist_json,\n  s.combined_text\nfrom product_classification p\njoin classification_shortlist s\n  on s.product_id = p.product_id\nwhere\n  p.decision_status = 'pending'\n  and p.rule_decision_status in ('needs_llm', 'no_match')\norder by p.product_id\nlimit 100;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -32,
+        320
+      ],
+      "id": "fd82e788-b629-4698-b558-1c47e1aac90a",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "maxItems": 5
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        112,
+        544
+      ],
+      "id": "e2250b09-c7f0-4e2c-9a83-f2b8f15dfb6c",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map((item, index) => {\n  const j = item.json || {};\n  const shortlist = Array.isArray(j.shortlist_json) ? j.shortlist_json : [];\n\n  const ruleTopScoreRaw = Number(j.rule_top_score);\n  const ruleTopScore = Number.isFinite(ruleTopScoreRaw) ? ruleTopScoreRaw : 0;\n\n  const highThreshold = 20;\n  const mediumThreshold = 10;\n\n  const shortlistText = shortlist.length\n    ? shortlist.map((c, idx) => {\n        const reasons = Array.isArray(c.reasons) ? c.reasons.join(', ') : '';\n        return `${idx + 1}. id=${c.category_id}, code=${c.category_code}, name=${c.category_name}, score=${c.score}, reasons=${reasons}`;\n      }).join('\\n')\n    : 'EMPTY';\n\n  const ruleTopCategoryId = j.rule_top_category_id !== undefined && j.rule_top_category_id !== null && j.rule_top_category_id !== ''\n    ? Number(j.rule_top_category_id)\n    : null;\n\n  const ruleHint = ruleTopCategoryId\n    ? `Rule engine suggests category_id=${ruleTopCategoryId} as top candidate with score=${ruleTopScore}.`\n    : 'Rule engine has no strong suggestion.';\n\n  let shortlistPolicyText = '';\n  if (!shortlist.length || ruleTopScore < mediumThreshold) {\n    shortlistPolicyText = `\nПолитика выбора:\n- Shortlist пустой или низкоуверенный.\n- Рассматривай shortlist как слабую подсказку, а не как ограничение.\n- Если видишь более подходящую категорию вне shortlist, можешь выбрать её.\n- Если уверенно выбрать нельзя, верни category_id = null и в объяснении укажи, что нужен review.\n`.trim();\n  } else if (ruleTopScore >= highThreshold) {\n    shortlistPolicyText = `\nПолитика выбора:\n- Rule-based слой дал сильный top candidate.\n- В первую очередь проверь, подходит ли top candidate.\n- Если top candidate не подходит, выбери лучшую категорию из shortlist.\n- Если ни одна категория не подходит, верни category_id = null и укажи причину.\n`.trim();\n  } else {\n    shortlistPolicyText = `\nПолитика выбора:\n- Shortlist выглядит разумным, но не окончательным.\n- Предпочитай выбор из shortlist.\n- Если ни один кандидат не подходит, можешь выбрать категорию вне shortlist или вернуть category_id = null.\n- Если выбор вне shortlist, кратко объясни почему shortlist оказался недостаточным.\n`.trim();\n  }\n\n  const userPrompt = `\nТовар (нормализованный текст):\n${j.combined_text || ''}\n\nТип товара по эвристике: ${j.product_type_guess || 'unknown'}\n\nShortlist кандидатов категорий:\n${shortlistText}\n\n${ruleHint}\n\n${shortlistPolicyText}\n\nЗадача:\n- Выбери наиболее подходящую категорию для товара.\n- Верни category_id, confidence и explanation.\n- confidence должен быть числом от 0.0 до 1.0.\n- explanation должен быть кратким, на русском, 1–3 предложения.\n- Не добавляй комментарии вне JSON.\n`.trim();\n\n  return {\n    json: {\n      ...j,\n\n      product_id: j.product_id !== undefined && j.product_id !== null && j.product_id !== ''\n        ? Number(j.product_id)\n        : null,\n\n      product_raw_id: j.product_raw_id !== undefined && j.product_raw_id !== null && j.product_raw_id !== ''\n        ? Number(j.product_raw_id)\n        : null,\n\n      run_id: j.run_id !== undefined && j.run_id !== null && j.run_id !== ''\n        ? Number(j.run_id)\n        : null,\n\n      rule_top_category_id: ruleTopCategoryId,\n      rule_top_score: ruleTopScore,\n      shortlist_count: shortlist.length,\n      shortlist_json: shortlist,\n\n      deepseek_body: {\n        model: 'deepseek-chat',\n        messages: [\n          {\n            role: 'system',\n            content: 'You classify pharmacy products into one category. Return ONLY a valid JSON object with keys: category_id, confidence, explanation.'\n          },\n          {\n            role: 'user',\n            content: userPrompt\n          }\n        ]\n      },\n\n      llm_prompt_debug: {\n        system: 'You classify pharmacy products into one category. Return ONLY a valid JSON object with keys: category_id, confidence, explanation.',\n        user: userPrompt\n      }\n    },\n    pairedItem: index\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        288,
+        -224
+      ],
+      "id": "92d7e824-99e5-48ec-bbce-4cfca844acdf",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt_user }}",
+        "options": {
+          "systemMessage": "={{ $json.prompt_system }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        592,
+        176
+      ],
+      "id": "7161bf32-e71f-427a-b96a-ce172a8241a4",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "deepseek-v4-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "position": [
+        592,
+        352
+      ],
+      "id": "46d100bd-2f8f-4b85-ad5d-4d8ac66e60dc",
+      "name": "DeepSeek Chat Model",
+      "credentials": {
+        "deepSeekApi": {
+          "id": "xyaJwQg88odvtCfC",
+          "name": "DeepSeek account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map((item, index) => {\n  const j = item.json || {};\n  const shortlist = Array.isArray(j.shortlist_json) ? j.shortlist_json : [];\n  const messages = Array.isArray(j.deepseek_body?.messages) ? j.deepseek_body.messages : [];\n\n  return {\n    json: {\n      ...j,\n\n      context: {\n        run_id: j.run_id !== undefined && j.run_id !== null && j.run_id !== ''\n          ? Number(j.run_id)\n          : null,\n\n        run_meta: j.run_meta || null,\n\n        product_id: j.product_id !== undefined && j.product_id !== null && j.product_id !== ''\n          ? Number(j.product_id)\n          : null,\n\n        product_raw_id: j.product_raw_id !== undefined && j.product_raw_id !== null && j.product_raw_id !== ''\n          ? Number(j.product_raw_id)\n          : null,\n\n        rule_top_category_id: j.rule_top_category_id !== undefined && j.rule_top_category_id !== null && j.rule_top_category_id !== ''\n          ? Number(j.rule_top_category_id)\n          : null,\n\n        rule_top_score: j.rule_top_score !== undefined && j.rule_top_score !== null && j.rule_top_score !== ''\n          ? Number(j.rule_top_score)\n          : null,\n\n        shortlist_count: shortlist.length,\n        shortlist_json: shortlist\n      },\n\n      prompt_system: messages[0]?.content || '',\n      prompt_user: messages[1]?.content || ''\n    },\n    pairedItem: index\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        -32
+      ],
+      "id": "99def698-3fb0-4b8c-8760-0577549c77f6",
+      "name": "LLM Prepare Payload"
+    },
+    {
+      "parameters": {
+        "jsCode": "function extractJsonString(value) {\n  if (value === null || value === undefined) return null;\n  if (typeof value === 'object') return JSON.stringify(value);\n\n  let text = String(value).trim();\n\n  const codeFenceMatch = text.match(/^```(?:json)?\\s*\\n?([\\s\\S]+?)\\n?```\\s*$/i);\n  if (codeFenceMatch) {\n    text = codeFenceMatch[1].trim();\n  }\n\n  return text;\n}\n\nfunction safeParseJson(value) {\n  const text = extractJsonString(value);\n\n  if (!text) {\n    return { ok: false, error: 'empty_output', parsed: null, raw_text: null };\n  }\n\n  try {\n    return { ok: true, error: null, parsed: JSON.parse(text), raw_text: text };\n  } catch (e) {\n    return { ok: false, error: 'invalid_json', parsed: null, raw_text: text };\n  }\n}\n\nfunction normalizeInt(v) {\n  if (v === null || v === undefined || v === '') return null;\n  const n = Number(v);\n  return Number.isFinite(n) ? Math.trunc(n) : null;\n}\n\nfunction normalizeConfidence(v) {\n  if (v === null || v === undefined || v === '') return null;\n  const n = Number(v);\n  if (!Number.isFinite(n)) return null;\n  if (n < 0 || n > 1) return null;\n  return n;\n}\n\nfunction safeText(v) {\n  if (v === undefined || v === null || v === '') return null;\n  const s = String(v).trim();\n  return s === '' ? null : s;\n}\n\nfunction safeNumber(v) {\n  if (v === undefined || v === null || v === '') return null;\n  const n = Number(v);\n  return Number.isFinite(n) ? n : null;\n}\n\nfunction safeJson(v) {\n  if (v === undefined || v === null) return null;\n  return v;\n}\n\nreturn items.map((item, index) => {\n  const root = item.json || {};\n  const ctx = root.context || {};\n  const C = root.constants || {};\n\n  const STAGE = C.stage || {\n    primary_llm: 'primary_llm'\n  };\n\n  const DECISION = C.decision_status || {\n    classified: 'classified',\n    pending_fallback: 'pending_fallback',\n    needs_human_review: 'needs_human_review',\n    error: 'error'\n  };\n\n  const FINAL = C.final_source || {\n    llm: 'llm',\n    system: 'system'\n  };\n\n  const NEXT = C.next_action || {\n    none: 'none',\n    fallback_2a: 'fallback_2a',\n    judge: 'judge',\n    human_review: 'human_review'\n  };\n\n  const ACTOR = C.actor_type || {\n    llm: 'llm'\n  };\n\n  const LOG = C.log_status || {\n    success: 'success',\n    needs_review: 'needs_review',\n    rejected: 'rejected',\n    error: 'error'\n  };\n\n  const THRESHOLDS = C.thresholds || {\n    min_confidence_ok: 0.60\n  };\n\n  const MODEL = C.model || {\n    primary_actor_name: 'deepseek-chat'\n  };\n\n  const runId = normalizeInt(ctx.run_id ?? root.run_id);\n  const productId = normalizeInt(ctx.product_id ?? root.product_id);\n  const productRawId = normalizeInt(ctx.product_raw_id ?? root.product_raw_id);\n  const ruleTopCategoryId = normalizeInt(ctx.rule_top_category_id ?? root.rule_top_category_id);\n  const ruleTopScore = safeNumber(ctx.rule_top_score ?? root.rule_top_score);\n\n  const shortlist = Array.isArray(ctx.shortlist_json)\n    ? ctx.shortlist_json\n    : (Array.isArray(root.shortlist_json) ? root.shortlist_json : []);\n\n  const shortlistCount = safeNumber(ctx.shortlist_count ?? root.shortlist_count) ?? shortlist.length;\n\n  const shortlistIds = new Set(\n    shortlist\n      .map(c => normalizeInt(c.category_id))\n      .filter(v => v !== null)\n      .map(String)\n  );\n\n  const rawModelOutput =\n    root.output ??\n    root.text ??\n    root.response ??\n    root.content ??\n    root.result ??\n    null;\n\n  const parsedResult = safeParseJson(rawModelOutput);\n\n  let llmCategoryId = null;\n  let llmConfidence = null;\n  let llmExplanation = null;\n\n  let llmValidationPassed = false;\n  let llmRejectReason = null;\n  let llmNeedsReview = true;\n  let categoryOutsideShortlist = false;\n\n  if (!parsedResult.ok) {\n    llmRejectReason = parsedResult.error;\n  } else {\n    const parsed = parsedResult.parsed || {};\n\n    llmCategoryId = normalizeInt(parsed.category_id);\n    llmConfidence = normalizeConfidence(parsed.confidence);\n    llmExplanation = safeText(parsed.explanation);\n\n    if (!llmExplanation) {\n      llmRejectReason = 'missing_explanation';\n    } else if (llmConfidence === null) {\n      llmRejectReason = 'invalid_confidence';\n    } else if (llmCategoryId === null) {\n      llmRejectReason = 'null_category';\n    } else {\n      llmValidationPassed = true;\n    }\n\n    if (llmValidationPassed && shortlistCount > 0 && !shortlistIds.has(String(llmCategoryId))) {\n      categoryOutsideShortlist = true;\n      llmRejectReason = 'category_outside_shortlist';\n    }\n  }\n\n  if (!llmValidationPassed) {\n    llmNeedsReview = true;\n  } else if (categoryOutsideShortlist) {\n    llmNeedsReview = true;\n  } else if (llmConfidence <= THRESHOLDS.min_confidence_ok) {\n    llmNeedsReview = true;\n  } else {\n    llmNeedsReview = false;\n  }\n\n  let decisionStatus = DECISION.error;\n  let finalSource = FINAL.system;\n  let finalCategoryId = null;\n  let finalConfidence = null;\n  let finalExplanation = null;\n  let nextAction = NEXT.human_review;\n\n  if (llmValidationPassed && !categoryOutsideShortlist && !llmNeedsReview) {\n    decisionStatus = DECISION.classified;\n    finalSource = FINAL.llm;\n    finalCategoryId = llmCategoryId;\n    finalConfidence = llmConfidence;\n    finalExplanation = llmExplanation;\n    nextAction = NEXT.none;\n  } else if (\n    llmRejectReason === 'invalid_json' ||\n    llmRejectReason === 'empty_output' ||\n    llmRejectReason === 'null_category' ||\n    llmRejectReason === 'category_outside_shortlist'\n  ) {\n    decisionStatus = DECISION.pending_fallback;\n    finalSource = FINAL.system;\n    nextAction = NEXT.fallback_2a;\n  } else if (llmValidationPassed && llmNeedsReview) {\n    decisionStatus = DECISION.needs_human_review;\n    finalSource = FINAL.system;\n    nextAction = NEXT.human_review;\n  } else {\n    decisionStatus = DECISION.needs_human_review;\n    finalSource = FINAL.system;\n    nextAction = NEXT.human_review;\n  }\n\n  const llmRawJson = safeJson(parsedResult.ok ? parsedResult.parsed : null);\n  const llmRawOutputText = safeText(parsedResult.raw_text);\n\n  const normalizedLlmExplanation = safeText(llmExplanation);\n  const normalizedFinalExplanation = safeText(finalExplanation);\n  const normalizedFinalSource = safeText(finalSource);\n  const normalizedDecisionStatus = safeText(decisionStatus);\n  const normalizedRejectReason = safeText(llmRejectReason);\n  const normalizedNextAction = safeText(nextAction);\n\n  const routingHint = {\n    trigger_reason: normalizedRejectReason,\n    shortlist_count: shortlistCount,\n    category_outside_shortlist: categoryOutsideShortlist,\n    llm_validation_passed: llmValidationPassed,\n    llm_confidence: llmConfidence,\n    suggested_next_action: normalizedNextAction\n  };\n\n  const productClassificationUpdate = {\n    product_id: productId,\n    product_raw_id: productRawId,\n    latest_run_id: runId,\n    llm_category_id: llmCategoryId,\n    llm_confidence: llmConfidence,\n    llm_explanation: normalizedLlmExplanation,\n    llm_needs_review: llmNeedsReview,\n    llm_validation_passed: llmValidationPassed,\n    llm_reject_reason: normalizedRejectReason,\n    llm_raw_json: llmRawJson,\n    next_action: normalizedNextAction,\n    routing_hint: routingHint,\n    final_category_id: finalCategoryId,\n    final_confidence: finalConfidence,\n    final_explanation: normalizedFinalExplanation,\n    final_source: normalizedFinalSource,\n    decision_status: normalizedDecisionStatus\n  };\n\n  const productClassificationLogInsert = {\n    run_id: runId,\n    product_id: productId,\n    product_raw_id: productRawId,\n    stage: STAGE.primary_llm,\n    actor_type: ACTOR.llm,\n    actor_name: MODEL.primary_actor_name,\n    status: llmValidationPassed\n      ? (llmNeedsReview ? LOG.needs_review : LOG.success)\n      : LOG.rejected,\n    selected_category_id: llmCategoryId,\n    confidence: llmConfidence,\n    explanation: normalizedLlmExplanation,\n    validation_passed: llmValidationPassed,\n    error_message: normalizedRejectReason,\n    decision_status: normalizedDecisionStatus,\n    next_action: normalizedNextAction,\n    input_payload: {\n      shortlist_count: shortlistCount,\n      shortlist_json: shortlist,\n      rule_top_category_id: ruleTopCategoryId,\n      rule_top_score: ruleTopScore\n    },\n    output_payload: safeJson(\n      parsedResult.ok\n        ? parsedResult.parsed\n        : { raw_output: llmRawOutputText }\n    ),\n    routing_hint: routingHint\n  };\n\n  return {\n    json: {\n      ...root,\n\n      run_id: runId,\n      product_id: productId,\n      product_raw_id: productRawId,\n      rule_top_category_id: ruleTopCategoryId,\n      rule_top_score: ruleTopScore,\n      shortlist_count: shortlistCount,\n      shortlist_json: shortlist,\n\n      llm_category_id: llmCategoryId,\n      llm_confidence: llmConfidence,\n      llm_explanation: normalizedLlmExplanation,\n      llm_needs_review: llmNeedsReview,\n      llm_validation_passed: llmValidationPassed,\n      llm_reject_reason: normalizedRejectReason,\n\n      next_action: normalizedNextAction,\n      routing_hint: routingHint,\n\n      decision_status: normalizedDecisionStatus,\n      final_source: normalizedFinalSource,\n      final_category_id: finalCategoryId,\n      final_confidence: finalConfidence,\n      final_explanation: normalizedFinalExplanation,\n\n      llm_raw_output_text: llmRawOutputText,\n      llm_raw_json: llmRawJson,\n\n      product_classification_update: productClassificationUpdate,\n      product_classification_log_insert: productClassificationLogInsert\n    },\n    pairedItem: index\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        848,
+        96
+      ],
+      "id": "1182b78f-64ca-4e0f-8fde-b8927e42ec34",
+      "name": "Post-process"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        720,
+        -16
+      ],
+      "id": "67eb4622-8364-42fb-bf92-133e65972239",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO public.product_classification (\n    product_id,\n    product_raw_id,\n    latest_run_id,\n\n    workflow_version,\n    prompt_version,\n\n    rule_top_category_id,\n    rule_top_score,\n    rule_shortlist_id,\n    rule_decision_status,\n\n    llm_category_id,\n    llm_confidence,\n    llm_explanation,\n    llm_needs_review,\n    llm_validation_passed,\n    llm_reject_reason,\n    llm_raw_json,\n\n    judge_category_id,\n    judge_confidence,\n    judge_explanation,\n    judge_needs_review,\n    judge_raw_json,\n\n    fallback_2a_direction,\n    fallback_2a_block_family,\n    fallback_2a_family_code,\n    fallback_2a_nosology_hint,\n    fallback_2a_confidence,\n    fallback_2a_explanation,\n    fallback_2a_raw_json,\n\n    fallback_2b_category_id,\n    fallback_2b_confidence,\n    fallback_2b_explanation,\n    fallback_2b_raw_json,\n\n    final_category_id,\n    final_confidence,\n    final_explanation,\n    final_source,\n\n    decision_status,\n    next_action,\n    routing_hint,\n    updated_at\n)\nVALUES (\n    {{ $json.product_classification_update.product_id }},\n    {{ $json.product_classification_update.product_raw_id }},\n    {{ $json.product_classification_update.latest_run_id }},\n\n    {{ $json.product_classification_update.workflow_version ? \"'\" + $json.product_classification_update.workflow_version.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_update.prompt_version ? \"'\" + $json.product_classification_update.prompt_version.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n\n    {{ $json.product_classification_update.rule_top_category_id }},\n    {{ $json.product_classification_update.rule_top_score }},\n    {{ $json.product_classification_update.rule_shortlist_id }},\n    {{ $json.product_classification_update.rule_decision_status ? \"'\" + $json.product_classification_update.rule_decision_status.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n\n    {{ $json.product_classification_update.llm_category_id }},\n    {{ $json.product_classification_update.llm_confidence }},\n    {{ $json.product_classification_update.llm_explanation ? \"'\" + $json.product_classification_update.llm_explanation.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_update.llm_needs_review === null ? \"NULL\" : $json.product_classification_update.llm_needs_review }},\n    {{ $json.product_classification_update.llm_validation_passed === null ? \"NULL\" : $json.product_classification_update.llm_validation_passed }},\n    {{ $json.product_classification_update.llm_reject_reason ? \"'\" + $json.product_classification_update.llm_reject_reason.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_update.llm_raw_json ? \"'\" + JSON.stringify($json.product_classification_update.llm_raw_json).replace(/'/g, \"''\") + \"'::jsonb\" : \"NULL\" }},\n\n    {{ $json.product_classification_update.judge_category_id }},\n    {{ $json.product_classification_update.judge_confidence }},\n    {{ $json.product_classification_update.judge_explanation ? \"'\" + $json.product_classification_update.judge_explanation.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_update.judge_needs_review === null ? \"NULL\" : $json.product_classification_update.judge_needs_review }},\n    {{ $json.product_classification_update.judge_raw_json ? \"'\" + JSON.stringify($json.product_classification_update.judge_raw_json).replace(/'/g, \"''\") + \"'::jsonb\" : \"NULL\" }},\n\n    {{ $json.product_classification_update.fallback_2a_direction ? \"'\" + $json.product_classification_update.fallback_2a_direction.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_update.fallback_2a_block_family ? \"'\" + $json.product_classification_update.fallback_2a_block_family.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_update.fallback_2a_family_code ? \"'\" + $json.product_classification_update.fallback_2a_family_code.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_update.fallback_2a_nosology_hint ? \"'\" + $json.product_classification_update.fallback_2a_nosology_hint.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_update.fallback_2a_confidence }},\n    {{ $json.product_classification_update.fallback_2a_explanation ? \"'\" + $json.product_classification_update.fallback_2a_explanation.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_update.fallback_2a_raw_json ? \"'\" + JSON.stringify($json.product_classification_update.fallback_2a_raw_json).replace(/'/g, \"''\") + \"'::jsonb\" : \"NULL\" }},\n\n    {{ $json.product_classification_update.fallback_2b_category_id }},\n    {{ $json.product_classification_update.fallback_2b_confidence }},\n    {{ $json.product_classification_update.fallback_2b_explanation ? \"'\" + $json.product_classification_update.fallback_2b_explanation.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_update.fallback_2b_raw_json ? \"'\" + JSON.stringify($json.product_classification_update.fallback_2b_raw_json).replace(/'/g, \"''\") + \"'::jsonb\" : \"NULL\" }},\n\n    {{ $json.product_classification_update.final_category_id }},\n    {{ $json.product_classification_update.final_confidence }},\n    {{ $json.product_classification_update.final_explanation ? \"'\" + $json.product_classification_update.final_explanation.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_update.final_source ? \"'\" + $json.product_classification_update.final_source.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n\n    {{ $json.product_classification_update.decision_status ? \"'\" + $json.product_classification_update.decision_status.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_update.next_action ? \"'\" + $json.product_classification_update.next_action.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_update.routing_hint ? \"'\" + JSON.stringify($json.product_classification_update.routing_hint).replace(/'/g, \"''\") + \"'::jsonb\" : \"NULL\" }},\n    NOW()\n)\nON CONFLICT (product_id) DO UPDATE\nSET\n    product_raw_id = EXCLUDED.product_raw_id,\n    latest_run_id = EXCLUDED.latest_run_id,\n\n    workflow_version = EXCLUDED.workflow_version,\n    prompt_version = EXCLUDED.prompt_version,\n\n    rule_top_category_id = EXCLUDED.rule_top_category_id,\n    rule_top_score = EXCLUDED.rule_top_score,\n    rule_shortlist_id = EXCLUDED.rule_shortlist_id,\n    rule_decision_status = EXCLUDED.rule_decision_status,\n\n    llm_category_id = EXCLUDED.llm_category_id,\n    llm_confidence = EXCLUDED.llm_confidence,\n    llm_explanation = EXCLUDED.llm_explanation,\n    llm_needs_review = EXCLUDED.llm_needs_review,\n    llm_validation_passed = EXCLUDED.llm_validation_passed,\n    llm_reject_reason = EXCLUDED.llm_reject_reason,\n    llm_raw_json = EXCLUDED.llm_raw_json,\n\n    judge_category_id = EXCLUDED.judge_category_id,\n    judge_confidence = EXCLUDED.judge_confidence,\n    judge_explanation = EXCLUDED.judge_explanation,\n    judge_needs_review = EXCLUDED.judge_needs_review,\n    judge_raw_json = EXCLUDED.judge_raw_json,\n\n    fallback_2a_direction = EXCLUDED.fallback_2a_direction,\n    fallback_2a_block_family = EXCLUDED.fallback_2a_block_family,\n    fallback_2a_family_code = EXCLUDED.fallback_2a_family_code,\n    fallback_2a_nosology_hint = EXCLUDED.fallback_2a_nosology_hint,\n    fallback_2a_confidence = EXCLUDED.fallback_2a_confidence,\n    fallback_2a_explanation = EXCLUDED.fallback_2a_explanation,\n    fallback_2a_raw_json = EXCLUDED.fallback_2a_raw_json,\n\n    fallback_2b_category_id = EXCLUDED.fallback_2b_category_id,\n    fallback_2b_confidence = EXCLUDED.fallback_2b_confidence,\n    fallback_2b_explanation = EXCLUDED.fallback_2b_explanation,\n    fallback_2b_raw_json = EXCLUDED.fallback_2b_raw_json,\n\n    final_category_id = EXCLUDED.final_category_id,\n    final_confidence = EXCLUDED.final_confidence,\n    final_explanation = EXCLUDED.final_explanation,\n    final_source = EXCLUDED.final_source,\n\n    decision_status = EXCLUDED.decision_status,\n    next_action = EXCLUDED.next_action,\n    routing_hint = EXCLUDED.routing_hint,\n    updated_at = NOW();",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1200,
+        -80
+      ],
+      "id": "77c95058-a89c-4e95-932d-e229a1b576a4",
+      "name": "Upsert",
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function sqlText(value) {\n  if (value === undefined || value === null) return null;\n  const s = String(value).trim();\n  return s === '' ? null : s;\n}\n\nfunction sqlNumber(value) {\n  if (value === undefined || value === null || value === '') return null;\n  const n = Number(value);\n  return Number.isFinite(n) ? n : null;\n}\n\nfunction sqlBoolean(value) {\n  if (value === undefined || value === null || value === '') return null;\n  if (typeof value === 'boolean') return value;\n  if (typeof value === 'number') return value !== 0;\n  if (typeof value === 'string') {\n    const v = value.trim().toLowerCase();\n    if (['true', '1', 'yes', 'y'].includes(v)) return true;\n    if (['false', '0', 'no', 'n'].includes(v)) return false;\n  }\n  return null;\n}\n\nfunction sqlJson(value) {\n  if (value === undefined || value === null || value === '') return null;\n  return value;\n}\n\nreturn items.map((item, index) => {\n  const j = item.json || {};\n\n  const productClassificationUpdate = {\n    product_id: sqlNumber(j.product_id),\n    product_raw_id: sqlNumber(j.product_raw_id),\n    latest_run_id: sqlNumber(j.run_id),\n\n    workflow_version: sqlText(j.workflow_version),\n    prompt_version: sqlText(j.prompt_version),\n\n    rule_top_category_id: sqlNumber(j.rule_top_category_id),\n    rule_top_score: sqlNumber(j.rule_top_score),\n    rule_shortlist_id: sqlNumber(j.rule_shortlist_id),\n    rule_decision_status: sqlText(j.rule_decision_status),\n\n    llm_category_id: sqlNumber(j.llm_category_id),\n    llm_confidence: sqlNumber(j.llm_confidence),\n    llm_explanation: sqlText(j.llm_explanation),\n    llm_needs_review: sqlBoolean(j.llm_needs_review),\n    llm_validation_passed: sqlBoolean(j.llm_validation_passed),\n    llm_reject_reason: sqlText(j.llm_reject_reason),\n    llm_raw_json: sqlJson(j.llm_raw_json),\n\n    judge_category_id: sqlNumber(j.judge_category_id),\n    judge_confidence: sqlNumber(j.judge_confidence),\n    judge_explanation: sqlText(j.judge_explanation),\n    judge_needs_review: sqlBoolean(j.judge_needs_review),\n    judge_raw_json: sqlJson(j.judge_raw_json),\n\n    fallback_2a_direction: sqlText(j.fallback_2a_direction),\n    fallback_2a_block_family: sqlText(j.fallback_2a_block_family),\n    fallback_2a_family_code: sqlText(j.fallback_2a_family_code),\n    fallback_2a_nosology_hint: sqlText(j.fallback_2a_nosology_hint),\n    fallback_2a_confidence: sqlNumber(j.fallback_2a_confidence),\n    fallback_2a_explanation: sqlText(j.fallback_2a_explanation),\n    fallback_2a_raw_json: sqlJson(j.fallback_2a_raw_json),\n\n    fallback_2b_category_id: sqlNumber(j.fallback_2b_category_id),\n    fallback_2b_confidence: sqlNumber(j.fallback_2b_confidence),\n    fallback_2b_explanation: sqlText(j.fallback_2b_explanation),\n    fallback_2b_raw_json: sqlJson(j.fallback_2b_raw_json),\n\n    final_category_id: sqlNumber(j.final_category_id),\n    final_confidence: sqlNumber(j.final_confidence),\n    final_explanation: sqlText(j.final_explanation),\n    final_source: sqlText(j.final_source),\n\n    decision_status: sqlText(j.decision_status),\n    next_action: sqlText(j.next_action),\n    routing_hint: sqlJson(j.routing_hint)\n  };\n\n  return {\n    json: {\n      ...j,\n      product_classification_update: productClassificationUpdate\n    },\n    pairedItem: {\n      item: index\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        -80
+      ],
+      "id": "fa551f80-be16-4a6b-ad92-1d37cad2d4ea",
+      "name": "Prepare DB Payload"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO public.product_classification_log (\n    run_id,\n    product_id,\n    product_raw_id,\n    stage,\n    actor_type,\n    actor_name,\n    status,\n    input_payload,\n    output_payload,\n    selected_category_id,\n    confidence,\n    explanation,\n    validation_passed,\n    error_message,\n    workflow_version,\n    prompt_version,\n    decision_status,\n    next_action,\n    routing_hint,\n    created_at\n)\nVALUES (\n    {{ $json.product_classification_log_insert.run_id }},\n    {{ $json.product_classification_log_insert.product_id }},\n    {{ $json.product_classification_log_insert.product_raw_id }},\n    {{ $json.product_classification_log_insert.stage ? \"'\" + $json.product_classification_log_insert.stage.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_log_insert.actor_type ? \"'\" + $json.product_classification_log_insert.actor_type.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_log_insert.actor_name ? \"'\" + $json.product_classification_log_insert.actor_name.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_log_insert.status ? \"'\" + $json.product_classification_log_insert.status.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_log_insert.input_payload ? \"'\" + JSON.stringify($json.product_classification_log_insert.input_payload).replace(/'/g, \"''\") + \"'::jsonb\" : \"NULL\" }},\n    {{ $json.product_classification_log_insert.output_payload ? \"'\" + JSON.stringify($json.product_classification_log_insert.output_payload).replace(/'/g, \"''\") + \"'::jsonb\" : \"NULL\" }},\n    {{ $json.product_classification_log_insert.selected_category_id }},\n    {{ $json.product_classification_log_insert.confidence }},\n    {{ $json.product_classification_log_insert.explanation ? \"'\" + $json.product_classification_log_insert.explanation.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_log_insert.validation_passed === null ? \"NULL\" : $json.product_classification_log_insert.validation_passed }},\n    {{ $json.product_classification_log_insert.error_message ? \"'\" + $json.product_classification_log_insert.error_message.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_log_insert.workflow_version ? \"'\" + $json.product_classification_log_insert.workflow_version.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_log_insert.prompt_version ? \"'\" + $json.product_classification_log_insert.prompt_version.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_log_insert.decision_status ? \"'\" + $json.product_classification_log_insert.decision_status.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_log_insert.next_action ? \"'\" + $json.product_classification_log_insert.next_action.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_log_insert.routing_hint ? \"'\" + JSON.stringify($json.product_classification_log_insert.routing_hint).replace(/'/g, \"''\") + \"'::jsonb\" : \"NULL\" }},\n    NOW()\n);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1216,
+        288
+      ],
+      "id": "efaa9ac9-211f-4505-8cd1-a32cbc8e2050",
+      "name": "Insert",
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function sqlText(value) {\n  if (value === undefined || value === null) return null;\n  const s = String(value).trim();\n  return s === '' ? null : s;\n}\n\nfunction sqlNumber(value) {\n  if (value === undefined || value === null || value === '') return null;\n  const n = Number(value);\n  return Number.isFinite(n) ? n : null;\n}\n\nfunction sqlBoolean(value) {\n  if (value === undefined || value === null || value === '') return null;\n  if (typeof value === 'boolean') return value;\n  if (typeof value === 'number') return value !== 0;\n  if (typeof value === 'string') {\n    const v = value.trim().toLowerCase();\n    if (['true', '1', 'yes', 'y'].includes(v)) return true;\n    if (['false', '0', 'no', 'n'].includes(v)) return false;\n  }\n  return null;\n}\n\nfunction sqlJson(value) {\n  if (value === undefined || value === null || value === '') return null;\n  return value;\n}\n\nreturn items.map((item, index) => {\n  const j = item.json || {};\n\n  const stage = sqlText(j.stage) || 'primary_llm';\n  const actorType = sqlText(j.actor_type) || 'llm';\n  const actorName = sqlText(j.actor_name) || 'deepseek-chat';\n\n  const selectedCategoryId =\n    sqlNumber(j.final_category_id) ??\n    sqlNumber(j.fallback_2b_category_id) ??\n    sqlNumber(j.judge_category_id) ??\n    sqlNumber(j.llm_category_id);\n\n  const confidence =\n    sqlNumber(j.final_confidence) ??\n    sqlNumber(j.fallback_2b_confidence) ??\n    sqlNumber(j.judge_confidence) ??\n    sqlNumber(j.llm_confidence) ??\n    sqlNumber(j.fallback_2a_confidence);\n\n  const explanation =\n    sqlText(j.final_explanation) ??\n    sqlText(j.fallback_2b_explanation) ??\n    sqlText(j.judge_explanation) ??\n    sqlText(j.llm_explanation) ??\n    sqlText(j.fallback_2a_explanation);\n\n  const validationPassed =\n    sqlBoolean(j.validation_passed) ??\n    sqlBoolean(j.fallback_2b_validation_passed) ??\n    sqlBoolean(j.llm_validation_passed);\n\n  const errorMessage =\n    sqlText(j.error_message) ??\n    sqlText(j.fallback_2b_reject_reason) ??\n    sqlText(j.llm_reject_reason);\n\n  const inputPayload = {\n    product_id: sqlNumber(j.product_id),\n    product_raw_id: sqlNumber(j.product_raw_id),\n    run_id: sqlNumber(j.run_id),\n    stage,\n    workflow_version: sqlText(j.workflow_version),\n    prompt_version: sqlText(j.prompt_version),\n    combined_text: sqlText(j.combined_text),\n    product_type_guess: sqlText(j.product_type_guess),\n    rule_top_category_id: sqlNumber(j.rule_top_category_id),\n    rule_top_score: sqlNumber(j.rule_top_score),\n    rule_shortlist_id: sqlNumber(j.rule_shortlist_id),\n    shortlist_json: sqlJson(j.shortlist_json),\n    shortlist_count: sqlNumber(j.shortlist_count),\n    next_action: sqlText(j.next_action),\n    routing_hint: sqlJson(j.routing_hint)\n  };\n\n  const outputPayload = {\n    llm_category_id: sqlNumber(j.llm_category_id),\n    llm_confidence: sqlNumber(j.llm_confidence),\n    llm_explanation: sqlText(j.llm_explanation),\n    llm_needs_review: sqlBoolean(j.llm_needs_review),\n    llm_validation_passed: sqlBoolean(j.llm_validation_passed),\n    llm_reject_reason: sqlText(j.llm_reject_reason),\n    llm_raw_json: sqlJson(j.llm_raw_json),\n\n    fallback_2a_direction: sqlText(j.fallback_2a_direction),\n    fallback_2a_block_family: sqlText(j.fallback_2a_block_family),\n    fallback_2a_family_code: sqlText(j.fallback_2a_family_code),\n    fallback_2a_nosology_hint: sqlText(j.fallback_2a_nosology_hint),\n    fallback_2a_confidence: sqlNumber(j.fallback_2a_confidence),\n    fallback_2a_explanation: sqlText(j.fallback_2a_explanation),\n    fallback_2a_raw_json: sqlJson(j.fallback_2a_raw_json),\n\n    fallback_2b_category_id: sqlNumber(j.fallback_2b_category_id),\n    fallback_2b_confidence: sqlNumber(j.fallback_2b_confidence),\n    fallback_2b_explanation: sqlText(j.fallback_2b_explanation),\n    fallback_2b_raw_json: sqlJson(j.fallback_2b_raw_json),\n\n    judge_category_id: sqlNumber(j.judge_category_id),\n    judge_confidence: sqlNumber(j.judge_confidence),\n    judge_explanation: sqlText(j.judge_explanation),\n    judge_needs_review: sqlBoolean(j.judge_needs_review),\n    judge_raw_json: sqlJson(j.judge_raw_json),\n\n    final_category_id: sqlNumber(j.final_category_id),\n    final_confidence: sqlNumber(j.final_confidence),\n    final_explanation: sqlText(j.final_explanation),\n    final_source: sqlText(j.final_source),\n\n    decision_status: sqlText(j.decision_status),\n    next_action: sqlText(j.next_action),\n    routing_hint: sqlJson(j.routing_hint)\n  };\n\n  const productClassificationLogInsert = {\n    run_id: sqlNumber(j.run_id),\n    product_id: sqlNumber(j.product_id),\n    product_raw_id: sqlNumber(j.product_raw_id),\n    stage,\n    actor_type: actorType,\n    actor_name: actorName,\n    status: sqlText(j.decision_status),\n    input_payload: sqlJson(inputPayload),\n    output_payload: sqlJson(outputPayload),\n    selected_category_id: selectedCategoryId,\n    confidence,\n    explanation,\n    validation_passed: validationPassed,\n    error_message: errorMessage,\n    workflow_version: sqlText(j.workflow_version),\n    prompt_version: sqlText(j.prompt_version),\n    decision_status: sqlText(j.decision_status),\n    next_action: sqlText(j.next_action),\n    routing_hint: sqlJson(j.routing_hint)\n  };\n\n  return {\n    json: {\n      ...j,\n      product_classification_log_insert: productClassificationLogInsert\n    },\n    pairedItem: {\n      item: index\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        288
+      ],
+      "id": "59c1c895-1dc3-4621-9fe5-574cd21ad21a",
+      "name": "Prepare Log Payload"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "insert into classification_runs (\n    run_type,\n    workflow_name,\n    workflow_version,\n    rules_version,\n    primary_model_name,\n    primary_model_version,\n    prompt_version,\n    status,\n    batch_size,\n    metadata\n)\nvalues (\n    'stage2_primary_llm',\n    'Pharmacy Stage 2 LLM',\n    'v1',\n    'rule_engine_v1',\n    'deepseek-chat',\n    'v1',\n    'deepseek_shortlist_v1',\n    'running',\n    5,\n    '{\"trigger\":\"manual\"}'::jsonb\n)\nreturning id, run_type, workflow_name, workflow_version, started_at;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        16,
+        -192
+      ],
+      "id": "de8977bb-496b-4a1e-95fb-7a2aaf0ddb57",
+      "name": "Create Run",
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const run = $('Create Run').first().json;\nconst runId = run.id;\n\nreturn items.map((item, index) => ({\n  json: {\n    ...item.json,\n    run_id: runId,\n    run_meta: {\n      run_type: run.run_type,\n      workflow_name: run.workflow_name,\n      workflow_version: run.workflow_version,\n      started_at: run.started_at\n    }\n  },\n  pairedItem: index\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        544
+      ],
+      "id": "f5788346-47a2-4a4d-81d0-fa055def2758",
+      "name": "Attach Run ID"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1424,
+        96
+      ],
+      "id": "1cd002b4-6726-4e8f-b3fa-7d44aa1399b0",
+      "name": "Merge Finish"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1552,
+        -208
+      ],
+      "id": "9f52e25e-1ece-4673-9bb3-168ca2b1ee44",
+      "name": "Merge Run Context"
+    },
+    {
+      "parameters": {
+        "jsCode": "const runItem = items.find(item => item.json && item.json.id);\n\nif (!runItem) {\n  throw new Error('Run item with id not found');\n}\n\nreturn [\n  {\n    json: {\n      ...runItem.json\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1712,
+        -80
+      ],
+      "id": "ba71dcc0-3aab-48f6-9299-60e9733777ce",
+      "name": "Pick Run Item"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH stats AS (\n    SELECT\n        latest_run_id AS run_id,\n        COUNT(*) AS total_count,\n        COUNT(*) FILTER (WHERE decision_status = 'classified') AS success_count,\n        COUNT(*) FILTER (WHERE decision_status = 'needs_human_review') AS needs_review_count,\n        COUNT(*) FILTER (WHERE decision_status = 'error') AS error_count\n    FROM product_classification\n    WHERE latest_run_id = {{ Number($json.id) }}\n    GROUP BY latest_run_id\n)\nUPDATE classification_runs cr\nSET\n    success_count = stats.success_count,\n    error_count = stats.error_count,\n    finished_at = NOW(),\n    status = CASE\n        WHEN stats.total_count = 0 THEN 'finished_empty'\n        WHEN stats.needs_review_count > 0 THEN 'finished_with_review'\n        WHEN stats.error_count > 0 AND stats.success_count = 0 THEN 'finished_with_errors'\n        ELSE 'finished'\n    END,\n    metadata = COALESCE(cr.metadata, '{}'::jsonb) || jsonb_build_object(\n        'total_count', stats.total_count,\n        'needs_review_count', stats.needs_review_count\n    )\nFROM stats\nWHERE cr.id = stats.run_id\nRETURNING\n    cr.id,\n    cr.run_type,\n    cr.workflow_name,\n    cr.workflow_version,\n    cr.prompt_version,\n    cr.status,\n    cr.batch_size,\n    cr.success_count,\n    cr.error_count,\n    cr.started_at,\n    cr.finished_at,\n    cr.metadata;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1888,
+        112
+      ],
+      "id": "d22d19c0-8f11-49f1-9cb8-3d89c5155bd3",
+      "name": "Finish Run",
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map((item, index) => {\n  const constants = {\n    stage: {\n      rule_shortlist: 'rule_shortlist',\n      primary_llm: 'primary_llm',\n      fallback_2a: 'fallback_2a',\n      fallback_2b: 'fallback_2b',\n      judge: 'judge',\n      human_review: 'human_review'\n    },\n    decision_status: {\n      classified: 'classified',\n      pending_fallback: 'pending_fallback',\n      needs_human_review: 'needs_human_review',\n      error: 'error'\n    },\n    final_source: {\n      rules: 'rules',\n      llm: 'llm',\n      fallback_2b: 'fallback_2b',\n      judge: 'judge',\n      human: 'human',\n      system: 'system',\n      pending: 'pending'\n    },\n    next_action: {\n      none: 'none',\n      fallback_2a: 'fallback_2a',\n      judge: 'judge',\n      human_review: 'human_review'\n    },\n    actor_type: {\n      llm: 'llm',\n      human: 'human',\n      system: 'system'\n    },\n    log_status: {\n      success: 'success',\n      needs_review: 'needs_review',\n      rejected: 'rejected',\n      error: 'error'\n    },\n    thresholds: {\n      min_confidence_ok: 0.60\n    },\n    model: {\n      primary_actor_name: 'deepseek-chat'\n    }\n  };\n\n  return {\n    json: {\n      ...item.json,\n      constants\n    },\n    pairedItem: index\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -16,
+        96
+      ],
+      "id": "63621d2d-489a-48ed-9657-ee35f04258a2",
+      "name": "Init Stage Constants"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Create Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Attach Run ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "LLM Prepare Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM Prepare Payload": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Post-process",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post-process": {
+      "main": [
+        [
+          {
+            "node": "Prepare Log Payload",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prepare DB Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare DB Payload": {
+      "main": [
+        [
+          {
+            "node": "Upsert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert": {
+      "main": [
+        [
+          {
+            "node": "Merge Finish",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Log Payload": {
+      "main": [
+        [
+          {
+            "node": "Insert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Run": {
+      "main": [
+        [
+          {
+            "node": "Merge Run Context",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Init Stage Constants",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attach Run ID": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert": {
+      "main": [
+        [
+          {
+            "node": "Merge Finish",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Finish": {
+      "main": [
+        [
+          {
+            "node": "Merge Run Context",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Run Context": {
+      "main": [
+        [
+          {
+            "node": "Pick Run Item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick Run Item": {
+      "main": [
+        [
+          {
+            "node": "Finish Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Init Stage Constants": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

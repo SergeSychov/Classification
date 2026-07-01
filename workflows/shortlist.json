@@ -1,0 +1,282 @@
+{
+  "name": "ShortList",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        -176
+      ],
+      "id": "abf60251-f555-4570-827a-4454bee170ac",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "products_prepared",
+          "mode": "list",
+          "cachedResultName": "products_prepared"
+        },
+        "limit": 100,
+        "sort": {
+          "values": [
+            {
+              "column": "product_raw_id"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -352,
+        -176
+      ],
+      "id": "fb4d3e31-a66b-418c-8680-f176384c0d89",
+      "name": "Товары",
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "categories_dict",
+          "mode": "list",
+          "cachedResultName": "categories_dict"
+        },
+        "returnAll": true,
+        "where": {
+          "values": [
+            {
+              "column": "is_active",
+              "value": "true"
+            }
+          ]
+        },
+        "sort": {
+          "values": [
+            {
+              "column": "id"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -352,
+        -336
+      ],
+      "id": "f1a0466b-8144-4304-acb5-ff34a577b70d",
+      "name": "категории",
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -128,
+        -256
+      ],
+      "id": "b14141ef-4107-4d11-a734-42e38354de2b",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nfunction norm(s) {\n  if (s === null || s === undefined) return '';\n  return String(s)\n    .toLowerCase()\n    .replace(/ё/g, 'е')\n    .replace(/[^\\p{L}\\p{N}\\s/+.-]/gu, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction tokenize(text) {\n  return norm(text)\n    .split(/\\s+/)\n    .map(t => t.trim())\n    .filter(Boolean);\n}\n\nfunction splitTerms(text) {\n  if (!text) return [];\n\n  const stop = new Set([\n    'мг', 'мл', 'г', 'кг', 'ml', 'mg', 'n', 'na', 'cl', 'ca', 'k', 'd',\n    'и', 'или', 'для', 'при', 'под', 'над', 'без', 'от', 'до', 'по',\n    'средство', 'средства', 'форма', 'формы', 'дети', 'взрослые'\n  ]);\n\n  return Array.from(new Set(\n    norm(text)\n      .split(/[\\/,;|()+]+/)\n      .flatMap(part => part.split(/\\s+/))\n      .map(s => s.trim())\n      .filter(Boolean)\n      .filter(t => t.length >= 3)\n      .filter(t => !/^\\d+$/.test(t))\n      .filter(t => !stop.has(t))\n  ));\n}\n\nfunction hasAnyWord(text, words) {\n  if (!words || !words.length) return false;\n  const tokens = new Set(tokenize(text).filter(w => w.length >= 3));\n  return words.some(w => tokens.has(norm(w)));\n}\n\nfunction routeHints(text) {\n  const t = norm(text);\n  return {\n    oral: /(сироп|таблет|капсул|капс\\.|пастил|леденц|порошок|суспенз|внутрь|оральн)/.test(t),\n    nasal: /(назал|в нос|капли в нос|спрей в нос)/.test(t),\n    throat: /(горло|спрей для горла|пастил|леденц)/.test(t),\n    eye: /(глаз|глазн)/.test(t),\n    skin: /(крем|маз|гель|лосьон|сыворотк|маска|пенка|шампунь|флюид|бальзам)/.test(t),\n    external: /(наруж|местн|крем|маз|гель|лосьон|сыворотк|маска|пенка|шампунь|флюид|бальзам)/.test(t),\n    infusion: /(инфуз|р-р д\\/инфуз|раствор д\\/инфуз|в\\/в)/.test(t),\n    injection: /(ампул|инъекц|шприц)/.test(t),\n  };\n}\n\nfunction ageHints(text) {\n  const t = norm(text);\n  return {\n    child: /(дет|baby|kid|junior|малыш|младен|0\\+|1\\+|2\\+|3\\+)/.test(t),\n    adult: /(взросл)/.test(t),\n  };\n}\n\nfunction guessProductType(text) {\n  const t = norm(text);\n\n  if (/(подгузник|трусики-подгузники|трусики подгузники|трусики|памперс)/.test(t)) return 'infant_hygiene';\n  if (/(прокладк|тампон|ежедневк)/.test(t)) return 'female_hygiene';\n\n  if (/(шампунь|пенка|гель д\\/умывания|умыван|лосьон|маска д\\/лица|сыворотк|крем д\\/рук|крем д\\/лица|крем для рук|крем для лица|увлажняющ|солнцезащитн|флюид|косметическ)/.test(t)) {\n    return 'cosmetic';\n  }\n\n  if (/(шприц|игл|катетер|тест[- ]?полоск|тест система|межпальцевый разделитель|ортопед|бинт|пластыр|ингалятор|термометр)/.test(t)) {\n    return 'device';\n  }\n\n  if (/(витамин|бета-каротин|бета каротин|спирулин|бад|now foods|нау фудс)/.test(t)) return 'supplement';\n\n  if (/(р-р д\\/инфуз|инфузи|натрия хлорид|ампул|инъекц)/.test(t)) return 'infusion_drug';\n\n  if (/(таб\\.|таблет|капсул|сироп|суспенз|порошок|драже)/.test(t)) return 'drug';\n\n  if (/(закваск|сметан|йогурт|кефир)/.test(t)) return 'food';\n\n  return 'other';\n}\n\nfunction looksLikeCosmeticCategory(c) {\n  const code = (c.category_code || '').toUpperCase();\n  const name = norm(c.category_name);\n  const dir = norm(c.direction);\n  return (\n    code.startsWith('COSM_') ||\n    /космет|уход|лица|рук|тела|волос|шампун|сыворот|маска|пенка|гигиен/.test(name) ||\n    /космет|уход|гигиен/.test(dir)\n  );\n}\n\nfunction looksLikeInfantHygieneCategory(c) {\n  const code = (c.category_code || '').toUpperCase();\n  const name = norm(c.category_name);\n  return code.startsWith('FAM_CAT_INFANT') || /подгузник|трусики/.test(name);\n}\n\nfunction looksLikeFemaleHygieneCategory(c) {\n  const code = (c.category_code || '').toUpperCase();\n  const name = norm(c.category_name);\n  return (\n    code.startsWith('COSM_CAT_HYGIENE') ||\n    /прокладк|тампон|ежедневк/.test(name) ||\n    /гигиенические женские/.test(name)\n  );\n}\n\nfunction looksLikeDeviceCategory(c) {\n  const code = (c.category_code || '').toUpperCase();\n  const name = norm(c.category_name);\n  const dir = norm(c.direction);\n  return (\n    code.startsWith('LS_MD_') ||\n    /шприц|игл|тест|ортопед|стельк|разделител|бинт|пластыр|инструмент/.test(name) ||\n    /медицинск/.test(dir)\n  );\n}\n\nfunction looksLikeSupplementCategory(c) {\n  const code = (c.category_code || '').toUpperCase();\n  const name = norm(c.category_name);\n  const dir = norm(c.direction);\n  return (\n    code.startsWith('BA_') ||\n    /витамин|минерал|комплекс|иммун|бад|спирулин|каротин/.test(name) ||\n    /бад/.test(dir)\n  );\n}\n\nfunction looksLikeInfusionDrugCategory(c) {\n  const code = (c.category_code || '').toUpperCase();\n  const name = norm(c.category_name);\n  const mnn = norm(c.mnn_cluster);\n  return (\n    code.startsWith('LS_INF_') ||\n    /инфуз|раствор|регидрон|рингер|натрия|хлорид/.test(name) ||\n    /натрия|хлорид|инфуз/.test(mnn)\n  );\n}\n\nfunction looksLikeDrugCategory(c) {\n  const code = (c.category_code || '').toUpperCase();\n  return code.startsWith('LS_') && !code.startsWith('LS_MD_') && !code.startsWith('LS_INF_');\n}\n\nconst products = [];\nconst categories = [];\n\nfor (const item of items) {\n  const j = item.json;\n\n  if ('product_raw_id' in j) {\n    products.push({\n      product_id: j.product_id ?? j.id ?? null,\n      product_raw_id: j.product_raw_id ?? null,\n      product_name_effective: j.product_name_effective ?? null,\n      manufacturer_effective: j.manufacturer_effective ?? null,\n      brand_guess: j.brand_guess ?? null,\n      form_guess: j.form_guess ?? null,\n      dosage_guess: j.dosage_guess ?? null,\n      pack_size_guess: j.pack_size_guess ?? null,\n      combined_text: j.combined_text ?? null\n    });\n  } else if ('category_code' in j) {\n    categories.push(j);\n  }\n}\n\nconst out = [];\n\nfor (const p of products) {\n  const baseText = norm([\n    p.product_name_effective,\n    p.manufacturer_effective,\n    p.brand_guess,\n    p.form_guess,\n    p.dosage_guess,\n    p.pack_size_guess,\n    p.combined_text\n  ].filter(Boolean).join(' '));\n\n  const productTypeGuess = guessProductType(baseText);\n  const rh = routeHints(baseText);\n  const ah = ageHints(baseText);\n\n  const scored = [];\n\n  for (const c of categories) {\n    const catCode = (c.category_code || '').toUpperCase();\n\n    if (productTypeGuess === 'cosmetic' && !looksLikeCosmeticCategory(c)) continue;\n    if (productTypeGuess === 'infant_hygiene' && !looksLikeInfantHygieneCategory(c)) continue;\n    if (productTypeGuess === 'female_hygiene' && !looksLikeFemaleHygieneCategory(c)) continue;\n    if (productTypeGuess === 'device' && !looksLikeDeviceCategory(c)) continue;\n    if (productTypeGuess === 'supplement' && !looksLikeSupplementCategory(c)) continue;\n    if (productTypeGuess === 'infusion_drug' && !looksLikeInfusionDrugCategory(c)) continue;\n    if (productTypeGuess === 'drug' && !looksLikeDrugCategory(c)) continue;\n    if (productTypeGuess === 'food') continue;\n\n    let score = 0;\n    const reasons = [];\n\n    const categoryTerms = splitTerms(c.category_name);\n    const nosologyTerms = splitTerms(c.need_nosology);\n    const mnnTerms = splitTerms(c.mnn_cluster);\n    const commentTerms = splitTerms(c.inclusion_comment).filter(t => t.length >= 5);\n\n    const ageSegment = norm(c.age_segment);\n    const route = norm(c.administration_route);\n\n    for (const term of categoryTerms) {\n      if (term && baseText.includes(term)) {\n        score += 7;\n        reasons.push(`category:${term}`);\n      }\n    }\n\n    for (const term of nosologyTerms) {\n      if (term && baseText.includes(term)) {\n        score += 5;\n        reasons.push(`nosology:${term}`);\n      }\n    }\n\n    for (const term of mnnTerms) {\n      if (term && baseText.includes(term)) {\n        score += 6;\n        reasons.push(`mnn:${term}`);\n      }\n    }\n\n    for (const term of commentTerms.slice(0, 8)) {\n      if (term && baseText.includes(term)) {\n        score += 2;\n        reasons.push(`comment:${term}`);\n      }\n    }\n\n    if (hasAnyWord(baseText, c.include_keywords || [])) {\n      score += 10;\n      reasons.push('include_keywords');\n    }\n\n    if (hasAnyWord(baseText, c.exclude_keywords || [])) {\n      score -= 12;\n      reasons.push('exclude_keywords');\n    }\n\n    if (ageSegment.includes('дет') && ah.child) {\n      score += 4;\n      reasons.push('age:child');\n    }\n    if (ageSegment.includes('взрос') && ah.adult) {\n      score += 4;\n      reasons.push('age:adult');\n    }\n\n    if (route.includes('назал') && rh.nasal) {\n      score += 5;\n      reasons.push('route:nasal');\n    }\n    if (route.includes('внутрь') && rh.oral) {\n      score += 4;\n      reasons.push('route:oral');\n    }\n    if (route.includes('орофар') && rh.throat) {\n      score += 5;\n      reasons.push('route:throat');\n    }\n    if (route.includes('наруж') && rh.external) {\n      score += 3;\n      reasons.push('route:external');\n    }\n    if (route.includes('глаз') && rh.eye) {\n      score += 5;\n      reasons.push('route:eye');\n    }\n\n    if (productTypeGuess === 'infusion_drug' && rh.infusion && catCode.startsWith('LS_INF_')) {\n      score += 8;\n      reasons.push('product_type:infusion_drug');\n    }\n\n    if (productTypeGuess === 'device' && catCode.startsWith('LS_MD_')) {\n      score += 5;\n      reasons.push('product_type:device');\n    }\n\n    if (productTypeGuess === 'supplement' && catCode.startsWith('BA_')) {\n      score += 6;\n      reasons.push('product_type:supplement');\n    }\n\n    if (productTypeGuess === 'cosmetic' && catCode.startsWith('COSM_')) {\n      score += 6;\n      reasons.push('product_type:cosmetic');\n    }\n\n    const hasStrongMatch =\n      reasons.some(r => r.startsWith('category:')) ||\n      reasons.some(r => r.startsWith('nosology:')) ||\n      reasons.some(r => r.startsWith('mnn:')) ||\n      reasons.some(r => r.startsWith('comment:')) ||\n      reasons.includes('include_keywords') ||\n      reasons.includes('product_type:infusion_drug') ||\n      reasons.includes('product_type:device') ||\n      reasons.includes('product_type:supplement') ||\n      reasons.includes('product_type:cosmetic');\n\n    if (!hasStrongMatch) {\n      score = 0;\n    }\n\n    if (score > 0) {\n      scored.push({\n        category_id: String(c.id),\n        category_code: c.category_code,\n        category_name: c.category_name,\n        score,\n        reasons\n      });\n    }\n  }\n\n  scored.sort((a, b) => b.score - a.score);\n\n  out.push({\n    json: {\n      product_id: p.product_id ?? null,\n      product_raw_id: p.product_raw_id,\n      product_name_effective: p.product_name_effective,\n      manufacturer_effective: p.manufacturer_effective,\n      combined_text: p.combined_text,\n      product_type_guess: productTypeGuess,\n      shortlist: scored.slice(0, 5),\n      top_category_id: scored[0]?.category_id ?? null,\n      top_category_name: scored[0]?.category_name ?? null,\n      top_score: scored[0]?.score ?? 0,\n      shortlist_count: scored.length\n    }\n  });\n}\n\nreturn out;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        -256
+      ],
+      "id": "88303426-2b07-4b71-8385-8ebd0e195c54",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "insert into classification_shortlist (\n  product_id,\n  product_raw_id,\n  product_type_guess,\n  rule_top_category_id,\n  rule_top_score,\n  shortlist_count,\n  shortlist_json,\n  combined_text,\n  rules_version\n) values (\n  $1,\n  $2,\n  $3,\n  $4,\n  $5,\n  $6,\n  $7::jsonb,\n  $8,\n  $9\n)\non conflict (product_id) do update set\n  product_raw_id       = excluded.product_raw_id,\n  product_type_guess   = excluded.product_type_guess,\n  rule_top_category_id = excluded.rule_top_category_id,\n  rule_top_score       = excluded.rule_top_score,\n  shortlist_count      = excluded.shortlist_count,\n  shortlist_json       = excluded.shortlist_json,\n  combined_text        = excluded.combined_text,\n  rules_version        = excluded.rules_version,\n  updated_at           = now()\nreturning\n  id as shortlist_id,\n  product_id,\n  product_raw_id,\n  product_type_guess,\n  rule_top_category_id,\n  rule_top_score,\n  shortlist_count,\n  combined_text;",
+        "options": {
+          "queryReplacement": "={{ [\n  $json.product_id,\n  $json.product_raw_id,\n  $json.product_type_guess,\n  $json.top_category_id,\n  $json.top_score,\n  ($json.shortlist || []).length,\n  JSON.stringify($json.shortlist || []),\n  $json.combined_text,\n  'rules-v1'\n] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        288,
+        -256
+      ],
+      "id": "54f11811-a1be-4868-ae56-a3198b8b7c88",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "insert into product_classification (\n  product_id,\n  product_raw_id,\n  rule_top_category_id,\n  rule_top_score,\n  rule_shortlist_id,\n  rule_decision_status,\n  decision_status,\n  final_source\n) values (\n  $1,\n  $2,\n  $3,\n  cast($4 as numeric)::integer,\n  $5,\n  case\n    when cast($4 as numeric)::integer >= 20 then 'accepted_candidate'\n    when cast($4 as numeric)::integer >= 10 then 'needs_llm'\n    when $6 = 0 then 'no_match'\n    else 'needs_llm'\n  end,\n  'pending',\n  'pending'\n)\non conflict (product_id) do update set\n  product_raw_id       = excluded.product_raw_id,\n  rule_top_category_id = excluded.rule_top_category_id,\n  rule_top_score       = excluded.rule_top_score,\n  rule_shortlist_id    = excluded.rule_shortlist_id,\n  rule_decision_status = excluded.rule_decision_status,\n  updated_at           = now()\nreturning\n  product_id,\n  product_raw_id,\n  rule_top_category_id,\n  rule_top_score,\n  rule_shortlist_id,\n  rule_decision_status,\n  decision_status,\n  final_source;",
+        "options": {
+          "queryReplacement": "={{ [\n  Number($json.product_id),\n  Number($json.product_raw_id),\n  $json.rule_top_category_id ? Number($json.rule_top_category_id) : null,\n  Number($json.rule_top_score ?? 0),\n  Number($json.shortlist_id),\n  Number($json.shortlist_count ?? 0)\n] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        480,
+        -256
+      ],
+      "id": "74eec815-7587-46ec-824e-4dc2eda538ae",
+      "name": "product_classification",
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "insert into product_classification_log (\n  product_id,\n  stage,\n  actor_type,\n  actor_name,\n  status,\n  input_payload,\n  output_payload,\n  selected_category_id,\n  confidence,\n  explanation,\n  validation_passed,\n  workflow_version,\n  prompt_version\n) values (\n  $1,\n  'rule_shortlist',\n  'system',\n  'rule_engine_v1',\n  'success',\n  $2::jsonb,\n  $3::jsonb,\n  $4,\n  $5,\n  $6,\n  true,\n  'v1.0.0',\n  null\n)\nreturning id, product_id, stage, selected_category_id, confidence;",
+        "options": {
+          "queryReplacement": "={{ [   Number($json.product_id),   JSON.stringify({     product_raw_id: $json.product_raw_id,     combined_text: $json.combined_text,     product_type_guess: $json.product_type_guess   }),   JSON.stringify({     shortlist_id: $json.shortlist_id,     rule_top_category_id: $json.rule_top_category_id,     rule_top_score: $json.rule_top_score,     shortlist_count: $json.shortlist_count   }),   $json.rule_top_category_id ? Number($json.rule_top_category_id) : null,   Math.max(0, Math.min(1, Number($json.rule_top_score || 0) / 20)),   'Rule-based shortlist generated' ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        688,
+        -256
+      ],
+      "id": "4e902e52-5530-4c41-9b23-66266f382a70",
+      "name": "product_classification_log",
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Товары",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "категории",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Товары": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "категории": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "product_classification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "product_classification": {
+      "main": [
+        [
+          {
+            "node": "product_classification_log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

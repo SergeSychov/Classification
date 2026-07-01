@@ -1,0 +1,37 @@
+---
+description: Конвенции workflow classification-stage2-dev (имена, контракт, layout)
+globs: workflows/classification-stage2-dev.json,scripts/**stage2**,scripts/phase3_nodes/**,Categories/stage2_workflow_contract.md
+alwaysApply: false
+---
+
+# Stage 2 workflow conventions
+
+Перед правками прочитай `Categories/stage2_workflow_contract.md`.
+
+## Имена нод
+
+- Префикс зоны: `In —`, `Run —`, `Load —`, `P1 —`, `2A —`, `2B —`, `DB —`, `Fin —`, `Shared —`
+- Запрещены generic-имена: `Code`, `Merge`, `AI Agent`, `Post-process` без префикса
+- Ссылка на run: `$('Run — Create Run')`, не `$('Create Run')`
+
+## Code-ноды
+
+- Всегда `...item.json` и `pairedItem`
+- Константы из `item.json.constants` (Init Constants), с локальным fallback
+- Не использовать `$('…')` на ноды из параллельных веток — только через Merge Context
+
+## Layout
+
+- Поток слева направо: In → Run → Load → P1 → 2A → 2B → DB → Fin
+- Новые ноды в зоне префикса, шаг ~200px, не перекрывать существующие
+- Добавлять/обновлять sticky note для блока при существенных изменениях
+
+## Деплой
+
+```bash
+python3 scripts/pull_workflow.py classification-stage2-dev
+# правки
+python3 scripts/push_workflow.py classification-stage2-dev
+```
+
+Не менять `classification-stage2-prepare-for-llm`.
