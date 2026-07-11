@@ -10,7 +10,7 @@ alwaysApply: false
 
 ## Имена нод
 
-- Префикс зоны: `In —`, `Run —`, `Load —`, `P1 —`, `2A —`, `2B —`, `DB —`, `Fin —`, `Shared —`
+- Префикс зоны: `In —`, `Run —`, `Load —`, `P1 —`, `2A —`, `2B —`, `Judge —`, `DB —`, `Fin —`, `Shared —`
 - Запрещены generic-имена: `Code`, `Merge`, `AI Agent`, `Post-process` без префикса
 - Ссылка на run: `$('Run — Create Run')`, не `$('Create Run')`
 
@@ -20,11 +20,13 @@ alwaysApply: false
 - Константы из `item.json.constants` (Init Constants), с локальным fallback
 - Не использовать `$('…')` на ноды из параллельных веток — только через Merge Context
 
-## Layout
+## Layout (swimlanes)
 
-- Поток слева направо: In → Run → Load → P1 → 2A → 2B → DB → Fin
-- Новые ноды в зоне префикса, шаг ~200px, не перекрывать существующие
-- Добавлять/обновлять sticky note для блока при существенных изменениях
+- Субпроцессы **сверху вниз**: Setup → P1 → 2A → 2B → Judge → DB/Fin
+- Внутри полосы — слева направо; Route в конце полосы, выход в DB — вниз
+- Шаг колонок ~220px; Chat Model — **под** AI Agent своей зоны (`P1 — DeepSeek`, `2A — DeepSeek`, `2B — DeepSeek`; одна модель, три ноды)
+- Sticky note + цвет preset для каждого субпроцесса (см. контракт §7)
+- После правок позиций: `python3 scripts/reorganize_stage2_layout.py`
 
 ## Деплой
 

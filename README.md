@@ -19,7 +19,7 @@ python3 scripts/run_workflow.py --wait
 
 | Путь | Назначение |
 |------|------------|
-| `Categories/` | Документация, ТЗ, планы |
+| `Categories/` | Документация, ТЗ, планы (см. `stage2_node_map.md`) |
 | `workflows/` | JSON workflow + `.id` файлы для n8n |
 | `scripts/` | pull/push/deploy скрипты и code-ноды для 2B |
 | `.cursor/rules/` | Конвенции для Cursor Agent |

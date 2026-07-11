@@ -287,6 +287,29 @@
 * **Sticky notes (10):** обзор + блоки In/Run/Load/P1/2A/2B/DB/Fin/Shared на канвасе n8n.
 * **Деплой:** push успешно (`updatedAt: 2026-07-01`).
 
+22. **Фаза 4 — Judge OpenRouter (`classification-stage2-dev`)**
+
+* **Дата:** 2026-07-01. Workflow: `classification-stage2-dev` (`BaBjEPi78taRj2G5`).
+* **Подход:** OpenRouter (`openai/gpt-4.1-mini`) арбитражит спорные кейсы после 2B.
+* **Новые ноды (6 + sticky):**
+  * `Judge — Route` — Switch по `next_action === 'judge'`;
+  * `Judge — LLM Prepare` / `Judge — AI Agent` / `Judge — Merge LLM` — вызов OpenRouter;
+  * `Judge — Post-process` — `judge_*`, `final_source=judge`, routing;
+  * `Shared — OpenRouter` — `lmChatOpenRouter`, credential `OpenRouter account`.
+* **Топология:**
+  * `2B — Post-process` → `Judge — Route` (вместо прямого DB);
+  * ветка **judge** → log fallback_2b → LLM → Post-process Judge → Upsert/Insert;
+  * ветка **other** → Prepare DB/Log → Merge Finish (как раньше).
+* **Init Stage Constants:** `min_confidence_judge_ok: 0.60`, `judge_actor_name: openai/gpt-4.1-mini`.
+* **Версии Judge:** `workflow_version=stage2_judge_v1`, `prompt_version=prompt_judge_v1`.
+* **Judge LLM output:** `winner_source`, `category_id`, `confidence`, `explanation`, `needs_human_review`.
+* **Routing Judge Post-process:**
+  * valid + confidence > 0.60 + category в кандидатах → `classified`, `final_source=judge`, `next_action=none`;
+  * иначе → `needs_human_review`, `next_action=human_review`.
+* **Скрипты:** `scripts/apply_phase4_judge.py`, `scripts/phase4_nodes/`.
+* **Статус Фазы 4:** **закрыта** ✅ (код + runtime deploy)
+* **Runtime smoke-test (2026-07-01, execution #1327):** webhook `success`, ~97 сек, workflow без ошибок после деплоя Judge. Judge-ветка не сработала на текущей партии (нет `next_action=judge` — ожидаемо, см. хвост 2B→judge тест).
+
 14. **Решение по языку Code-нод**
 
 * Проверена возможность использовать Python в Code-нодах n8n. [file:1]
@@ -347,11 +370,12 @@
   * `rules`, `llm`, `fallback_2b`, `judge`, `human`, `system`. [file:1]
 * Следующий шаг — распространить эти же контракты на fallback, judge и human-review слои. [file:1]
 
-3. **Подготовка к fallback 2A / 2B** — **2A выполнено (п.19)** ✅ | **2B выполнено (п.20)** ✅ | **Judge — следующий шаг**
+3. **Подготовка к fallback 2A / 2B** — **2A выполнено (п.19)** ✅ | **2B выполнено (п.20)** ✅ | **Judge выполнено (п.22)** ✅ | **Telegram — следующий шаг**
 
 * ~~Спроектировать и реализовать fallback 2A~~ → run `11` подтверждён.
 * ~~Fallback 2B (branch shortlist + DeepSeek)~~ → п.20.
-* **Осталось:** Judge (OpenRouter) + policy borderline primary.
+* ~~Judge (OpenRouter)~~ → п.22.
+* **Осталось:** Telegram human review + policy borderline primary.
 
 **Решение (2026-06-27):**
 
