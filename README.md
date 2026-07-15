@@ -31,3 +31,21 @@ python3 scripts/run_workflow.py --wait
 | `ShortList` | `workflows/shortlist.json` | Stage 1: rule-based shortlist |
 | `classification-stage2-prepare-for-llm` | `workflows/classification-stage2-prepare-for-llm.json` | Эталон Stage 2 (read-only) |
 | `classification-stage2-dev` | `workflows/classification-stage2-dev.json` | Рабочая копия для разработки |
+| `polza-qwen-test` | `workflows/polza-qwen-test.json` | Smoke-test Polza.ai + Qwen (Judge) |
+
+## Polza.ai (Judge)
+
+Judge в `classification-stage2-dev` использует **Polza.ai** вместо OpenRouter:
+
+- Нода: `Shared — Polza` (`lmChatOpenAi`)
+- Credential: `Polza account` (OpenAI API, Base URL `https://polza.ai/api/v1`)
+- Модель: `qwen/qwen3.5-flash-02-23@reasoning_effort=none`
+
+Проверка API:
+
+```bash
+python3 scripts/polza_test.py --balance
+python3 scripts/polza_test.py --json-test
+```
+
+Миграция (уже применена): `python3 scripts/migrate_judge_to_polza.py`

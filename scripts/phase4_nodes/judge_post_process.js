@@ -75,7 +75,7 @@ return items.map((item, index) => {
   const ACTOR = C.actor_type || { llm: 'llm' };
   const LOG = C.log_status || { success: 'success', needs_review: 'needs_review', rejected: 'rejected' };
   const THRESHOLDS = C.thresholds || { min_confidence_judge_ok: 0.60 };
-  const MODEL = C.model || { judge_actor_name: 'openai/gpt-4.1-mini' };
+  const MODEL = C.model || { judge_actor_name: 'qwen/qwen3.5-flash-02-23' };
 
   const WORKFLOW_VERSION = root.workflow_version || 'stage2_judge_v1';
   const PROMPT_VERSION = root.prompt_version || 'prompt_judge_v1';

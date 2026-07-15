@@ -101,7 +101,7 @@ POSITIONS: dict[str, list[int]] = {
     "Judge — AI Agent": [1100, 1520],
     "Judge — Merge LLM": [1320, 1380],
     "Judge — Post-process": [1540, 1380],
-    "Shared — OpenRouter": [1100, 1700],
+    "Shared — Polza": [1100, 1700],
     # —— DB + Fin (слой сбора) ——
     "DB — Prepare Snapshot": [440, 1920],
     "DB — Upsert Snapshot": [660, 1920],
@@ -207,7 +207,7 @@ STICKIES: list[dict] = [
         "h": 480,
         "color": 6,
         "content": (
-            "## Субпроцесс Judge (OpenRouter)\n\n"
+            "## Субпроцесс Judge (Polza / Qwen)\n\n"
             "Route → Prepare → Agent → Merge → Post → DB ↓\n\n"
             "Арбитраж P1 + 2A + 2B при конфликте"
         ),
@@ -235,13 +235,13 @@ STICKIES: list[dict] = [
         "content": "**DeepSeek:** `P1 —` / `2A —` / `2B — DeepSeek` — одна модель, нода под каждым Agent",
     },
     {
-        "name": "🔗 Shared — OpenRouter",
+        "name": "🔗 Shared — Polza",
         "x": 1040,
         "y": 1660,
         "w": 260,
         "h": 120,
         "color": 7,
-        "content": "**OpenRouter** → Judge",
+        "content": "**Polza / Qwen** → Judge",
     },
 ]
 

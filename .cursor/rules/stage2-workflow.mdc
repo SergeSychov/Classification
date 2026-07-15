@@ -24,7 +24,7 @@ alwaysApply: false
 
 - Субпроцессы **сверху вниз**: Setup → P1 → 2A → 2B → Judge → DB/Fin
 - Внутри полосы — слева направо; Route в конце полосы, выход в DB — вниз
-- Шаг колонок ~220px; Chat Model — **под** AI Agent своей зоны (`P1 — DeepSeek`, `2A — DeepSeek`, `2B — DeepSeek`; одна модель, три ноды)
+- Шаг колонок ~220px; Chat Model — **под** AI Agent своей зоны (`P1 — DeepSeek`, `2A — DeepSeek`, `2B — DeepSeek`; Judge: `Shared — Polza`)
 - Sticky note + цвет preset для каждого субпроцесса (см. контракт §7)
 - После правок позиций: `python3 scripts/reorganize_stage2_layout.py`
 

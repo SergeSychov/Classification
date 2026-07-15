@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Apply Phase 4 Judge (OpenRouter) nodes to classification-stage2-dev workflow JSON."""
+"""Apply Phase 4 Judge (Polza / Qwen) nodes to classification-stage2-dev workflow JSON."""
 
 from __future__ import annotations
 
@@ -11,11 +11,12 @@ ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW_PATH = ROOT / "workflows" / "classification-stage2-dev.json"
 NODES_DIR = Path(__file__).resolve().parent / "phase4_nodes"
 
-JUDGE_MODEL = "openai/gpt-4.1-mini"
-OPENROUTER_CREDENTIALS = {
-    "openRouterApi": {
-        "id": "NlSk6tYTIOJUqT7P",
-        "name": "OpenRouter account",
+JUDGE_MODEL = "qwen/qwen3.5-flash-02-23@reasoning_effort=none"
+JUDGE_ACTOR_NAME = "qwen/qwen3.5-flash-02-23"
+POLZA_CREDENTIALS = {
+    "openAiApi": {
+        "id": "YFMznqpi3SeJdYod",
+        "name": "Polza account",
     }
 }
 
@@ -52,7 +53,7 @@ def main() -> None:
     )
     init_code = init_code.replace(
         "judge_actor_name: 'openrouter'  // placeholder until Phase 4",
-        f"judge_actor_name: '{JUDGE_MODEL}'",
+        f"judge_actor_name: '{JUDGE_ACTOR_NAME}'",
     )
     init["parameters"]["jsCode"] = init_code
 
@@ -121,20 +122,28 @@ def main() -> None:
         make_code_node("Judge — Post-process", [5720, 360], "judge_post_process.js"),
         {
             "parameters": {
-                "model": JUDGE_MODEL,
-                "options": {"responseFormat": "json_object"},
+                "model": {
+                    "__rl": True,
+                    "mode": "id",
+                    "value": JUDGE_MODEL,
+                },
+                "responsesApiEnabled": False,
+                "options": {
+                    "responseFormat": "json_object",
+                    "temperature": 0.2,
+                },
             },
-            "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
-            "typeVersion": 1,
+            "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+            "typeVersion": 1.2,
             "position": [5120, 720],
             "id": node_id(),
-            "name": "Shared — OpenRouter",
-            "credentials": OPENROUTER_CREDENTIALS,
+            "name": "Shared — Polza",
+            "credentials": POLZA_CREDENTIALS,
         },
         {
             "parameters": {
                 "content": (
-                    "## Judge — OpenRouter (субпроцесс)\n\n"
+                    "## Judge — Polza / Qwen (субпроцесс)\n\n"
                     "Арбитраж P1 + 2A + 2B при конфликте / low confidence\n\n"
                     "Успех → `final_source=judge` | иначе → human_review"
                 ),
@@ -206,7 +215,7 @@ def main() -> None:
         ]
     }
 
-    conn["Shared — OpenRouter"] = {
+    conn["Shared — Polza"] = {
         "ai_languageModel": [
             [{"node": "Judge — AI Agent", "type": "ai_languageModel", "index": 0}]
         ]
@@ -225,7 +234,7 @@ def main() -> None:
             node["parameters"]["content"] = (
                 "## Shared — LLM\n\n"
                 "DeepSeek: P1, 2A, 2B\n\n"
-                "OpenRouter: Judge"
+                "Polza / Qwen: Judge"
             )
 
     WORKFLOW_PATH.write_text(

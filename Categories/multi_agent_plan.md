@@ -70,7 +70,7 @@
 **Агент:** `judge-builder`  
 **Зависимости:** Фаза 3
 
-**Модель:** **OpenRouter** (отдельная модель через API credential в n8n), не DeepSeek.
+**Модель:** **Polza.ai / Qwen** (отдельная модель через API credential в n8n), не DeepSeek.
 
 **Условия вызова:**
 
@@ -81,10 +81,10 @@
 **Задачи:**
 
 1. Ветка `next_action='judge'`
-2. AI Agent + **OpenRouter Chat Model** (не DeepSeek)
+2. AI Agent + **OpenAI Chat Model → Polza** (не DeepSeek)
 3. Промпт с полным контекстом всех раундов
 4. Post-process judge → `judge_*` поля, `final_source='judge'`
-5. Log `stage='judge'`, `actor_name` = имя модели OpenRouter
+5. Log `stage='judge'`, `actor_name` = имя модели Qwen / Polza
 
 ---
 
@@ -169,7 +169,7 @@ gantt
 | # | Вопрос | Решение |
 |---|--------|---------|
 | 1 | Fallback 2A | **Rule + DeepSeek** по `categories_dict`, не свободный LLM |
-| 2 | Judge model | **OpenRouter** (другая модель), DeepSeek — только массовые раунды |
+| 2 | Judge model | **Polza / Qwen** (другая модель), DeepSeek — только массовые раунды |
 | 3 | Low-confidence primary (v1) | `needs_human_review` + `human_review` при confidence ≤ 0.60 |
 | 4 | Low-confidence primary (целевая policy) | 0.40–0.60 → сначала fallback; <0.40 → опционально сразу human; после fallback низкая уверенность → judge → human |
 | 5 | ShortList в git | **Да** — `workflows/shortlist.json` |
@@ -181,7 +181,7 @@ gantt
 | # | Вопрос | Статус |
 |---|--------|--------|
 | 1 | Точные пороги 0.40 / 0.60 для borderline policy | Уточнить с заказчиком при внедрении |
-| 2 | Какая именно модель OpenRouter для judge | Выбрать при Фазе 4 |
+| 2 | Какая именно модель Polza для judge | Выбрано: `qwen/qwen3.5-flash-02-23` |
 | 3 | Runs 7/8 — баг Finish Run или незавершённый execute? | Фаза 1 |
 
 ---

@@ -1,0 +1,151 @@
+{
+  "name": "polza-qwen-test",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        304
+      ],
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "content": "## Polza + Qwen smoke test\n\n1. Credentials: **OpenAI API** → Base URL `https://polza.ai/api/v1`, API Key из [polza.ai/dashboard](https://polza.ai/dashboard)\n2. Отключите **Use Responses API** в ноде Polza — Qwen\n3. Модель с `@reasoning_effort=none` — иначе Qwen Flash «думает» ~1200 токенов и ответ идёт 10–120 с\n4. Запустите workflow вручную\n\nПроверяет: chat + JSON (как Judge)",
+        "height": 220,
+        "width": 520
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        208,
+        48
+      ],
+      "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "jsCode": "const model = 'qwen/qwen3.5-flash-02-23@reasoning_effort=none';\n\nconst promptSystem =\n  'You are a test assistant for pharmacy classification pipeline. Return ONLY valid JSON.';\n\nconst promptUser = `\nSmoke test for Polza.ai + Qwen via n8n.\n\nProduct: \"Нурофен таблетки 200 мг, 10 шт\"\n\nReturn JSON with keys:\n- winner_source (llm | fallback_2b | none)\n- category_id (number or null)\n- confidence (0.0-1.0)\n- explanation (1 sentence in Russian)\n- needs_human_review (boolean)\n`.trim();\n\nreturn [{\n  json: {\n    model,\n    prompt_system: promptSystem,\n    prompt_user: promptUser,\n    test_started_at: new Date().toISOString(),\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        304
+      ],
+      "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+      "name": "Test — Prepare Prompt"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt_user }}",
+        "options": {
+          "systemMessage": "={{ $json.prompt_system }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        688,
+        304
+      ],
+      "id": "d4e5f6a7-b8c9-0123-def0-234567890123",
+      "name": "Test — AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "id",
+          "value": "qwen/qwen3.5-flash-02-23@reasoning_effort=none"
+        },
+        "responsesApiEnabled": false,
+        "options": {
+          "responseFormat": "json_object",
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        688,
+        528
+      ],
+      "id": "e5f6a7b8-c9d0-1234-ef01-345678901234",
+      "name": "Polza — Qwen",
+      "credentials": {
+        "openAiApi": {
+          "id": "YFMznqpi3SeJdYod",
+          "name": "Polza account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function extractJsonString(value) {\n  if (value === null || value === undefined) return null;\n  if (typeof value === 'object') return JSON.stringify(value);\n  let text = String(value).trim();\n  const codeFenceMatch = text.match(/^```(?:json)?\\s*\\n?([\\s\\S]+?)\\n?```\\s*$/i);\n  if (codeFenceMatch) text = codeFenceMatch[1].trim();\n  return text;\n}\n\nreturn items.map((item, index) => {\n  const j = item.json || {};\n  const raw = j.output ?? j.text ?? j.response ?? j.content ?? null;\n  const rawText = extractJsonString(raw);\n  let parsed = null;\n  let jsonOk = false;\n  let jsonError = null;\n\n  if (rawText) {\n    try {\n      parsed = JSON.parse(rawText);\n      jsonOk = true;\n    } catch (e) {\n      jsonError = String(e);\n    }\n  }\n\n  const required = ['winner_source', 'category_id', 'confidence', 'explanation', 'needs_human_review'];\n  const missingKeys = jsonOk\n    ? required.filter((k) => !(k in parsed))\n    : required;\n\n  return {\n    json: {\n      provider: 'polza.ai',\n      model: j.model || 'qwen/qwen3.5-flash-02-23',\n      test_started_at: j.test_started_at || null,\n      test_finished_at: new Date().toISOString(),\n      raw_output: rawText,\n      parsed_json: parsed,\n      json_ok: jsonOk,\n      json_error: jsonError,\n      judge_schema_ok: jsonOk && missingKeys.length === 0,\n      missing_keys: missingKeys,\n      status: jsonOk && missingKeys.length === 0 ? 'ok' : 'failed',\n    },\n    pairedItem: index,\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1008,
+        304
+      ],
+      "id": "f6a7b8c9-d0e1-2345-f012-456789012345",
+      "name": "Test — Validate JSON"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Test — Prepare Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test — Prepare Prompt": {
+      "main": [
+        [
+          {
+            "node": "Test — AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test — AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Test — Validate JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Polza — Qwen": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Test — AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

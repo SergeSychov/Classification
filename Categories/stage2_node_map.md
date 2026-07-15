@@ -3,7 +3,7 @@
 Справочник для заказчика и команды. Технический контракт: [`stage2_workflow_contract.md`](stage2_workflow_contract.md).
 
 **Workflow:** `classification-stage2-dev` на n8n  
-**Стек:** n8n + PostgreSQL + DeepSeek (массовые раунды) + OpenRouter (арбитраж)
+**Стек:** n8n + PostgreSQL + DeepSeek (массовые раунды) + Polza / Qwen (арбитраж)
 
 ---
 
@@ -38,7 +38,7 @@ flowchart TB
   end
 
   subgraph JUDGE["Этап Judge"]
-    JR[OpenRouter — арбитраж]
+    JR[Polza / Qwen — арбитраж]
   end
 
   subgraph DB["Учёт"]
@@ -97,7 +97,7 @@ flowchart TB
 | **P1 — DeepSeek** | Primary | DeepSeek (`deepseek-v4-flash`) | Читаемость канваса |
 | **2A — DeepSeek** | Fallback ветка | та же модель, тот же credential | Связь только с 2A Agent |
 | **2B — DeepSeek** | Fallback категория | та же | Связь только с 2B Agent |
-| **Shared — OpenRouter** | Judge | `openai/gpt-4.1-mini` | Арбитраж спорных кейсов |
+| **Shared — Polza** | Judge | `qwen/qwen3.5-flash-02-23@reasoning_effort=none` | Арбитраж спорных кейсов |
 
 Все три DeepSeek-ноды указывают на **одну модель** — это осознанное правило для удобства чтения workflow, а не три разных API.
 
@@ -177,14 +177,14 @@ flowchart TB
 
 ---
 
-### Judge — арбитраж (OpenRouter)
+### Judge — арбитраж (Polza / Qwen)
 
 | Нода | Что делает |
 |------|------------|
 | **Judge — Route** | `judge` → цепочка Judge; иначе → БД |
 | **Judge — LLM Prepare** | Сводный промпт: результаты P1, 2A, 2B + оба shortlist + контекст спора |
 | **Judge — AI Agent** | JSON: winner_source, category_id, confidence, explanation, needs_human_review |
-| **Shared — OpenRouter** | Chat Model для Judge (отдельная от DeepSeek) |
+| **Shared — Polza** | Chat Model для Judge (отдельная от DeepSeek) |
 | **Judge — Merge LLM** | Context + ответ Judge |
 | **Judge — Post-process** | Финальное решение → запись в БД |
 

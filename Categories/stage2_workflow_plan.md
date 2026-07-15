@@ -310,6 +310,15 @@
 * **Статус Фазы 4:** **закрыта** ✅ (код + runtime deploy)
 * **Runtime smoke-test (2026-07-01, execution #1327):** webhook `success`, ~97 сек, workflow без ошибок после деплоя Judge. Judge-ветка не сработала на текущей партии (нет `next_action=judge` — ожидаемо, см. хвост 2B→judge тест).
 
+22a. **Миграция Judge: OpenRouter → Polza.ai / Qwen (`classification-stage2-dev`)**
+
+* **Дата:** 2026-07-15. Причина: недоступность OpenRouter.
+* **Модель:** `qwen/qwen3.5-flash-02-23@reasoning_effort=none` (Polza OpenAI-compatible API).
+* **Нода:** `Shared — OpenRouter` (`lmChatOpenRouter`) → `Shared — Polza` (`lmChatOpenAi`, credential `Polza account`, Base URL `https://polza.ai/api/v1`).
+* **Init Constants:** `judge_actor_name: qwen/qwen3.5-flash-02-23`.
+* **Предпроверка:** `polza-qwen-test` + `scripts/polza_test.py --json-test` ✅.
+* **Скрипт:** `scripts/migrate_judge_to_polza.py`.
+
 14. **Решение по языку Code-нод**
 
 * Проверена возможность использовать Python в Code-нодах n8n. [file:1]
@@ -374,7 +383,7 @@
 
 * ~~Спроектировать и реализовать fallback 2A~~ → run `11` подтверждён.
 * ~~Fallback 2B (branch shortlist + DeepSeek)~~ → п.20.
-* ~~Judge (OpenRouter)~~ → п.22.
+* ~~Judge (OpenRouter → Polza / Qwen)~~ → п.22 / п.22a.
 * **Осталось:** Telegram human review + policy borderline primary.
 
 **Решение (2026-06-27):**
@@ -385,7 +394,7 @@
 
 4. **Judge-слой**
 
-* Модель judge: **OpenRouter** (отдельная модель через API credential), не DeepSeek. DeepSeek остаётся для primary, 2A, 2B.
+* Модель judge: **Polza.ai / Qwen** (отдельная модель через OpenAI-compatible credential), не DeepSeek. DeepSeek остаётся для primary, 2A, 2B.
 
 * Определить условия вызова judge-модели: [file:1]
   * конфликт решений primary LLM vs fallback 2B; [file:1]
