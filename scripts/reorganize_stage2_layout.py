@@ -116,7 +116,7 @@ NODE_NOTES: dict[str, str] = {
     "In — Webhook": "POST /webhook/classification-stage2-dev",
     "Run — Create Run": "INSERT classification_runs, metadata.trigger",
     "Run — Init Constants": "Канонические stage/decision/next_action/thresholds",
-    "Load — Select Batch": "pending + needs_llm/no_match",
+    "Load — Select Batch": "pending + needs_llm/no_match; primary shortlist; LIMIT=batch_size",
     "P1 — Route": "out[0]: fallback_2a + log | out[1]: classified → DB",
     "2A — Merge Context": "products + categories_dict (ancestor-safe)",
     "2B — Insert Branch Shortlist": "classification_shortlist stage=fallback_2b",

@@ -289,9 +289,9 @@ Judge **не** использует DeepSeek — только Polza / Qwen (см
 | In — Webhook Start | Code | `batch_size` из body (1–100, дефолт 5) |
 | Run — Create Run | Postgres | INSERT `classification_runs`, статус `running` |
 | Run — Init Constants | Code | Словарь `constants` (стадии, пороги, модели) |
-| Load — Select Batch | Postgres | Товары `pending` + shortlist из БД |
+| Load — Select Batch | Postgres | Товары `pending` + primary shortlist; `LIMIT = batch_size` |
 | Load — Attach Run ID | Code | `run_id`, `run_meta` на каждый item |
-| Load — Limit Batch | Limit | Обрезка до `batch_size` |
+| Load — Limit Batch | Limit | Страховочный лимит до `batch_size` |
 
 ### P1 — Primary LLM
 

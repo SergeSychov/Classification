@@ -114,9 +114,9 @@ flowchart TB
 | **In — Webhook Start** | Читает `batch_size` из body (1–100, по умолчанию 5) |
 | **Run — Create Run** | Создаёт запись в `classification_runs`, возвращает `run_id` |
 | **Run — Init Constants** | Прикладывает словарь констант: стадии, пороги, имена моделей |
-| **Load — Select Batch** | Выбирает товары со статусом `pending` и готовым rule-shortlist |
+| **Load — Select Batch** | Выбирает товары `pending` + primary shortlist; `LIMIT = batch_size` |
 | **Load — Attach Run ID** | Добавляет каждому товару `run_id` и метаданные запуска |
-| **Load — Limit Batch** | Обрезает партию до размера batch |
+| **Load — Limit Batch** | Страховочный лимит до `batch_size` (на случай рассинхрона SQL) |
 
 ---
 
