@@ -226,6 +226,8 @@ flowchart TB
 - **Human review через Telegram** — карточки для товаров с `needs_human_review`
 - **Policy borderline** — кейсы с confidence 0.40–0.60 сначала в fallback, а не сразу на ревью
 
+Автопуть **P1 → 2A → 2B → Judge** подтверждён smoke-тестами (executions `5529`/`5530`, 2026-07-17). См. `stage2_workflow_plan.md` п.23.
+
 ---
 
 ## Связанные документы

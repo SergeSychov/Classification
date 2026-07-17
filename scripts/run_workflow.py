@@ -106,7 +106,13 @@ def wait_for_execution(
             started_ts = parse_started_at(started_at)
             if started_ts + 1 < started_after_ts:
                 continue
-            if execution.get("finished"):
+            status = execution.get("status")
+            if execution.get("finished") or status in {
+                "success",
+                "error",
+                "crashed",
+                "canceled",
+            }:
                 return execution
             break
         time.sleep(poll_sec)

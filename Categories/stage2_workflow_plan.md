@@ -319,6 +319,23 @@
 * **Предпроверка:** `polza-qwen-test` + `scripts/polza_test.py --json-test` ✅.
 * **Скрипт:** `scripts/migrate_judge_to_polza.py`.
 
+23. **Smoke-test 2B + Judge + фиксы пути (2026-07-17)**
+
+* **Цель:** дотянуть и подтвердить runtime-цепочку `P1 → 2A → 2B → Judge` на реальных товарах.
+* **Найденные блокеры и фиксы:**
+  * **Stale LLM `output`:** после P1 поле `output` оставалось в item и при Merge 2A/2B/Judge перезаписывало ответ текущего Agent → `missing_branch_fields`. Фикс: `withoutStaleLlmOutput()` в `2A/2B/Judge — LLM Prepare`.
+  * **UNIQUE shortlist:** в БД был UNIQUE только по `product_id`, а `2B — Insert Branch Shortlist` делал `ON CONFLICT (product_id, stage)` → ошибка. Миграция: `stage=primary_rules` для старых строк; UNIQUE `(product_id, stage)`. Stage 1 `ShortList` обновлён под тот же conflict target.
+  * **Пустой branch shortlist:** keyword-score часто 0 при непустой ветке → `empty_branch_shortlist` и обрыв до Judge. Soft-fill в `2B — Branch Shortlist Builder`: top-5 из ветки с `reasons=['branch_membership_only']`.
+* **Harness:** `scripts/smoke_2b_judge.py` — временный smoke-режим (select `pending`+`needs_human_review`, пониженные пороги 2A/2B), несколько batch, авто-restore production settings. `run_workflow.py` ждёт и `error`/`crashed`, не только `finished`.
+* **Runtime подтверждение:**
+  | Exec | 2B | Judge | Комментарий |
+  |------|----|-------|-------------|
+  | `5529` | ✅ | ✅ | product 62: 2B `cat=1024` conf 0.6 → Judge Polza `winner=fallback_2b` conf 0.65 → `human_review` |
+  | `5530` | ✅ | ✅ | тот же путь |
+  | `5531` | — | — | все остановились на 2A `human_review` (низкий conf) |
+* **Итог:** полный автопуть до Judge подтверждён; production-пороги после smoke восстановлены.
+* **Следующий крупный блок:** Telegram human review + policy borderline primary (п.3 / п.5).
+
 14. **Решение по языку Code-нод**
 
 * Проверена возможность использовать Python в Code-нодах n8n. [file:1]
@@ -379,11 +396,12 @@
   * `rules`, `llm`, `fallback_2b`, `judge`, `human`, `system`. [file:1]
 * Следующий шаг — распространить эти же контракты на fallback, judge и human-review слои. [file:1]
 
-3. **Подготовка к fallback 2A / 2B** — **2A выполнено (п.19)** ✅ | **2B выполнено (п.20)** ✅ | **Judge выполнено (п.22)** ✅ | **Telegram — следующий шаг**
+3. **Подготовка к fallback 2A / 2B** — **2A выполнено (п.19)** ✅ | **2B выполнено (п.20)** ✅ | **Judge выполнено (п.22)** ✅ | **runtime 2B→Judge подтверждён (п.23)** ✅ | **Telegram — следующий шаг**
 
 * ~~Спроектировать и реализовать fallback 2A~~ → run `11` подтверждён.
 * ~~Fallback 2B (branch shortlist + DeepSeek)~~ → п.20.
 * ~~Judge (OpenRouter → Polza / Qwen)~~ → п.22 / п.22a.
+* ~~Smoke-test полного пути до Judge~~ → п.23 (exec `5529`/`5530`).
 * **Осталось:** Telegram human review + policy borderline primary.
 
 **Решение (2026-06-27):**

@@ -1,3 +1,6 @@
 .env
 *.local
 .DS_Store
+__pycache__/
+*.pyc
+workflows/.classification-stage2-dev.smoke-backup.json
