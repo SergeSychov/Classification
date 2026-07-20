@@ -1,0 +1,1792 @@
+{
+  "name": "classification-stage2-hierarchy-dev",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -768,
+        -1312
+      ],
+      "id": "1b588ccf-1a86-4559-82f5-b51b0cf33ea2",
+      "name": "In — Manual"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- B2 skeleton stub: never drain pending pool\nSELECT\n  NULL::bigint AS product_id,\n  NULL::bigint AS product_raw_id\nWHERE false;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -96,
+        -1296
+      ],
+      "id": "fd82e788-b629-4698-b558-1c47e1aac90a",
+      "name": "Load — Select Batch",
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      },
+      "notes": "pending + needs_llm/no_match; primary shortlist only; LIMIT=batch_size"
+    },
+    {
+      "parameters": {
+        "maxItems": "={{ $('Run — Create Run').first().json.batch_size || 5 }}"
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        1152,
+        -944
+      ],
+      "id": "e2250b09-c7f0-4e2c-9a83-f2b8f15dfb6c",
+      "name": "Load — Limit Batch"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map((item, index) => {\n  const j = item.json || {};\n  const shortlist = Array.isArray(j.shortlist_json) ? j.shortlist_json : [];\n\n  const ruleTopScoreRaw = Number(j.rule_top_score);\n  const ruleTopScore = Number.isFinite(ruleTopScoreRaw) ? ruleTopScoreRaw : 0;\n\n  const highThreshold = 20;\n  const mediumThreshold = 10;\n\n  const shortlistText = shortlist.length\n    ? shortlist.map((c, idx) => {\n        const reasons = Array.isArray(c.reasons) ? c.reasons.join(', ') : '';\n        return `${idx + 1}. id=${c.category_id}, code=${c.category_code}, name=${c.category_name}, score=${c.score}, reasons=${reasons}`;\n      }).join('\\n')\n    : 'EMPTY';\n\n  const ruleTopCategoryId = j.rule_top_category_id !== undefined && j.rule_top_category_id !== null && j.rule_top_category_id !== ''\n    ? Number(j.rule_top_category_id)\n    : null;\n\n  const ruleHint = ruleTopCategoryId\n    ? `Rule engine suggests category_id=${ruleTopCategoryId} as top candidate with score=${ruleTopScore}.`\n    : 'Rule engine has no strong suggestion.';\n\n  let shortlistPolicyText = '';\n  if (!shortlist.length || ruleTopScore < mediumThreshold) {\n    shortlistPolicyText = `\nПолитика выбора:\n- Shortlist пустой или низкоуверенный.\n- Рассматривай shortlist как слабую подсказку, а не как ограничение.\n- Если видишь более подходящую категорию вне shortlist, можешь выбрать её.\n- Если уверенно выбрать нельзя, верни category_id = null и в объяснении укажи, что нужен review.\n`.trim();\n  } else if (ruleTopScore >= highThreshold) {\n    shortlistPolicyText = `\nПолитика выбора:\n- Rule-based слой дал сильный top candidate.\n- В первую очередь проверь, подходит ли top candidate.\n- Если top candidate не подходит, выбери лучшую категорию из shortlist.\n- Если ни одна категория не подходит, верни category_id = null и укажи причину.\n`.trim();\n  } else {\n    shortlistPolicyText = `\nПолитика выбора:\n- Shortlist выглядит разумным, но не окончательным.\n- Предпочитай выбор из shortlist.\n- Если ни один кандидат не подходит, можешь выбрать категорию вне shortlist или вернуть category_id = null.\n- Если выбор вне shortlist, кратко объясни почему shortlist оказался недостаточным.\n`.trim();\n  }\n\n  const userPrompt = `\nТовар (нормализованный текст):\n${j.combined_text || ''}\n\nТип товара по эвристике: ${j.product_type_guess || 'unknown'}\n\nShortlist кандидатов категорий:\n${shortlistText}\n\n${ruleHint}\n\n${shortlistPolicyText}\n\nЗадача:\n- Выбери наиболее подходящую категорию для товара.\n- Верни category_id, confidence и explanation.\n- confidence должен быть числом от 0.0 до 1.0.\n- explanation должен быть кратким, на русском, 1–3 предложения.\n- Не добавляй комментарии вне JSON.\n`.trim();\n\n  return {\n    json: {\n      ...j,\n\n      product_id: j.product_id !== undefined && j.product_id !== null && j.product_id !== ''\n        ? Number(j.product_id)\n        : null,\n\n      product_raw_id: j.product_raw_id !== undefined && j.product_raw_id !== null && j.product_raw_id !== ''\n        ? Number(j.product_raw_id)\n        : null,\n\n      run_id: j.run_id !== undefined && j.run_id !== null && j.run_id !== ''\n        ? Number(j.run_id)\n        : null,\n\n      rule_top_category_id: ruleTopCategoryId,\n      rule_top_score: ruleTopScore,\n      shortlist_count: shortlist.length,\n      shortlist_json: shortlist,\n\n      deepseek_body: {\n        model: 'deepseek-chat',\n        messages: [\n          {\n            role: 'system',\n            content: 'You classify pharmacy products into one category. Return ONLY a valid JSON object with keys: category_id, confidence, explanation.'\n          },\n          {\n            role: 'user',\n            content: userPrompt\n          }\n        ]\n      },\n\n      llm_prompt_debug: {\n        system: 'You classify pharmacy products into one category. Return ONLY a valid JSON object with keys: category_id, confidence, explanation.',\n        user: userPrompt\n      }\n    },\n    pairedItem: index\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -736,
+        -96
+      ],
+      "id": "92d7e824-99e5-48ec-bbce-4cfca844acdf",
+      "name": "P1 — Build Prompt"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt_user }}",
+        "options": {
+          "systemMessage": "={{ $json.prompt_system }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -112,
+        -336
+      ],
+      "id": "7161bf32-e71f-427a-b96a-ce172a8241a4",
+      "name": "P1 — AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "deepseek-v4-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "position": [
+        -112,
+        -176
+      ],
+      "id": "46d100bd-2f8f-4b85-ad5d-4d8ac66e60dc",
+      "name": "Shared — DeepSeek",
+      "credentials": {
+        "deepSeekApi": {
+          "id": "xyaJwQg88odvtCfC",
+          "name": "DeepSeek account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map((item, index) => {\n  const j = item.json || {};\n  const shortlist = Array.isArray(j.shortlist_json) ? j.shortlist_json : [];\n  const messages = Array.isArray(j.deepseek_body?.messages) ? j.deepseek_body.messages : [];\n\n  return {\n    json: {\n      ...j,\n\n      context: {\n        run_id: j.run_id !== undefined && j.run_id !== null && j.run_id !== ''\n          ? Number(j.run_id)\n          : null,\n\n        run_meta: j.run_meta || null,\n\n        product_id: j.product_id !== undefined && j.product_id !== null && j.product_id !== ''\n          ? Number(j.product_id)\n          : null,\n\n        product_raw_id: j.product_raw_id !== undefined && j.product_raw_id !== null && j.product_raw_id !== ''\n          ? Number(j.product_raw_id)\n          : null,\n\n        rule_top_category_id: j.rule_top_category_id !== undefined && j.rule_top_category_id !== null && j.rule_top_category_id !== ''\n          ? Number(j.rule_top_category_id)\n          : null,\n\n        rule_top_score: j.rule_top_score !== undefined && j.rule_top_score !== null && j.rule_top_score !== ''\n          ? Number(j.rule_top_score)\n          : null,\n\n        shortlist_count: shortlist.length,\n        shortlist_json: shortlist\n      },\n\n      prompt_system: messages[0]?.content || '',\n      prompt_user: messages[1]?.content || ''\n    },\n    pairedItem: index\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        -96
+      ],
+      "id": "99def698-3fb0-4b8c-8760-0577549c77f6",
+      "name": "P1 — LLM Prepare"
+    },
+    {
+      "parameters": {
+        "jsCode": "function extractJsonString(value) {\n  if (value === null || value === undefined) return null;\n  if (typeof value === 'object') return JSON.stringify(value);\n\n  let text = String(value).trim();\n\n  const codeFenceMatch = text.match(/^```(?:json)?\\s*\\n?([\\s\\S]+?)\\n?```\\s*$/i);\n  if (codeFenceMatch) {\n    text = codeFenceMatch[1].trim();\n  }\n\n  return text;\n}\n\nfunction safeParseJson(value) {\n  const text = extractJsonString(value);\n\n  if (!text) {\n    return { ok: false, error: 'empty_output', parsed: null, raw_text: null };\n  }\n\n  try {\n    return { ok: true, error: null, parsed: JSON.parse(text), raw_text: text };\n  } catch (e) {\n    return { ok: false, error: 'invalid_json', parsed: null, raw_text: text };\n  }\n}\n\nfunction normalizeInt(v) {\n  if (v === null || v === undefined || v === '') return null;\n  const n = Number(v);\n  return Number.isFinite(n) ? Math.trunc(n) : null;\n}\n\nfunction normalizeConfidence(v) {\n  if (v === null || v === undefined || v === '') return null;\n  const n = Number(v);\n  if (!Number.isFinite(n)) return null;\n  if (n < 0 || n > 1) return null;\n  return n;\n}\n\nfunction safeText(v) {\n  if (v === undefined || v === null || v === '') return null;\n  const s = String(v).trim();\n  return s === '' ? null : s;\n}\n\nfunction safeNumber(v) {\n  if (v === undefined || v === null || v === '') return null;\n  const n = Number(v);\n  return Number.isFinite(n) ? n : null;\n}\n\nfunction safeJson(v) {\n  if (v === undefined || v === null) return null;\n  return v;\n}\n\nreturn items.map((item, index) => {\n  const root = item.json || {};\n  const ctx = root.context || {};\n  const C = root.constants || {};\n\n  const STAGE = C.stage || {\n    primary_llm: 'primary_llm'\n  };\n\n  const DECISION = C.decision_status || {\n    classified: 'classified',\n    pending_fallback: 'pending_fallback',\n    needs_human_review: 'needs_human_review',\n    error: 'error'\n  };\n\n  const FINAL = C.final_source || {\n    llm: 'llm',\n    system: 'system'\n  };\n\n  const NEXT = C.next_action || {\n    none: 'none',\n    fallback_2a: 'fallback_2a',\n    judge: 'judge',\n    human_review: 'human_review'\n  };\n\n  const ACTOR = C.actor_type || {\n    llm: 'llm'\n  };\n\n  const LOG = C.log_status || {\n    success: 'success',\n    needs_review: 'needs_review',\n    rejected: 'rejected',\n    error: 'error'\n  };\n\n  const THRESHOLDS = C.thresholds || {\n    min_confidence_ok: 0.60,\n    min_confidence_borderline_low: 0.40\n  };\n\n  const MODEL = C.model || {\n    primary_actor_name: 'deepseek-chat'\n  };\n\n  const runId = normalizeInt(ctx.run_id ?? root.run_id);\n  const productId = normalizeInt(ctx.product_id ?? root.product_id);\n  const productRawId = normalizeInt(ctx.product_raw_id ?? root.product_raw_id);\n  const ruleTopCategoryId = normalizeInt(ctx.rule_top_category_id ?? root.rule_top_category_id);\n  const ruleTopScore = safeNumber(ctx.rule_top_score ?? root.rule_top_score);\n\n  const shortlist = Array.isArray(ctx.shortlist_json)\n    ? ctx.shortlist_json\n    : (Array.isArray(root.shortlist_json) ? root.shortlist_json : []);\n\n  const shortlistCount = safeNumber(ctx.shortlist_count ?? root.shortlist_count) ?? shortlist.length;\n\n  const shortlistIds = new Set(\n    shortlist\n      .map(c => normalizeInt(c.category_id))\n      .filter(v => v !== null)\n      .map(String)\n  );\n\n  const rawModelOutput =\n    root.output ??\n    root.text ??\n    root.response ??\n    root.content ??\n    root.result ??\n    null;\n\n  const parsedResult = safeParseJson(rawModelOutput);\n\n  let llmCategoryId = null;\n  let llmConfidence = null;\n  let llmExplanation = null;\n\n  let llmValidationPassed = false;\n  let llmRejectReason = null;\n  let llmNeedsReview = true;\n  let categoryOutsideShortlist = false;\n\n  if (!parsedResult.ok) {\n    llmRejectReason = parsedResult.error;\n  } else {\n    const parsed = parsedResult.parsed || {};\n\n    llmCategoryId = normalizeInt(parsed.category_id);\n    llmConfidence = normalizeConfidence(parsed.confidence);\n    llmExplanation = safeText(parsed.explanation);\n\n    if (!llmExplanation) {\n      llmRejectReason = 'missing_explanation';\n    } else if (llmConfidence === null) {\n      llmRejectReason = 'invalid_confidence';\n    } else if (llmCategoryId === null) {\n      llmRejectReason = 'null_category';\n    } else {\n      llmValidationPassed = true;\n    }\n\n    if (llmValidationPassed && shortlistCount > 0 && !shortlistIds.has(String(llmCategoryId))) {\n      categoryOutsideShortlist = true;\n      llmRejectReason = 'category_outside_shortlist';\n    }\n  }\n\n  if (!llmValidationPassed) {\n    llmNeedsReview = true;\n  } else if (categoryOutsideShortlist) {\n    llmNeedsReview = true;\n  } else if (llmConfidence <= THRESHOLDS.min_confidence_ok) {\n    llmNeedsReview = true;\n  } else {\n    llmNeedsReview = false;\n  }\n\n  let decisionStatus = DECISION.error;\n  let finalSource = FINAL.system;\n  let finalCategoryId = null;\n  let finalConfidence = null;\n  let finalExplanation = null;\n  let nextAction = NEXT.human_review;\n\n  const borderlineLow = Number(THRESHOLDS.min_confidence_borderline_low);\n  const minOk = Number(THRESHOLDS.min_confidence_ok);\n\n  if (llmValidationPassed && !categoryOutsideShortlist && !llmNeedsReview) {\n    // confidence > min_confidence_ok\n    decisionStatus = DECISION.classified;\n    finalSource = FINAL.llm;\n    finalCategoryId = llmCategoryId;\n    finalConfidence = llmConfidence;\n    finalExplanation = llmExplanation;\n    nextAction = NEXT.none;\n  } else if (\n    llmRejectReason === 'invalid_json' ||\n    llmRejectReason === 'empty_output' ||\n    llmRejectReason === 'null_category' ||\n    llmRejectReason === 'category_outside_shortlist' ||\n    llmRejectReason === 'missing_explanation' ||\n    llmRejectReason === 'invalid_confidence'\n  ) {\n    // broken / unusable primary output → fallback 2A\n    decisionStatus = DECISION.pending_fallback;\n    finalSource = FINAL.system;\n    nextAction = NEXT.fallback_2a;\n  } else if (\n    llmValidationPassed &&\n    !categoryOutsideShortlist &&\n    llmConfidence !== null &&\n    Number.isFinite(borderlineLow) &&\n    Number.isFinite(minOk) &&\n    llmConfidence > borderlineLow &&\n    llmConfidence <= minOk\n  ) {\n    // borderline (borderlineLow, minOk] → try fallback before human\n    decisionStatus = DECISION.pending_fallback;\n    finalSource = FINAL.system;\n    nextAction = NEXT.fallback_2a;\n  } else if (llmValidationPassed && llmNeedsReview) {\n    // includes valid but confidence <= borderlineLow\n    decisionStatus = DECISION.needs_human_review;\n    finalSource = FINAL.system;\n    nextAction = NEXT.human_review;\n  } else {\n    decisionStatus = DECISION.needs_human_review;\n    finalSource = FINAL.system;\n    nextAction = NEXT.human_review;\n  }\n\n  const llmRawJson = safeJson(parsedResult.ok ? parsedResult.parsed : null);\n  const llmRawOutputText = safeText(parsedResult.raw_text);\n\n  const normalizedLlmExplanation = safeText(llmExplanation);\n  const normalizedFinalExplanation = safeText(finalExplanation);\n  const normalizedFinalSource = safeText(finalSource);\n  const normalizedDecisionStatus = safeText(decisionStatus);\n  const normalizedRejectReason = safeText(llmRejectReason);\n  const normalizedNextAction = safeText(nextAction);\n\n  const routingHint = {\n    trigger_reason: normalizedRejectReason,\n    shortlist_count: shortlistCount,\n    category_outside_shortlist: categoryOutsideShortlist,\n    llm_validation_passed: llmValidationPassed,\n    llm_confidence: llmConfidence,\n    suggested_next_action: normalizedNextAction\n  };\n\n  const productClassificationUpdate = {\n    product_id: productId,\n    product_raw_id: productRawId,\n    latest_run_id: runId,\n    llm_category_id: llmCategoryId,\n    llm_confidence: llmConfidence,\n    llm_explanation: normalizedLlmExplanation,\n    llm_needs_review: llmNeedsReview,\n    llm_validation_passed: llmValidationPassed,\n    llm_reject_reason: normalizedRejectReason,\n    llm_raw_json: llmRawJson,\n    next_action: normalizedNextAction,\n    routing_hint: routingHint,\n    final_category_id: finalCategoryId,\n    final_confidence: finalConfidence,\n    final_explanation: normalizedFinalExplanation,\n    final_source: normalizedFinalSource,\n    decision_status: normalizedDecisionStatus\n  };\n\n  const productClassificationLogInsert = {\n    run_id: runId,\n    product_id: productId,\n    product_raw_id: productRawId,\n    stage: STAGE.primary_llm,\n    actor_type: ACTOR.llm,\n    actor_name: MODEL.primary_actor_name,\n    status: llmValidationPassed\n      ? (llmNeedsReview ? LOG.needs_review : LOG.success)\n      : LOG.rejected,\n    selected_category_id: llmCategoryId,\n    confidence: llmConfidence,\n    explanation: normalizedLlmExplanation,\n    validation_passed: llmValidationPassed,\n    error_message: normalizedRejectReason,\n    decision_status: normalizedDecisionStatus,\n    next_action: normalizedNextAction,\n    input_payload: {\n      shortlist_count: shortlistCount,\n      shortlist_json: shortlist,\n      rule_top_category_id: ruleTopCategoryId,\n      rule_top_score: ruleTopScore\n    },\n    output_payload: safeJson(\n      parsedResult.ok\n        ? parsedResult.parsed\n        : { raw_output: llmRawOutputText }\n    ),\n    routing_hint: routingHint\n  };\n\n  return {\n    json: {\n      ...root,\n\n      run_id: runId,\n      product_id: productId,\n      product_raw_id: productRawId,\n      rule_top_category_id: ruleTopCategoryId,\n      rule_top_score: ruleTopScore,\n      shortlist_count: shortlistCount,\n      shortlist_json: shortlist,\n\n      llm_category_id: llmCategoryId,\n      llm_confidence: llmConfidence,\n      llm_explanation: normalizedLlmExplanation,\n      llm_needs_review: llmNeedsReview,\n      llm_validation_passed: llmValidationPassed,\n      llm_reject_reason: normalizedRejectReason,\n\n      next_action: normalizedNextAction,\n      routing_hint: routingHint,\n\n      decision_status: normalizedDecisionStatus,\n      final_source: normalizedFinalSource,\n      final_category_id: finalCategoryId,\n      final_confidence: finalConfidence,\n      final_explanation: normalizedFinalExplanation,\n\n      llm_raw_output_text: llmRawOutputText,\n      llm_raw_json: llmRawJson,\n\n      product_classification_update: productClassificationUpdate,\n      product_classification_log_insert: productClassificationLogInsert\n    },\n    pairedItem: index\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        528,
+        -112
+      ],
+      "id": "1182b78f-64ca-4e0f-8fde-b8927e42ec34",
+      "name": "P1 — Post-process"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        304,
+        -112
+      ],
+      "id": "67eb4622-8364-42fb-bf92-133e65972239",
+      "name": "P1 — Merge LLM"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO public.product_classification (\n    product_id,\n    product_raw_id,\n    latest_run_id,\n\n    workflow_version,\n    prompt_version,\n\n    rule_top_category_id,\n    rule_top_score,\n    rule_shortlist_id,\n    rule_decision_status,\n\n    llm_category_id,\n    llm_confidence,\n    llm_explanation,\n    llm_needs_review,\n    llm_validation_passed,\n    llm_reject_reason,\n    llm_raw_json,\n\n    judge_category_id,\n    judge_confidence,\n    judge_explanation,\n    judge_needs_review,\n    judge_raw_json,\n\n    fallback_2a_direction,\n    fallback_2a_block_family,\n    fallback_2a_family_code,\n    fallback_2a_nosology_hint,\n    fallback_2a_confidence,\n    fallback_2a_explanation,\n    fallback_2a_raw_json,\n\n    fallback_2b_category_id,\n    fallback_2b_confidence,\n    fallback_2b_explanation,\n    fallback_2b_raw_json,\n\n    final_category_id,\n    final_confidence,\n    final_explanation,\n    final_source,\n\n    decision_status,\n    next_action,\n    routing_hint,\n    updated_at\n)\nVALUES (\n    {{ $json.product_classification_update.product_id }},\n    {{ $json.product_classification_update.product_raw_id }},\n    {{ $json.product_classification_update.latest_run_id }},\n\n    {{ $json.product_classification_update.workflow_version ? \"'\" + $json.product_classification_update.workflow_version.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_update.prompt_version ? \"'\" + $json.product_classification_update.prompt_version.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n\n    {{ $json.product_classification_update.rule_top_category_id }},\n    {{ $json.product_classification_update.rule_top_score }},\n    {{ $json.product_classification_update.rule_shortlist_id }},\n    {{ $json.product_classification_update.rule_decision_status ? \"'\" + $json.product_classification_update.rule_decision_status.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n\n    {{ $json.product_classification_update.llm_category_id }},\n    {{ $json.product_classification_update.llm_confidence }},\n    {{ $json.product_classification_update.llm_explanation ? \"'\" + $json.product_classification_update.llm_explanation.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_update.llm_needs_review === null ? \"NULL\" : $json.product_classification_update.llm_needs_review }},\n    {{ $json.product_classification_update.llm_validation_passed === null ? \"NULL\" : $json.product_classification_update.llm_validation_passed }},\n    {{ $json.product_classification_update.llm_reject_reason ? \"'\" + $json.product_classification_update.llm_reject_reason.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_update.llm_raw_json ? \"'\" + JSON.stringify($json.product_classification_update.llm_raw_json).replace(/'/g, \"''\") + \"'::jsonb\" : \"NULL\" }},\n\n    {{ $json.product_classification_update.judge_category_id }},\n    {{ $json.product_classification_update.judge_confidence }},\n    {{ $json.product_classification_update.judge_explanation ? \"'\" + $json.product_classification_update.judge_explanation.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_update.judge_needs_review === null ? \"NULL\" : $json.product_classification_update.judge_needs_review }},\n    {{ $json.product_classification_update.judge_raw_json ? \"'\" + JSON.stringify($json.product_classification_update.judge_raw_json).replace(/'/g, \"''\") + \"'::jsonb\" : \"NULL\" }},\n\n    {{ $json.product_classification_update.fallback_2a_direction ? \"'\" + $json.product_classification_update.fallback_2a_direction.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_update.fallback_2a_block_family ? \"'\" + $json.product_classification_update.fallback_2a_block_family.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_update.fallback_2a_family_code ? \"'\" + $json.product_classification_update.fallback_2a_family_code.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_update.fallback_2a_nosology_hint ? \"'\" + $json.product_classification_update.fallback_2a_nosology_hint.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_update.fallback_2a_confidence }},\n    {{ $json.product_classification_update.fallback_2a_explanation ? \"'\" + $json.product_classification_update.fallback_2a_explanation.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_update.fallback_2a_raw_json ? \"'\" + JSON.stringify($json.product_classification_update.fallback_2a_raw_json).replace(/'/g, \"''\") + \"'::jsonb\" : \"NULL\" }},\n\n    {{ $json.product_classification_update.fallback_2b_category_id }},\n    {{ $json.product_classification_update.fallback_2b_confidence }},\n    {{ $json.product_classification_update.fallback_2b_explanation ? \"'\" + $json.product_classification_update.fallback_2b_explanation.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_update.fallback_2b_raw_json ? \"'\" + JSON.stringify($json.product_classification_update.fallback_2b_raw_json).replace(/'/g, \"''\") + \"'::jsonb\" : \"NULL\" }},\n\n    {{ $json.product_classification_update.final_category_id }},\n    {{ $json.product_classification_update.final_confidence }},\n    {{ $json.product_classification_update.final_explanation ? \"'\" + $json.product_classification_update.final_explanation.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_update.final_source ? \"'\" + $json.product_classification_update.final_source.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n\n    {{ $json.product_classification_update.decision_status ? \"'\" + $json.product_classification_update.decision_status.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_update.next_action ? \"'\" + $json.product_classification_update.next_action.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_update.routing_hint ? \"'\" + JSON.stringify($json.product_classification_update.routing_hint).replace(/'/g, \"''\") + \"'::jsonb\" : \"NULL\" }},\n    NOW()\n)\nON CONFLICT (product_id) DO UPDATE\nSET\n    product_raw_id = EXCLUDED.product_raw_id,\n    latest_run_id = EXCLUDED.latest_run_id,\n\n    workflow_version = EXCLUDED.workflow_version,\n    prompt_version = EXCLUDED.prompt_version,\n\n    rule_top_category_id = EXCLUDED.rule_top_category_id,\n    rule_top_score = EXCLUDED.rule_top_score,\n    rule_shortlist_id = EXCLUDED.rule_shortlist_id,\n    rule_decision_status = EXCLUDED.rule_decision_status,\n\n    llm_category_id = EXCLUDED.llm_category_id,\n    llm_confidence = EXCLUDED.llm_confidence,\n    llm_explanation = EXCLUDED.llm_explanation,\n    llm_needs_review = EXCLUDED.llm_needs_review,\n    llm_validation_passed = EXCLUDED.llm_validation_passed,\n    llm_reject_reason = EXCLUDED.llm_reject_reason,\n    llm_raw_json = EXCLUDED.llm_raw_json,\n\n    judge_category_id = EXCLUDED.judge_category_id,\n    judge_confidence = EXCLUDED.judge_confidence,\n    judge_explanation = EXCLUDED.judge_explanation,\n    judge_needs_review = EXCLUDED.judge_needs_review,\n    judge_raw_json = EXCLUDED.judge_raw_json,\n\n    fallback_2a_direction = EXCLUDED.fallback_2a_direction,\n    fallback_2a_block_family = EXCLUDED.fallback_2a_block_family,\n    fallback_2a_family_code = EXCLUDED.fallback_2a_family_code,\n    fallback_2a_nosology_hint = EXCLUDED.fallback_2a_nosology_hint,\n    fallback_2a_confidence = EXCLUDED.fallback_2a_confidence,\n    fallback_2a_explanation = EXCLUDED.fallback_2a_explanation,\n    fallback_2a_raw_json = EXCLUDED.fallback_2a_raw_json,\n\n    fallback_2b_category_id = EXCLUDED.fallback_2b_category_id,\n    fallback_2b_confidence = EXCLUDED.fallback_2b_confidence,\n    fallback_2b_explanation = EXCLUDED.fallback_2b_explanation,\n    fallback_2b_raw_json = EXCLUDED.fallback_2b_raw_json,\n\n    final_category_id = EXCLUDED.final_category_id,\n    final_confidence = EXCLUDED.final_confidence,\n    final_explanation = EXCLUDED.final_explanation,\n    final_source = EXCLUDED.final_source,\n\n    decision_status = EXCLUDED.decision_status,\n    next_action = EXCLUDED.next_action,\n    routing_hint = EXCLUDED.routing_hint,\n    updated_at = NOW()\nRETURNING product_id, decision_status, latest_run_id;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        3088,
+        800
+      ],
+      "id": "77c95058-a89c-4e95-932d-e229a1b576a4",
+      "name": "DB — Upsert Snapshot",
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function sqlText(value) {\n  if (value === undefined || value === null) return null;\n  const s = String(value).trim();\n  return s === '' ? null : s;\n}\n\nfunction sqlNumber(value) {\n  if (value === undefined || value === null || value === '') return null;\n  const n = Number(value);\n  return Number.isFinite(n) ? n : null;\n}\n\nfunction sqlBoolean(value) {\n  if (value === undefined || value === null || value === '') return null;\n  if (typeof value === 'boolean') return value;\n  if (typeof value === 'number') return value !== 0;\n  if (typeof value === 'string') {\n    const v = value.trim().toLowerCase();\n    if (['true', '1', 'yes', 'y'].includes(v)) return true;\n    if (['false', '0', 'no', 'n'].includes(v)) return false;\n  }\n  return null;\n}\n\nfunction sqlJson(value) {\n  if (value === undefined || value === null || value === '') return null;\n  return value;\n}\n\nreturn items.map((item, index) => {\n  const j = item.json || {};\n\n  const productClassificationUpdate = {\n    product_id: sqlNumber(j.product_id),\n    product_raw_id: sqlNumber(j.product_raw_id),\n    latest_run_id: sqlNumber(j.run_id),\n\n    workflow_version: sqlText(j.workflow_version),\n    prompt_version: sqlText(j.prompt_version),\n\n    rule_top_category_id: sqlNumber(j.rule_top_category_id),\n    rule_top_score: sqlNumber(j.rule_top_score),\n    rule_shortlist_id: sqlNumber(j.rule_shortlist_id),\n    rule_decision_status: sqlText(j.rule_decision_status),\n\n    llm_category_id: sqlNumber(j.llm_category_id),\n    llm_confidence: sqlNumber(j.llm_confidence),\n    llm_explanation: sqlText(j.llm_explanation),\n    llm_needs_review: sqlBoolean(j.llm_needs_review),\n    llm_validation_passed: sqlBoolean(j.llm_validation_passed),\n    llm_reject_reason: sqlText(j.llm_reject_reason),\n    llm_raw_json: sqlJson(j.llm_raw_json),\n\n    judge_category_id: sqlNumber(j.judge_category_id),\n    judge_confidence: sqlNumber(j.judge_confidence),\n    judge_explanation: sqlText(j.judge_explanation),\n    judge_needs_review: sqlBoolean(j.judge_needs_review),\n    judge_raw_json: sqlJson(j.judge_raw_json),\n\n    fallback_2a_direction: sqlText(j.fallback_2a_direction),\n    fallback_2a_block_family: sqlText(j.fallback_2a_block_family),\n    fallback_2a_family_code: sqlText(j.fallback_2a_family_code),\n    fallback_2a_nosology_hint: sqlText(j.fallback_2a_nosology_hint),\n    fallback_2a_confidence: sqlNumber(j.fallback_2a_confidence),\n    fallback_2a_explanation: sqlText(j.fallback_2a_explanation),\n    fallback_2a_raw_json: sqlJson(j.fallback_2a_raw_json),\n\n    fallback_2b_category_id: sqlNumber(j.fallback_2b_category_id),\n    fallback_2b_confidence: sqlNumber(j.fallback_2b_confidence),\n    fallback_2b_explanation: sqlText(j.fallback_2b_explanation),\n    fallback_2b_raw_json: sqlJson(j.fallback_2b_raw_json),\n\n    final_category_id: sqlNumber(j.final_category_id),\n    final_confidence: sqlNumber(j.final_confidence),\n    final_explanation: sqlText(j.final_explanation),\n    final_source: sqlText(j.final_source),\n\n    decision_status: sqlText(j.decision_status),\n    next_action: sqlText(j.next_action),\n    routing_hint: sqlJson(j.routing_hint)\n  };\n\n  return {\n    json: {\n      ...j,\n      product_classification_update: productClassificationUpdate\n    },\n    pairedItem: {\n      item: index\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2864,
+        800
+      ],
+      "id": "fa551f80-be16-4a6b-ad92-1d37cad2d4ea",
+      "name": "DB — Prepare Snapshot"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO public.product_classification_log (\n    run_id,\n    product_id,\n    product_raw_id,\n    stage,\n    actor_type,\n    actor_name,\n    status,\n    input_payload,\n    output_payload,\n    selected_category_id,\n    confidence,\n    explanation,\n    validation_passed,\n    error_message,\n    workflow_version,\n    prompt_version,\n    decision_status,\n    next_action,\n    routing_hint,\n    created_at\n)\nVALUES (\n    {{ $json.product_classification_log_insert.run_id }},\n    {{ $json.product_classification_log_insert.product_id }},\n    {{ $json.product_classification_log_insert.product_raw_id }},\n    {{ $json.product_classification_log_insert.stage ? \"'\" + $json.product_classification_log_insert.stage.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_log_insert.actor_type ? \"'\" + $json.product_classification_log_insert.actor_type.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_log_insert.actor_name ? \"'\" + $json.product_classification_log_insert.actor_name.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_log_insert.status ? \"'\" + $json.product_classification_log_insert.status.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_log_insert.input_payload ? \"'\" + JSON.stringify($json.product_classification_log_insert.input_payload).replace(/'/g, \"''\") + \"'::jsonb\" : \"NULL\" }},\n    {{ $json.product_classification_log_insert.output_payload ? \"'\" + JSON.stringify($json.product_classification_log_insert.output_payload).replace(/'/g, \"''\") + \"'::jsonb\" : \"NULL\" }},\n    {{ $json.product_classification_log_insert.selected_category_id }},\n    {{ $json.product_classification_log_insert.confidence }},\n    {{ $json.product_classification_log_insert.explanation ? \"'\" + $json.product_classification_log_insert.explanation.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_log_insert.validation_passed === null ? \"NULL\" : $json.product_classification_log_insert.validation_passed }},\n    {{ $json.product_classification_log_insert.error_message ? \"'\" + $json.product_classification_log_insert.error_message.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_log_insert.workflow_version ? \"'\" + $json.product_classification_log_insert.workflow_version.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_log_insert.prompt_version ? \"'\" + $json.product_classification_log_insert.prompt_version.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_log_insert.decision_status ? \"'\" + $json.product_classification_log_insert.decision_status.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_log_insert.next_action ? \"'\" + $json.product_classification_log_insert.next_action.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.product_classification_log_insert.routing_hint ? \"'\" + JSON.stringify($json.product_classification_log_insert.routing_hint).replace(/'/g, \"''\") + \"'::jsonb\" : \"NULL\" }},\n    NOW()\n)\nRETURNING id, product_id, run_id;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        3088,
+        960
+      ],
+      "id": "efaa9ac9-211f-4505-8cd1-a32cbc8e2050",
+      "name": "DB — Insert Log",
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function sqlText(value) {\n  if (value === undefined || value === null) return null;\n  const s = String(value).trim();\n  return s === '' ? null : s;\n}\n\nfunction sqlNumber(value) {\n  if (value === undefined || value === null || value === '') return null;\n  const n = Number(value);\n  return Number.isFinite(n) ? n : null;\n}\n\nfunction sqlBoolean(value) {\n  if (value === undefined || value === null || value === '') return null;\n  if (typeof value === 'boolean') return value;\n  if (typeof value === 'number') return value !== 0;\n  if (typeof value === 'string') {\n    const v = value.trim().toLowerCase();\n    if (['true', '1', 'yes', 'y'].includes(v)) return true;\n    if (['false', '0', 'no', 'n'].includes(v)) return false;\n  }\n  return null;\n}\n\nfunction sqlJson(value) {\n  if (value === undefined || value === null || value === '') return null;\n  return value;\n}\n\nreturn items.map((item, index) => {\n  const j = item.json || {};\n\n  const stage = sqlText(j.stage) || 'primary_llm';\n  const actorType = sqlText(j.actor_type) || 'llm';\n  const actorName = sqlText(j.actor_name) || 'deepseek-chat';\n\n  const selectedCategoryId =\n    sqlNumber(j.final_category_id) ??\n    sqlNumber(j.fallback_2b_category_id) ??\n    sqlNumber(j.judge_category_id) ??\n    sqlNumber(j.llm_category_id);\n\n  const confidence =\n    sqlNumber(j.final_confidence) ??\n    sqlNumber(j.fallback_2b_confidence) ??\n    sqlNumber(j.judge_confidence) ??\n    sqlNumber(j.llm_confidence) ??\n    sqlNumber(j.fallback_2a_confidence);\n\n  const explanation =\n    sqlText(j.final_explanation) ??\n    sqlText(j.fallback_2b_explanation) ??\n    sqlText(j.judge_explanation) ??\n    sqlText(j.llm_explanation) ??\n    sqlText(j.fallback_2a_explanation);\n\n  const validationPassed =\n    sqlBoolean(j.validation_passed) ??\n    sqlBoolean(j.fallback_2b_validation_passed) ??\n    sqlBoolean(j.llm_validation_passed);\n\n  const errorMessage =\n    sqlText(j.error_message) ??\n    sqlText(j.fallback_2b_reject_reason) ??\n    sqlText(j.llm_reject_reason);\n\n  const inputPayload = {\n    product_id: sqlNumber(j.product_id),\n    product_raw_id: sqlNumber(j.product_raw_id),\n    run_id: sqlNumber(j.run_id),\n    stage,\n    workflow_version: sqlText(j.workflow_version),\n    prompt_version: sqlText(j.prompt_version),\n    combined_text: sqlText(j.combined_text),\n    product_type_guess: sqlText(j.product_type_guess),\n    rule_top_category_id: sqlNumber(j.rule_top_category_id),\n    rule_top_score: sqlNumber(j.rule_top_score),\n    rule_shortlist_id: sqlNumber(j.rule_shortlist_id),\n    shortlist_json: sqlJson(j.shortlist_json),\n    shortlist_count: sqlNumber(j.shortlist_count),\n    next_action: sqlText(j.next_action),\n    routing_hint: sqlJson(j.routing_hint)\n  };\n\n  const outputPayload = {\n    llm_category_id: sqlNumber(j.llm_category_id),\n    llm_confidence: sqlNumber(j.llm_confidence),\n    llm_explanation: sqlText(j.llm_explanation),\n    llm_needs_review: sqlBoolean(j.llm_needs_review),\n    llm_validation_passed: sqlBoolean(j.llm_validation_passed),\n    llm_reject_reason: sqlText(j.llm_reject_reason),\n    llm_raw_json: sqlJson(j.llm_raw_json),\n\n    fallback_2a_direction: sqlText(j.fallback_2a_direction),\n    fallback_2a_block_family: sqlText(j.fallback_2a_block_family),\n    fallback_2a_family_code: sqlText(j.fallback_2a_family_code),\n    fallback_2a_nosology_hint: sqlText(j.fallback_2a_nosology_hint),\n    fallback_2a_confidence: sqlNumber(j.fallback_2a_confidence),\n    fallback_2a_explanation: sqlText(j.fallback_2a_explanation),\n    fallback_2a_raw_json: sqlJson(j.fallback_2a_raw_json),\n\n    fallback_2b_category_id: sqlNumber(j.fallback_2b_category_id),\n    fallback_2b_confidence: sqlNumber(j.fallback_2b_confidence),\n    fallback_2b_explanation: sqlText(j.fallback_2b_explanation),\n    fallback_2b_raw_json: sqlJson(j.fallback_2b_raw_json),\n\n    judge_category_id: sqlNumber(j.judge_category_id),\n    judge_confidence: sqlNumber(j.judge_confidence),\n    judge_explanation: sqlText(j.judge_explanation),\n    judge_needs_review: sqlBoolean(j.judge_needs_review),\n    judge_raw_json: sqlJson(j.judge_raw_json),\n\n    final_category_id: sqlNumber(j.final_category_id),\n    final_confidence: sqlNumber(j.final_confidence),\n    final_explanation: sqlText(j.final_explanation),\n    final_source: sqlText(j.final_source),\n\n    decision_status: sqlText(j.decision_status),\n    next_action: sqlText(j.next_action),\n    routing_hint: sqlJson(j.routing_hint)\n  };\n\n  const productClassificationLogInsert = {\n    run_id: sqlNumber(j.run_id),\n    product_id: sqlNumber(j.product_id),\n    product_raw_id: sqlNumber(j.product_raw_id),\n    stage,\n    actor_type: actorType,\n    actor_name: actorName,\n    status: sqlText(j.decision_status),\n    input_payload: sqlJson(inputPayload),\n    output_payload: sqlJson(outputPayload),\n    selected_category_id: selectedCategoryId,\n    confidence,\n    explanation,\n    validation_passed: validationPassed,\n    error_message: errorMessage,\n    workflow_version: sqlText(j.workflow_version),\n    prompt_version: sqlText(j.prompt_version),\n    decision_status: sqlText(j.decision_status),\n    next_action: sqlText(j.next_action),\n    routing_hint: sqlJson(j.routing_hint)\n  };\n\n  return {\n    json: {\n      ...j,\n      product_classification_log_insert: productClassificationLogInsert\n    },\n    pairedItem: {\n      item: index\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2864,
+        960
+      ],
+      "id": "59c1c895-1dc3-4621-9fe5-574cd21ad21a",
+      "name": "DB — Prepare Log"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "insert into classification_runs (\n    run_type,\n    workflow_name,\n    workflow_version,\n    rules_version,\n    primary_model_name,\n    primary_model_version,\n    prompt_version,\n    status,\n    batch_size,\n    metadata\n)\nvalues (\n    'stage2_hierarchy_v1',\n    'classification-stage2-hierarchy-dev',\n    'stage2_hierarchy_v1',\n    'rule_engine_v1',\n    'deepseek-chat',\n    'v1',\n    'prompt_hierarchy_skeleton_v0',\n    'running',\n    {{ Number($json.batch_size) || 5 }},\n    '{{ JSON.stringify({ trigger: $json.trigger || \"manual\", skeleton: \"b2\" }).replace(/'/g, \"''\") }}'::jsonb\n)\nreturning id, run_type, workflow_name, workflow_version, started_at, batch_size;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -320,
+        -1456
+      ],
+      "id": "de8977bb-496b-4a1e-95fb-7a2aaf0ddb57",
+      "name": "Run — Create Run",
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      },
+      "notes": "INSERT classification_runs, metadata.trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const run = $('Run — Create Run').first().json;\nconst runId = run.id;\n\nreturn items.map((item, index) => ({\n  json: {\n    ...item.json,\n    run_id: runId,\n    run_meta: {\n      run_type: run.run_type,\n      workflow_name: run.workflow_name,\n      workflow_version: run.workflow_version,\n      started_at: run.started_at\n    }\n  },\n  pairedItem: index\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        112,
+        -1296
+      ],
+      "id": "f5788346-47a2-4a4d-81d0-fa055def2758",
+      "name": "Load — Attach Run ID"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        3344,
+        880
+      ],
+      "id": "1cd002b4-6726-4e8f-b3fa-7d44aa1399b0",
+      "name": "Fin — Merge Barrier",
+      "notes": "append: Upsert + Insert"
+    },
+    {
+      "parameters": {
+        "jsCode": "const run = $('Run — Create Run').first().json;\n\nif (!run?.id) {\n  throw new Error('Run — Create Run did not return classification_runs.id');\n}\n\nconst runId = Number(run.id);\nconst expectedRaw = run.batch_size ?? run.metadata?.batch_size;\nconst expected = Number(expectedRaw);\nconst staticData = $getWorkflowStaticData('global');\nconst key = `fin_close_count_${runId}`;\n\nif (!Number.isFinite(expected) || expected <= 0) {\n  // No reliable batch size — close once per barrier completion (legacy).\n  return [{ json: { id: runId } }];\n}\n\nstaticData[key] = Number(staticData[key] || 0) + 1;\nif (staticData[key] < expected) {\n  return [];\n}\n\ndelete staticData[key];\nreturn [{ json: { id: runId, closed_after: expected } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3568,
+        880
+      ],
+      "id": "ba71dcc0-3aab-48f6-9299-60e9733777ce",
+      "name": "Fin — Pick Run"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH run_ref AS (\n  SELECT {{ Number($('Run — Create Run').first().json.id) }}::bigint AS run_id\n),\nstats AS (\n  SELECT\n    r.run_id,\n    COUNT(pc.*) AS total_count,\n    COUNT(*) FILTER (WHERE pc.decision_status = 'classified') AS success_count,\n    COUNT(*) FILTER (WHERE pc.decision_status = 'needs_human_review') AS needs_review_count,\n    COUNT(*) FILTER (WHERE pc.decision_status = 'error') AS error_count\n  FROM run_ref r\n  LEFT JOIN product_classification pc ON pc.latest_run_id = r.run_id\n  GROUP BY r.run_id\n)\nUPDATE classification_runs cr\nSET\n  success_count = COALESCE(stats.success_count, 0),\n  error_count = COALESCE(stats.error_count, 0),\n  finished_at = NOW(),\n  status = CASE\n    WHEN COALESCE(stats.total_count, 0) = 0 THEN 'finished_empty'\n    WHEN COALESCE(stats.needs_review_count, 0) > 0 THEN 'finished_with_review'\n    WHEN COALESCE(stats.error_count, 0) > 0 AND COALESCE(stats.success_count, 0) = 0 THEN 'finished_with_errors'\n    ELSE 'finished'\n  END,\n  metadata = COALESCE(cr.metadata, '{}'::jsonb) || jsonb_build_object(\n    'total_count', COALESCE(stats.total_count, 0),\n    'needs_review_count', COALESCE(stats.needs_review_count, 0)\n  )\nFROM stats\nWHERE cr.id = stats.run_id\nRETURNING cr.id, cr.run_type, cr.workflow_name, cr.workflow_version, cr.prompt_version, cr.status, cr.batch_size, cr.success_count, cr.error_count, cr.started_at, cr.finished_at, cr.metadata;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        3776,
+        880
+      ],
+      "id": "d22d19c0-8f11-49f1-9cb8-3d89c5155bd3",
+      "name": "Fin — Close Run",
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      },
+      "notes": "UPDATE classification_runs + metadata stats"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map((item, index) => {\n  const constants = {\n    stage: {\n      normalize: 'normalize',\n      semantic_primary: 'semantic_primary',\n      direction_candidates: 'direction_candidates',\n      direction_select: 'direction_select',\n      need_shortlist: 'need_shortlist',\n      need_select: 'need_select',\n      category_shortlist: 'category_shortlist',\n      category_select: 'category_select',\n      mnn_shortlist: 'mnn_shortlist',\n      mnn_select: 'mnn_select',\n      judge: 'judge',\n      human_review: 'human_review'\n    },\n    decision_status: {\n      classified: 'classified',\n      pending_fallback: 'pending_fallback',\n      needs_human_review: 'needs_human_review',\n      error: 'error'\n    },\n    final_source: {\n      hierarchy_cascade: 'hierarchy_cascade',\n      judge: 'judge',\n      human: 'human',\n      system: 'system',\n      pending: 'pending'\n    },\n    next_action: {\n      none: 'none',\n      direction_select: 'direction_select',\n      need_shortlist: 'need_shortlist',\n      need_select: 'need_select',\n      category_shortlist: 'category_shortlist',\n      category_select: 'category_select',\n      mnn_shortlist: 'mnn_shortlist',\n      mnn_select: 'mnn_select',\n      judge: 'judge',\n      human_review: 'human_review'\n    },\n    actor_type: {\n      llm: 'llm',\n      human: 'human',\n      system: 'system'\n    },\n    log_status: {\n      success: 'success',\n      needs_review: 'needs_review',\n      rejected: 'rejected',\n      error: 'error'\n    },\n    thresholds: {\n      min_soft_ok: 0.50,\n      min_category_ok: 0.60,\n      min_judge_ok: 0.60,\n      borderline_low: 0.40,\n      direction_soft_top_n: 8,\n      need_hard_top_n: 12,\n      category_hard_top_n: 10,\n      mnn_soft_top_n: 8\n    },\n    model: {\n      primary_actor_name: 'deepseek-chat',\n      cascade_actor_name: 'deepseek-chat',\n      judge_actor_name: 'qwen/qwen3.5-flash-02-23'\n    }\n  };\n\n  return {\n    json: {\n      ...item.json,\n      constants\n    },\n    pairedItem: index\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -304,
+        -1296
+      ],
+      "id": "63621d2d-489a-48ed-9657-ee35f04258a2",
+      "name": "Run — Init Constants",
+      "notes": "Канонические stage/decision/next_action/thresholds"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, category_code, category_name, direction, hierarchy_level, need_nosology, product_type, administration_route, age_segment, mnn_cluster, differentiation_degree, include_keywords, exclude_keywords, inclusion_comment, is_active FROM categories_dict WHERE is_active = true ORDER BY id",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -208,
+        1088
+      ],
+      "id": "5d195ec1-d622-4762-a45d-3c8b7c370726",
+      "name": "2A — Load Categories",
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "e388da8e-22b3-4178-96d0-c2235466d195",
+                    "leftValue": "={{ $json.next_action }}",
+                    "rightValue": "fallback_2a",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "fallback_2a"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1184,
+        144
+      ],
+      "id": "27e0a597-a4d7-4375-ba05-afe1dba8d6f1",
+      "name": "P1 — Route",
+      "notes": "out[0]: fallback_2a + log | out[1]: classified → DB"
+    },
+    {
+      "parameters": {
+        "jsCode": "const allItems = $input.all();\nconst products = [];\nconst categories = [];\nfor (const it of allItems) {\n  const row = it.json || {};\n  if (row.category_code !== undefined && row.category_code !== null && row.category_code !== '') {\n    categories.push(row);\n  } else if (row.product_id !== undefined && row.product_id !== null && row.product_id !== '') {\n    products.push(row);\n  }\n}\n\nfunction norm(s) {\n  if (s === null || s === undefined) return '';\n  return String(s)\n    .toLowerCase()\n    .replace(/ё/g, 'е')\n    .replace(/[^\\p{L}\\p{N}\\s/+.-]/gu, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction tokenize(text) {\n  return norm(text)\n    .split(/\\s+/)\n    .map(t => t.trim())\n    .filter(Boolean);\n}\n\nfunction splitTerms(text) {\n  if (!text) return [];\n  const stop = new Set([\n    'мг', 'мл', 'г', 'кг', 'ml', 'mg', 'n', 'na', 'cl', 'ca', 'k', 'd',\n    'и', 'или', 'для', 'при', 'под', 'над', 'без', 'от', 'до', 'по',\n    'средство', 'средства', 'форма', 'формы', 'дети', 'взрослые'\n  ]);\n  return Array.from(new Set(\n    norm(text)\n      .split(/[/,;|()+]+/)\n      .flatMap(part => part.split(/\\s+/))\n      .map(s => s.trim())\n      .filter(Boolean)\n      .filter(t => t.length >= 3)\n      .filter(t => !/^\\d+$/.test(t))\n      .filter(t => !stop.has(t))\n  ));\n}\n\nfunction hasAnyWord(text, words) {\n  if (!words || !words.length) return false;\n  const tokens = new Set(tokenize(text).filter(w => w.length >= 3));\n  const list = Array.isArray(words) ? words : [];\n  return list.some(w => tokens.has(norm(w)));\n}\n\nfunction routeHints(text) {\n  const t = norm(text);\n  return {\n    oral: /(сироп|таблет|капсул|капс\\.|пастил|леденц|порошок|суспенз|внутрь|оральн)/.test(t),\n    nasal: /(назал|в нос|капли в нос|спрей в нос)/.test(t),\n    throat: /(горло|спрей для горла|пастил|леденц)/.test(t),\n    eye: /(глаз|глазн)/.test(t),\n    skin: /(крем|маз|гель|лосьон|сыворотк|маска|пенка|шампунь|флюид|бальзам)/.test(t),\n    external: /(наруж|местн|крем|маз|гель|лосьон|сыворотк|маска|пенка|шампунь|флюид|бальзам)/.test(t),\n    infusion: /(инфуз|р-р д\\/инфуз|раствор д\\/инфуз|в\\/в)/.test(t),\n    injection: /(ампул|инъекц|шприц)/.test(t),\n  };\n}\n\nfunction ageHints(text) {\n  const t = norm(text);\n  return {\n    child: /(дет|baby|kid|junior|малыш|младен|0\\+|1\\+|2\\+|3\\+)/.test(t),\n    adult: /(взросл)/.test(t),\n  };\n}\n\nfunction guessProductType(text) {\n  const t = norm(text);\n  if (/(подгузник|трусики-подгузники|трусики подгузники|трусики|памперс)/.test(t)) return 'infant_hygiene';\n  if (/(прокладк|тампон|ежедневк)/.test(t)) return 'female_hygiene';\n  if (/(шампунь|пенка|гель д\\/умывания|умыван|лосьон|маска д\\/лица|сыворотк|крем д\\/рук|крем д\\/лица|крем для рук|крем для лица|увлажняющ|солнцезащитн|флюид|косметическ)/.test(t)) return 'cosmetic';\n  if (/(шприц|игл|катетер|тест[- ]?полоск|тест система|межпальцевый разделитель|ортопед|бинт|пластыр|ингалятор|термометр)/.test(t)) return 'device';\n  if (/(витамин|бета-каротин|бета каротин|спирулин|бад|now foods|нау фудс)/.test(t)) return 'supplement';\n  if (/(р-р д\\/инфуз|инфузи|натрия хлорид|ампул|инъекц)/.test(t)) return 'infusion_drug';\n  if (/(таб\\.|таблет|капсул|сироп|суспенз|порошок|драже)/.test(t)) return 'drug';\n  if (/(закваск|сметан|йогурт|кефир)/.test(t)) return 'food';\n  return 'other';\n}\n\nfunction looksLikeCosmeticCategory(c) {\n  const code = (c.category_code || '').toUpperCase();\n  const name = norm(c.category_name);\n  const dir = norm(c.direction);\n  return code.startsWith('COSM_') || /космет|уход|лица|рук|тела|волос|шампун|сыворот|маска|пенка|гигиен/.test(name) || /космет|уход|гигиен/.test(dir);\n}\n\nfunction looksLikeInfantHygieneCategory(c) {\n  const code = (c.category_code || '').toUpperCase();\n  const name = norm(c.category_name);\n  return code.startsWith('FAM_CAT_INFANT') || /подгузник|трусики/.test(name);\n}\n\nfunction looksLikeFemaleHygieneCategory(c) {\n  const code = (c.category_code || '').toUpperCase();\n  const name = norm(c.category_name);\n  return code.startsWith('COSM_CAT_HYGIENE') || /прокладк|тампон|ежедневк/.test(name) || /гигиенические женские/.test(name);\n}\n\nfunction looksLikeDeviceCategory(c) {\n  const code = (c.category_code || '').toUpperCase();\n  const name = norm(c.category_name);\n  const dir = norm(c.direction);\n  return code.startsWith('LS_MD_') || /шприц|игл|тест|ортопед|стельк|разделител|бинт|пластыр|инструмент/.test(name) || /медицинск/.test(dir);\n}\n\nfunction looksLikeSupplementCategory(c) {\n  const code = (c.category_code || '').toUpperCase();\n  const name = norm(c.category_name);\n  const dir = norm(c.direction);\n  return code.startsWith('BA_') || /витамин|минерал|комплекс|иммун|бад|спирулин|каротин/.test(name) || /бад/.test(dir);\n}\n\nfunction looksLikeInfusionDrugCategory(c) {\n  const code = (c.category_code || '').toUpperCase();\n  const name = norm(c.category_name);\n  const mnn = norm(c.mnn_cluster);\n  return code.startsWith('LS_INF_') || /инфуз|раствор|регидрон|рингер|натрия|хлорид/.test(name) || /натрия|хлорид|инфуз/.test(mnn);\n}\n\nfunction looksLikeDrugCategory(c) {\n  const code = (c.category_code || '').toUpperCase();\n  return code.startsWith('LS_') && !code.startsWith('LS_MD_') && !code.startsWith('LS_INF_');\n}\n\nfunction familyCodePrefix(code) {\n  const parts = String(code || '').split('_').filter(Boolean);\n  if (parts.length >= 2) return parts.slice(0, 2).join('_');\n  return parts[0] || '';\n}\n\nfunction blockFamilyFromCategory(c) {\n  const level = Number(c.hierarchy_level) || 0;\n  if (level <= 2) return c.category_name || familyCodePrefix(c.category_code);\n  return familyCodePrefix(c.category_code);\n}\n\n\n\nreturn products.map((j, index) => {\nconst baseText = norm([\n  j.combined_text,\n  j.product_type_guess\n].filter(Boolean).join(' '));\n\nconst productTypeGuess = j.product_type_guess || guessProductType(baseText);\nconst rh = routeHints(baseText);\nconst ah = ageHints(baseText);\n\nconst branchScores = new Map();\n\nfor (const c of categories) {\n  const catCode = (c.category_code || '').toUpperCase();\n\n  if (productTypeGuess === 'cosmetic' && !looksLikeCosmeticCategory(c)) continue;\n  if (productTypeGuess === 'infant_hygiene' && !looksLikeInfantHygieneCategory(c)) continue;\n  if (productTypeGuess === 'female_hygiene' && !looksLikeFemaleHygieneCategory(c)) continue;\n  if (productTypeGuess === 'device' && !looksLikeDeviceCategory(c)) continue;\n  if (productTypeGuess === 'supplement' && !looksLikeSupplementCategory(c)) continue;\n  if (productTypeGuess === 'infusion_drug' && !looksLikeInfusionDrugCategory(c)) continue;\n  if (productTypeGuess === 'drug' && !looksLikeDrugCategory(c)) continue;\n  if (productTypeGuess === 'food') continue;\n\n  let score = 0;\n  const reasons = [];\n\n  const categoryTerms = splitTerms(c.category_name);\n  const nosologyTerms = splitTerms(c.need_nosology);\n  const mnnTerms = splitTerms(c.mnn_cluster);\n  const commentTerms = splitTerms(c.inclusion_comment).filter(t => t.length >= 5);\n\n  const ageSegment = norm(c.age_segment);\n  const route = norm(c.administration_route);\n\n  for (const term of categoryTerms) {\n    if (term && baseText.includes(term)) { score += 7; reasons.push(`category:${term}`); }\n  }\n  for (const term of nosologyTerms) {\n    if (term && baseText.includes(term)) { score += 5; reasons.push(`nosology:${term}`); }\n  }\n  for (const term of mnnTerms) {\n    if (term && baseText.includes(term)) { score += 6; reasons.push(`mnn:${term}`); }\n  }\n  for (const term of commentTerms.slice(0, 8)) {\n    if (term && baseText.includes(term)) { score += 2; reasons.push(`comment:${term}`); }\n  }\n\n  if (hasAnyWord(baseText, c.include_keywords || [])) { score += 10; reasons.push('include_keywords'); }\n  if (hasAnyWord(baseText, c.exclude_keywords || [])) { score -= 12; reasons.push('exclude_keywords'); }\n\n  if (ageSegment.includes('дет') && ah.child) { score += 4; reasons.push('age:child'); }\n  if (ageSegment.includes('взрос') && ah.adult) { score += 4; reasons.push('age:adult'); }\n\n  if (route.includes('назал') && rh.nasal) { score += 5; reasons.push('route:nasal'); }\n  if (route.includes('внутрь') && rh.oral) { score += 4; reasons.push('route:oral'); }\n  if (route.includes('орофар') && rh.throat) { score += 5; reasons.push('route:throat'); }\n  if (route.includes('наруж') && rh.external) { score += 3; reasons.push('route:external'); }\n  if (route.includes('глаз') && rh.eye) { score += 5; reasons.push('route:eye'); }\n\n  if (productTypeGuess === 'infusion_drug' && rh.infusion && catCode.startsWith('LS_INF_')) { score += 8; reasons.push('product_type:infusion_drug'); }\n  if (productTypeGuess === 'device' && catCode.startsWith('LS_MD_')) { score += 5; reasons.push('product_type:device'); }\n  if (productTypeGuess === 'supplement' && catCode.startsWith('BA_')) { score += 6; reasons.push('product_type:supplement'); }\n  if (productTypeGuess === 'cosmetic' && catCode.startsWith('COSM_')) { score += 6; reasons.push('product_type:cosmetic'); }\n\n  const hasStrongMatch =\n    reasons.some(r => r.startsWith('category:')) ||\n    reasons.some(r => r.startsWith('nosology:')) ||\n    reasons.some(r => r.startsWith('mnn:')) ||\n    reasons.some(r => r.startsWith('comment:')) ||\n    reasons.includes('include_keywords') ||\n    reasons.includes('product_type:infusion_drug') ||\n    reasons.includes('product_type:device') ||\n    reasons.includes('product_type:supplement') ||\n    reasons.includes('product_type:cosmetic');\n\n  if (!hasStrongMatch) score = 0;\n  if (score <= 0) continue;\n\n  const direction = c.direction || null;\n  const blockFamily = blockFamilyFromCategory(c);\n  const familyCode = familyCodePrefix(c.category_code);\n  const branchKey = `${direction || ''}|${blockFamily || ''}|${familyCode || ''}`;\n\n  const existing = branchScores.get(branchKey) || {\n    direction,\n    block_family: blockFamily,\n    family_code: familyCode,\n    score: 0,\n    reasons: [],\n    sample_category_id: c.id,\n    sample_category_name: c.category_name,\n    hierarchy_level: c.hierarchy_level,\n    need_nosology: c.need_nosology || null\n  };\n\n  existing.score += score;\n  existing.reasons.push(...reasons);\n  branchScores.set(branchKey, existing);\n}\n\nconst branchCandidates = Array.from(branchScores.values())\n  .sort((a, b) => b.score - a.score)\n  .slice(0, 8)\n  .map((b, idx) => ({\n    rank: idx + 1,\n    direction: b.direction,\n    block_family: b.block_family,\n    family_code: b.family_code,\n    score: b.score,\n    reasons: Array.from(new Set(b.reasons)).slice(0, 12),\n    sample_category_id: b.sample_category_id,\n    sample_category_name: b.sample_category_name,\n    hierarchy_level: b.hierarchy_level,\n    need_nosology: b.need_nosology\n  }));\n\n\n  const skipLlm = branchCandidates.length === 0;\n\n  return {\n    json: {\n      ...j,\n      branch_candidates_json: branchCandidates,\n      branch_candidates_count: branchCandidates.length,\n      skip_llm: skipLlm,\n      product_type_guess: productTypeGuess\n    },\n    pairedItem: { item: index }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        192,
+        1072
+      ],
+      "id": "bfd2b7f3-c1b3-4436-82b4-7484aa2e9f72",
+      "name": "2A — Rule Branch Filter"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "0d5d7c2c-82ad-43d1-be93-84f733168e24",
+              "leftValue": "={{ $json.skip_llm }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        352,
+        816
+      ],
+      "id": "d494be26-523b-453b-9f8f-7d62bb5614cc",
+      "name": "2A — Skip LLM?"
+    },
+    {
+      "parameters": {
+        "jsCode": "function withoutStaleLlmOutput(j) {\n  const src = j || {};\n  const {\n    output,\n    text,\n    response,\n    content,\n    result,\n    llm_raw_output_text,\n    ...rest\n  } = src;\n  return rest;\n}\n\nreturn items.map((item, index) => {\n  const j = withoutStaleLlmOutput(item.json);\n  const C = j.constants || {};\n  const WORKFLOW_VERSION = 'stage2_fallback_2a_v1';\n  const PROMPT_VERSION = 'prompt_fallback_2a_v1';\n\n  const branchCandidates = Array.isArray(j.branch_candidates_json) ? j.branch_candidates_json : [];\n  const skipLlm = j.skip_llm === true || branchCandidates.length === 0;\n\n  const primaryFailureContext = {\n    llm_category_id: j.llm_category_id ?? null,\n    llm_confidence: j.llm_confidence ?? null,\n    llm_explanation: j.llm_explanation ?? null,\n    llm_reject_reason: j.llm_reject_reason ?? null,\n    llm_validation_passed: j.llm_validation_passed ?? null,\n    rule_top_category_id: j.rule_top_category_id ?? null,\n    rule_top_score: j.rule_top_score ?? null,\n    shortlist_count: j.shortlist_count ?? null,\n    routing_hint: j.routing_hint ?? null\n  };\n\n  const candidatesText = branchCandidates.length\n    ? branchCandidates.map((c, idx) => {\n        const reasons = Array.isArray(c.reasons) ? c.reasons.join(', ') : '';\n        return `${idx + 1}. direction=${c.direction}, block_family=${c.block_family}, family_code=${c.family_code}, score=${c.score}, sample=${c.sample_category_name}, reasons=${reasons}`;\n      }).join('\\n')\n    : 'EMPTY';\n\n  const promptSystem = skipLlm\n    ? ''\n    : 'You select a pharmacy product branch (direction/block/family), NOT a final category_id. Return ONLY a valid JSON object with keys: direction, block_family, family_code, nosology_hint, confidence, explanation.';\n\n  const promptUser = skipLlm\n    ? ''\n    : `\nТовар (нормализованный текст):\n${j.combined_text || ''}\n\nТип товара по эвристике: ${j.product_type_guess || 'unknown'}\n\nКонтекст неудачи primary LLM:\n${JSON.stringify(primaryFailureContext, null, 2)}\n\nBranch-кандидаты (выбери один):\n${candidatesText}\n\nЗадача:\n- Выбери наиболее подходящую ветку (direction, block_family, family_code).\n- nosology_hint — опциональная подсказка по нозологии, если уместно.\n- confidence — число от 0.0 до 1.0.\n- explanation — кратко на русском, 1–3 предложения.\n- НЕ возвращай category_id.\n- Не добавляй комментарии вне JSON.\n`.trim();\n\n  return {\n    json: {\n      ...j,\n      workflow_version: WORKFLOW_VERSION,\n      prompt_version: PROMPT_VERSION,\n      context: {\n        run_id: j.run_id !== undefined && j.run_id !== null && j.run_id !== '' ? Number(j.run_id) : null,\n        product_id: j.product_id !== undefined && j.product_id !== null && j.product_id !== '' ? Number(j.product_id) : null,\n        product_raw_id: j.product_raw_id !== undefined && j.product_raw_id !== null && j.product_raw_id !== '' ? Number(j.product_raw_id) : null,\n        primary_failure_context: primaryFailureContext,\n        branch_candidates_json: branchCandidates,\n        branch_candidates_count: branchCandidates.length,\n        skip_llm: skipLlm\n      },\n      prompt_system: promptSystem,\n      prompt_user: promptUser,\n      skip_llm: skipLlm\n    },\n    pairedItem: index\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        1120
+      ],
+      "id": "0cc21fa3-76fc-4b39-b70c-e30f48cb8f4f",
+      "name": "2A — LLM Prepare"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt_user }}",
+        "options": {
+          "systemMessage": "={{ $json.prompt_system }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        656,
+        1008
+      ],
+      "id": "90256b73-06ab-453b-ab4f-a324ec92c9cc",
+      "name": "2A — AI Agent"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        976,
+        1104
+      ],
+      "id": "78af26ec-33b2-431a-84a2-db8e4b058c3b",
+      "name": "2A — Merge LLM"
+    },
+    {
+      "parameters": {
+        "jsCode": "function extractJsonString(value) {\n  if (value === null || value === undefined) return null;\n  if (typeof value === 'object') return JSON.stringify(value);\n  let text = String(value).trim();\n  const codeFenceMatch = text.match(/^```(?:json)?\\s*\\n?([\\s\\S]+?)\\n?```\\s*$/i);\n  if (codeFenceMatch) text = codeFenceMatch[1].trim();\n  return text;\n}\n\nfunction safeParseJson(value) {\n  const text = extractJsonString(value);\n  if (!text) return { ok: false, error: 'empty_output', parsed: null, raw_text: null };\n  try {\n    return { ok: true, error: null, parsed: JSON.parse(text), raw_text: text };\n  } catch (e) {\n    return { ok: false, error: 'invalid_json', parsed: null, raw_text: text };\n  }\n}\n\nfunction normalizeConfidence(v) {\n  if (v === null || v === undefined || v === '') return null;\n  const n = Number(v);\n  if (!Number.isFinite(n)) return null;\n  if (n < 0 || n > 1) return null;\n  return n;\n}\n\nfunction safeText(v) {\n  if (v === undefined || v === null || v === '') return null;\n  const s = String(v).trim();\n  return s === '' ? null : s;\n}\n\nfunction safeNumber(v) {\n  if (v === undefined || v === null || v === '') return null;\n  const n = Number(v);\n  return Number.isFinite(n) ? n : null;\n}\n\nfunction safeJson(v) {\n  if (v === undefined || v === null) return null;\n  return v;\n}\n\nfunction normalizeInt(v) {\n  if (v === null || v === undefined || v === '') return null;\n  const n = Number(v);\n  return Number.isFinite(n) ? Math.trunc(n) : null;\n}\n\nreturn items.map((item, index) => {\n  const root = item.json || {};\n  const ctx = root.context || {};\n  const C = root.constants || {};\n\n  const STAGE = C.stage || { fallback_2a: 'fallback_2a', primary_llm: 'primary_llm' };\n  const DECISION = C.decision_status || {\n    pending_fallback: 'pending_fallback',\n    needs_human_review: 'needs_human_review',\n    error: 'error'\n  };\n  const NEXT = C.next_action || {\n    fallback_2b: 'fallback_2b',\n    human_review: 'human_review'\n  };\n  const ACTOR = C.actor_type || { llm: 'llm' };\n  const LOG = C.log_status || { success: 'success', needs_review: 'needs_review', rejected: 'rejected', error: 'error' };\n  const THRESHOLDS = C.thresholds || { min_confidence_2a_ok: 0.40 };\n  const MODEL = C.model || { fallback_actor_name: 'deepseek-chat' };\n\n  const WORKFLOW_VERSION = root.workflow_version || 'stage2_fallback_2a_v1';\n  const PROMPT_VERSION = root.prompt_version || 'prompt_fallback_2a_v1';\n\n  const runId = normalizeInt(ctx.run_id ?? root.run_id);\n  const productId = normalizeInt(ctx.product_id ?? root.product_id);\n  const productRawId = normalizeInt(ctx.product_raw_id ?? root.product_raw_id);\n\n  const branchCandidates = Array.isArray(ctx.branch_candidates_json)\n    ? ctx.branch_candidates_json\n    : (Array.isArray(root.branch_candidates_json) ? root.branch_candidates_json : []);\n\n  const skipLlm = root.skip_llm === true || ctx.skip_llm === true;\n\n  let fallback2aDirection = null;\n  let fallback2aBlockFamily = null;\n  let fallback2aFamilyCode = null;\n  let fallback2aNosologyHint = null;\n  let fallback2aConfidence = null;\n  let fallback2aExplanation = null;\n  let fallback2aValidationPassed = false;\n  let fallback2aRejectReason = null;\n  let fallback2aRawJson = null;\n  let fallback2aRawOutputText = null;\n\n  if (skipLlm) {\n    fallback2aRejectReason = 'no_branch_candidates';\n  } else {\n    const rawModelOutput = root.output ?? root.text ?? root.response ?? root.content ?? root.result ?? null;\n    const parsedResult = safeParseJson(rawModelOutput);\n    fallback2aRawOutputText = safeText(parsedResult.raw_text);\n    fallback2aRawJson = safeJson(parsedResult.ok ? parsedResult.parsed : null);\n\n    if (!parsedResult.ok) {\n      fallback2aRejectReason = parsedResult.error;\n    } else {\n      const parsed = parsedResult.parsed || {};\n      fallback2aDirection = safeText(parsed.direction);\n      fallback2aBlockFamily = safeText(parsed.block_family);\n      fallback2aFamilyCode = safeText(parsed.family_code);\n      fallback2aNosologyHint = safeText(parsed.nosology_hint);\n      fallback2aConfidence = normalizeConfidence(parsed.confidence);\n      fallback2aExplanation = safeText(parsed.explanation);\n\n      if (!fallback2aExplanation) {\n        fallback2aRejectReason = 'missing_explanation';\n      } else if (fallback2aConfidence === null) {\n        fallback2aRejectReason = 'invalid_confidence';\n      } else if (!fallback2aDirection || !fallback2aBlockFamily || !fallback2aFamilyCode) {\n        fallback2aRejectReason = 'missing_branch_fields';\n      } else {\n        const matched = branchCandidates.some(c =>\n          safeText(c.direction) === fallback2aDirection &&\n          safeText(c.block_family) === fallback2aBlockFamily &&\n          safeText(c.family_code) === fallback2aFamilyCode\n        );\n        if (!matched) {\n          fallback2aRejectReason = 'branch_not_in_candidates';\n        } else {\n          fallback2aValidationPassed = true;\n        }\n      }\n    }\n  }\n\n  let decisionStatus = DECISION.needs_human_review;\n  let nextAction = NEXT.human_review;\n  let logStatus = LOG.needs_review;\n\n  if (fallback2aValidationPassed && fallback2aConfidence > THRESHOLDS.min_confidence_2a_ok) {\n    decisionStatus = DECISION.pending_fallback;\n    nextAction = NEXT.fallback_2b;\n    logStatus = LOG.success;\n  } else if (fallback2aValidationPassed) {\n    decisionStatus = DECISION.needs_human_review;\n    nextAction = NEXT.human_review;\n    logStatus = LOG.needs_review;\n  } else {\n    decisionStatus = DECISION.needs_human_review;\n    nextAction = NEXT.human_review;\n    logStatus = fallback2aRejectReason ? LOG.rejected : LOG.needs_review;\n  }\n\n  const routingHint = {\n    stage: STAGE.fallback_2a,\n    skip_llm: skipLlm,\n    branch_candidates_count: branchCandidates.length,\n    fallback_2a_validation_passed: fallback2aValidationPassed,\n    fallback_2a_confidence: fallback2aConfidence,\n    fallback_2a_reject_reason: fallback2aRejectReason,\n    suggested_next_action: nextAction\n  };\n\n  const productClassificationUpdate = {\n    product_id: productId,\n    product_raw_id: productRawId,\n    latest_run_id: runId,\n    workflow_version: WORKFLOW_VERSION,\n    prompt_version: PROMPT_VERSION,\n    rule_top_category_id: safeNumber(root.rule_top_category_id),\n    rule_top_score: safeNumber(root.rule_top_score),\n    rule_shortlist_id: safeNumber(root.rule_shortlist_id),\n    rule_decision_status: safeText(root.rule_decision_status),\n    llm_category_id: safeNumber(root.llm_category_id),\n    llm_confidence: safeNumber(root.llm_confidence),\n    llm_explanation: safeText(root.llm_explanation),\n    llm_needs_review: root.llm_needs_review ?? null,\n    llm_validation_passed: root.llm_validation_passed ?? null,\n    llm_reject_reason: safeText(root.llm_reject_reason),\n    llm_raw_json: safeJson(root.llm_raw_json),\n    fallback_2a_direction: fallback2aDirection,\n    fallback_2a_block_family: fallback2aBlockFamily,\n    fallback_2a_family_code: fallback2aFamilyCode,\n    fallback_2a_nosology_hint: fallback2aNosologyHint,\n    fallback_2a_confidence: fallback2aConfidence,\n    fallback_2a_explanation: fallback2aExplanation,\n    fallback_2a_raw_json: fallback2aRawJson,\n    final_category_id: null,\n    final_confidence: null,\n    final_explanation: null,\n    final_source: safeText(root.final_source) || 'system',\n    decision_status: decisionStatus,\n    next_action: nextAction,\n    routing_hint: routingHint\n  };\n\n  return {\n    json: {\n      ...root,\n      run_id: runId,\n      product_id: productId,\n      product_raw_id: productRawId,\n      stage: STAGE.fallback_2a,\n      actor_type: ACTOR.llm,\n      actor_name: MODEL.fallback_actor_name,\n      workflow_version: WORKFLOW_VERSION,\n      prompt_version: PROMPT_VERSION,\n      fallback_2a_direction: fallback2aDirection,\n      fallback_2a_block_family: fallback2aBlockFamily,\n      fallback_2a_family_code: fallback2aFamilyCode,\n      fallback_2a_nosology_hint: fallback2aNosologyHint,\n      fallback_2a_confidence: fallback2aConfidence,\n      fallback_2a_explanation: fallback2aExplanation,\n      fallback_2a_validation_passed: fallback2aValidationPassed,\n      fallback_2a_reject_reason: fallback2aRejectReason,\n      fallback_2a_raw_json: fallback2aRawJson,\n      fallback_2a_raw_output_text: fallback2aRawOutputText,\n      validation_passed: fallback2aValidationPassed,\n      error_message: fallback2aRejectReason,\n      decision_status: decisionStatus,\n      next_action: nextAction,\n      routing_hint: routingHint,\n      final_category_id: null,\n      product_classification_update: productClassificationUpdate\n    },\n    pairedItem: index\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        1216
+      ],
+      "id": "4cf9d424-37fb-46ef-b4d7-3606719a940f",
+      "name": "2A — Post-process"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        32,
+        816
+      ],
+      "id": "80960268-a64d-4caa-9451-029c6c983156",
+      "name": "2A — Merge Context",
+      "notes": "products + categories_dict (ancestor-safe)"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { _load_categories: true } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -736,
+        752
+      ],
+      "id": "ef09a612-8a54-49ee-9679-57fea304fd26",
+      "name": "2A — Categories Trigger"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "1937b23c-4c0e-47e8-aae3-c7039d0929bc",
+                    "leftValue": "={{ $json.next_action }}",
+                    "rightValue": "fallback_2b",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "fallback_2b"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -704,
+        1904
+      ],
+      "id": "9e8a7709-a375-414d-a425-cdeb82ab7496",
+      "name": "2B — Route",
+      "notes": "out[0]: fallback_2b + log | out[1]: human_review → DB"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { _load_categories: true } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -704,
+        2144
+      ],
+      "id": "11b5d746-837b-4a94-9d9c-64ba8dad3d1c",
+      "name": "2B — Categories Trigger"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -432,
+        2112
+      ],
+      "id": "9e1199d8-3970-4d60-977d-90883ceac62e",
+      "name": "2B — Merge Context"
+    },
+    {
+      "parameters": {
+        "jsCode": "const allItems = $input.all();\nconst products = [];\nconst categories = [];\nfor (const it of allItems) {\n  const row = it.json || {};\n  if (row.category_code !== undefined && row.category_code !== null && row.category_code !== '') {\n    categories.push(row);\n  } else if (row.product_id !== undefined && row.product_id !== null && row.product_id !== '') {\n    products.push(row);\n  }\n}\n\nfunction norm(s) {\n  if (s === null || s === undefined) return '';\n  return String(s)\n    .toLowerCase()\n    .replace(/ё/g, 'е')\n    .replace(/[^\\p{L}\\p{N}\\s/+.-]/gu, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction tokenize(text) {\n  return norm(text).split(/\\s+/).map(t => t.trim()).filter(Boolean);\n}\n\nfunction splitTerms(text) {\n  if (!text) return [];\n  const stop = new Set([\n    'мг', 'мл', 'г', 'кг', 'ml', 'mg', 'n', 'na', 'cl', 'ca', 'k', 'd',\n    'и', 'или', 'для', 'при', 'под', 'над', 'без', 'от', 'до', 'по',\n    'средство', 'средства', 'форма', 'формы', 'дети', 'взрослые'\n  ]);\n  return Array.from(new Set(\n    norm(text)\n      .split(/[/,;|()+]+/)\n      .flatMap(part => part.split(/\\s+/))\n      .map(s => s.trim())\n      .filter(Boolean)\n      .filter(t => t.length >= 3)\n      .filter(t => !/^\\d+$/.test(t))\n      .filter(t => !stop.has(t))\n  ));\n}\n\nfunction hasAnyWord(text, words) {\n  if (!words || !words.length) return false;\n  const tokens = new Set(tokenize(text).filter(w => w.length >= 3));\n  const list = Array.isArray(words) ? words : [];\n  return list.some(w => tokens.has(norm(w)));\n}\n\nfunction routeHints(text) {\n  const t = norm(text);\n  return {\n    oral: /(сироп|таблет|капсул|капс\\.|пастил|леденц|порошок|суспенз|внутрь|оральн)/.test(t),\n    nasal: /(назал|в нос|капли в нос|спрей в нос)/.test(t),\n    throat: /(горло|спрей для горла|пастил|леденц)/.test(t),\n    eye: /(глаз|глазн)/.test(t),\n    skin: /(крем|маз|гель|лосьон|сыворотк|маска|пенка|шампунь|флюид|бальзам)/.test(t),\n    external: /(наруж|местн|крем|маз|гель|лосьон|сыворотк|маска|пенка|шампунь|флюид|бальзам)/.test(t),\n    infusion: /(инфуз|р-р д\\/инфуз|раствор д\\/инфуз|в\\/в)/.test(t),\n    injection: /(ампул|инъекц|шприц)/.test(t),\n  };\n}\n\nfunction ageHints(text) {\n  const t = norm(text);\n  return {\n    child: /(дет|baby|kid|junior|малыш|младен|0\\+|1\\+|2\\+|3\\+)/.test(t),\n    adult: /(взросл)/.test(t),\n  };\n}\n\nfunction guessProductType(text) {\n  const t = norm(text);\n  if (/(подгузник|трусики-подгузники|трусики подгузники|трусики|памперс)/.test(t)) return 'infant_hygiene';\n  if (/(прокладк|тампон|ежедневк)/.test(t)) return 'female_hygiene';\n  if (/(шампунь|пенка|гель д\\/умывания|умыван|лосьон|маска д\\/лица|сыворотк|крем д\\/рук|крем д\\/лица|крем для рук|крем для лица|увлажняющ|солнцезащитн|флюид|косметическ)/.test(t)) return 'cosmetic';\n  if (/(шприц|игл|катетер|тест[- ]?полоск|тест система|межпальцевый разделитель|ортопед|бинт|пластыр|ингалятор|термометр)/.test(t)) return 'device';\n  if (/(витамин|бета-каротин|бета каротин|спирулин|бад|now foods|нау фудс)/.test(t)) return 'supplement';\n  if (/(р-р д\\/инфуз|инфузи|натрия хлорид|ампул|инъекц)/.test(t)) return 'infusion_drug';\n  if (/(таб\\.|таблет|капсул|сироп|суспенз|порошок|драже)/.test(t)) return 'drug';\n  if (/(закваск|сметан|йогурт|кефир)/.test(t)) return 'food';\n  return 'other';\n}\n\nfunction familyCodePrefix(code) {\n  const parts = String(code || '').split('_').filter(Boolean);\n  if (parts.length >= 2) return parts.slice(0, 2).join('_');\n  return parts[0] || '';\n}\n\nfunction blockFamilyFromCategory(c) {\n  const level = Number(c.hierarchy_level) || 0;\n  if (level <= 2) return c.category_name || familyCodePrefix(c.category_code);\n  return familyCodePrefix(c.category_code);\n}\n\nfunction matchesBranch(c, branch) {\n  const dir = norm(branch.direction);\n  const blockFamily = norm(branch.block_family);\n  const familyCode = String(branch.family_code || '').toUpperCase();\n  if (dir && norm(c.direction) !== dir) return false;\n  if (familyCode && familyCodePrefix(c.category_code).toUpperCase() !== familyCode) return false;\n  if (blockFamily) {\n    const catBlock = norm(blockFamilyFromCategory(c));\n    const catName = norm(c.category_name);\n    if (catBlock !== blockFamily && !catName.includes(blockFamily) && !blockFamily.includes(catBlock)) {\n      return false;\n    }\n  }\n  return true;\n}\n\nreturn products.map((j, index) => {\n  const baseText = norm([j.combined_text, j.product_type_guess].filter(Boolean).join(' '));\n  const productTypeGuess = j.product_type_guess || guessProductType(baseText);\n  const rh = routeHints(baseText);\n  const ah = ageHints(baseText);\n  const nosologyHint = norm(j.fallback_2a_nosology_hint || '');\n\n  const branch = {\n    direction: j.fallback_2a_direction,\n    block_family: j.fallback_2a_block_family,\n    family_code: j.fallback_2a_family_code,\n  };\n\n  const branchCategories = categories.filter(c => matchesBranch(c, branch));\n  const scored = [];\n\n  for (const c of branchCategories) {\n    const catCode = (c.category_code || '').toUpperCase();\n    let score = 0;\n    const reasons = [];\n\n    const categoryTerms = splitTerms(c.category_name);\n    const nosologyTerms = splitTerms(c.need_nosology);\n    const mnnTerms = splitTerms(c.mnn_cluster);\n    const commentTerms = splitTerms(c.inclusion_comment).filter(t => t.length >= 5);\n\n    for (const term of categoryTerms) {\n      if (term && baseText.includes(term)) { score += 7; reasons.push(`category:${term}`); }\n    }\n    for (const term of nosologyTerms) {\n      if (term && baseText.includes(term)) { score += 5; reasons.push(`nosology:${term}`); }\n    }\n    for (const term of mnnTerms) {\n      if (term && baseText.includes(term)) { score += 6; reasons.push(`mnn:${term}`); }\n    }\n    for (const term of commentTerms.slice(0, 8)) {\n      if (term && baseText.includes(term)) { score += 2; reasons.push(`comment:${term}`); }\n    }\n\n    if (hasAnyWord(baseText, c.include_keywords || [])) { score += 10; reasons.push('include_keywords'); }\n    if (hasAnyWord(baseText, c.exclude_keywords || [])) { score -= 12; reasons.push('exclude_keywords'); }\n\n    const ageSegment = norm(c.age_segment);\n    const route = norm(c.administration_route);\n    if (ageSegment.includes('дет') && ah.child) { score += 4; reasons.push('age:child'); }\n    if (ageSegment.includes('взрос') && ah.adult) { score += 4; reasons.push('age:adult'); }\n    if (route.includes('назал') && rh.nasal) { score += 5; reasons.push('route:nasal'); }\n    if (route.includes('внутрь') && rh.oral) { score += 4; reasons.push('route:oral'); }\n    if (route.includes('орофар') && rh.throat) { score += 5; reasons.push('route:throat'); }\n    if (route.includes('наруж') && rh.external) { score += 3; reasons.push('route:external'); }\n    if (route.includes('глаз') && rh.eye) { score += 5; reasons.push('route:eye'); }\n\n    if (nosologyHint) {\n      const needNosology = norm(c.need_nosology);\n      if (needNosology && (needNosology.includes(nosologyHint) || nosologyHint.includes(needNosology))) {\n        score += 8;\n        reasons.push('nosology_hint');\n      }\n    }\n\n    const hasStrongMatch =\n      reasons.some(r => r.startsWith('category:')) ||\n      reasons.some(r => r.startsWith('nosology:')) ||\n      reasons.some(r => r.startsWith('mnn:')) ||\n      reasons.includes('include_keywords') ||\n      reasons.includes('nosology_hint');\n\n    if (!hasStrongMatch) score = 0;\n    if (score <= 0) continue;\n\n    scored.push({\n      category_id: String(c.id),\n      category_code: c.category_code,\n      category_name: c.category_name,\n      score,\n      reasons: Array.from(new Set(reasons)).slice(0, 12),\n    });\n  }\n\n  scored.sort((a, b) => b.score - a.score);\n  let branchShortlist = scored.slice(0, 8).map((c, idx) => ({\n    rank: idx + 1,\n    category_id: c.category_id,\n    category_code: c.category_code,\n    category_name: c.category_name,\n    score: c.score,\n    reasons: c.reasons,\n  }));\n\n  // SMOKE_SOFT_SHORTLIST / production soft-fill:\n  // if keyword scoring empty but branch has categories, keep weak candidates\n  // so 2B LLM / Judge can still run.\n  if (branchShortlist.length === 0 && branchCategories.length > 0) {\n    branchShortlist = branchCategories.slice(0, 5).map((c, idx) => ({\n      rank: idx + 1,\n      category_id: String(c.id),\n      category_code: c.category_code,\n      category_name: c.category_name,\n      score: 1,\n      reasons: ['branch_membership_only'],\n    }));\n  }\n\n  const skipLlm = branchShortlist.length === 0;\n\n  return {\n    json: {\n      ...j,\n      branch_shortlist_json: branchShortlist,\n      branch_shortlist_count: branchShortlist.length,\n      branch_filter_count: branchCategories.length,\n      skip_llm: skipLlm,\n      product_type_guess: productTypeGuess,\n      shortlist_metadata: {\n        strategy: 'branch_scoped_keywords',\n        scope: branch,\n        nosology_hint: j.fallback_2a_nosology_hint || null,\n        fallback_2a_confidence: j.fallback_2a_confidence ?? null,\n        branch_filter_count: branchCategories.length,\n        run_id: $('Run — Create Run').first().json.id,\n      },\n    },\n    pairedItem: { item: index },\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        2112
+      ],
+      "id": "13acfeb6-1eb6-4bf6-a0d9-83440c2445bd",
+      "name": "2B — Branch Shortlist Builder"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map((item, index) => {\n  const j = item.json || {};\n  const shortlist = Array.isArray(j.branch_shortlist_json) ? j.branch_shortlist_json : [];\n  const top = shortlist[0] || null;\n\n  return {\n    json: {\n      ...j,\n      shortlist_insert: {\n        product_id: Number(j.product_id),\n        product_raw_id: Number(j.product_raw_id),\n        product_type_guess: j.product_type_guess || null,\n        rule_top_category_id: top ? Number(top.category_id) : null,\n        rule_top_score: top ? top.score : 0,\n        shortlist_count: shortlist.length,\n        shortlist_json: shortlist,\n        combined_text: j.combined_text || null,\n        stage: 'fallback_2b',\n        shortlist_type: 'branch_shortlist',\n        parent_stage: 'fallback_2a',\n        shortlist_metadata: j.shortlist_metadata || null,\n        rules_version: 'branch_shortlist_v1',\n      },\n    },\n    pairedItem: { item: index },\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -16,
+        2112
+      ],
+      "id": "711de707-2d60-47d7-8071-041d9619a1f2",
+      "name": "2B — Prepare Shortlist Payload"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO classification_shortlist (\n    product_id, product_raw_id, product_type_guess,\n    rule_top_category_id, rule_top_score, shortlist_count,\n    shortlist_json, combined_text,\n    stage, shortlist_type, parent_stage, shortlist_metadata, rules_version\n) VALUES (\n    {{ $json.shortlist_insert.product_id }},\n    {{ $json.shortlist_insert.product_raw_id }},\n    {{ $json.shortlist_insert.product_type_guess ? \"'\" + String($json.shortlist_insert.product_type_guess).replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    {{ $json.shortlist_insert.rule_top_category_id }},\n    {{ $json.shortlist_insert.rule_top_score }},\n    {{ $json.shortlist_insert.shortlist_count }},\n    '{{ JSON.stringify($json.shortlist_insert.shortlist_json || []).replace(/'/g, \"''\") }}'::jsonb,\n    {{ $json.shortlist_insert.combined_text ? \"'\" + String($json.shortlist_insert.combined_text).replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n    'fallback_2b',\n    'branch_shortlist',\n    'fallback_2a',\n    '{{ JSON.stringify($json.shortlist_insert.shortlist_metadata || {}).replace(/'/g, \"''\") }}'::jsonb,\n    'branch_shortlist_v1'\n)\nON CONFLICT (product_id, stage) DO UPDATE SET\n    product_raw_id = EXCLUDED.product_raw_id,\n    product_type_guess = EXCLUDED.product_type_guess,\n    rule_top_category_id = EXCLUDED.rule_top_category_id,\n    rule_top_score = EXCLUDED.rule_top_score,\n    shortlist_count = EXCLUDED.shortlist_count,\n    shortlist_json = EXCLUDED.shortlist_json,\n    combined_text = EXCLUDED.combined_text,\n    shortlist_type = EXCLUDED.shortlist_type,\n    parent_stage = EXCLUDED.parent_stage,\n    shortlist_metadata = EXCLUDED.shortlist_metadata,\n    rules_version = EXCLUDED.rules_version,\n    updated_at = NOW()\nRETURNING id AS branch_shortlist_id, product_id, stage, shortlist_count;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        208,
+        2336
+      ],
+      "id": "5284d4cb-77ff-44a7-8e40-7176280918a4",
+      "name": "2B — Insert Branch Shortlist",
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      },
+      "notes": "classification_shortlist stage=fallback_2b"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9602f5ab-d111-41ea-a913-7604879cd37d",
+              "leftValue": "={{ $json.skip_llm }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        192,
+        1952
+      ],
+      "id": "ba8afbe4-1d1f-4d76-bbac-3932e43163f0",
+      "name": "2B — Skip LLM?"
+    },
+    {
+      "parameters": {
+        "jsCode": "function withoutStaleLlmOutput(j) {\n  const src = j || {};\n  const {\n    output,\n    text,\n    response,\n    content,\n    result,\n    llm_raw_output_text,\n    ...rest\n  } = src;\n  return rest;\n}\n\nreturn items.map((item, index) => {\n  const j = withoutStaleLlmOutput(item.json);\n  const WORKFLOW_VERSION = 'stage2_fallback_2b_v1';\n  const PROMPT_VERSION = 'prompt_fallback_2b_v1';\n\n  const shortlist = Array.isArray(j.branch_shortlist_json) ? j.branch_shortlist_json : [];\n  const skipLlm = j.skip_llm === true || shortlist.length === 0;\n\n  const shortlistText = shortlist.length\n    ? shortlist.map((c, idx) => {\n        const reasons = Array.isArray(c.reasons) ? c.reasons.join(', ') : '';\n        return `${idx + 1}. id=${c.category_id}, code=${c.category_code}, name=${c.category_name}, score=${c.score}, reasons=${reasons}`;\n      }).join('\\n')\n    : 'EMPTY';\n\n  const branchContext = {\n    direction: j.fallback_2a_direction,\n    block_family: j.fallback_2a_block_family,\n    family_code: j.fallback_2a_family_code,\n    nosology_hint: j.fallback_2a_nosology_hint,\n    fallback_2a_confidence: j.fallback_2a_confidence,\n    fallback_2a_explanation: j.fallback_2a_explanation,\n  };\n\n  const primaryContext = {\n    llm_category_id: j.llm_category_id ?? null,\n    llm_confidence: j.llm_confidence ?? null,\n    llm_explanation: j.llm_explanation ?? null,\n    llm_reject_reason: j.llm_reject_reason ?? null,\n    rule_top_category_id: j.rule_top_category_id ?? null,\n    rule_top_score: j.rule_top_score ?? null,\n  };\n\n  const promptSystem = skipLlm\n    ? ''\n    : 'You classify pharmacy products into one category within a pre-selected branch. Return ONLY valid JSON with keys: category_id, confidence, explanation. category_id MUST be from the branch shortlist.';\n\n  const promptUser = skipLlm\n    ? ''\n    : `\nТовар:\n${j.combined_text || ''}\n\nТип товара: ${j.product_type_guess || 'unknown'}\n\nВыбранная ветка (fallback 2A):\n${JSON.stringify(branchContext, null, 2)}\n\nКонтекст неудачи primary LLM:\n${JSON.stringify(primaryContext, null, 2)}\n\nBranch shortlist (выбери ОДНУ категорию ТОЛЬКО из списка):\n${shortlistText}\n\nПолитика:\n- category_id ОБЯЗАН быть из shortlist выше.\n- Если ни одна категория не подходит — верни category_id=null и объясни.\n- confidence: 0.0–1.0; explanation: 1–3 предложения на русском.\n- Только JSON, без комментариев.\n`.trim();\n\n  return {\n    json: {\n      ...j,\n      workflow_version: WORKFLOW_VERSION,\n      prompt_version: PROMPT_VERSION,\n      context: {\n        run_id: j.run_id !== undefined && j.run_id !== null && j.run_id !== '' ? Number(j.run_id) : null,\n        product_id: j.product_id !== undefined && j.product_id !== null && j.product_id !== '' ? Number(j.product_id) : null,\n        product_raw_id: j.product_raw_id !== undefined && j.product_raw_id !== null && j.product_raw_id !== '' ? Number(j.product_raw_id) : null,\n        branch_context: branchContext,\n        primary_context: primaryContext,\n        branch_shortlist_json: shortlist,\n        branch_shortlist_count: shortlist.length,\n        skip_llm: skipLlm,\n      },\n      prompt_system: promptSystem,\n      prompt_user: promptUser,\n      skip_llm: skipLlm,\n    },\n    pairedItem: index,\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        496,
+        2336
+      ],
+      "id": "b39abdc2-3364-4c8f-b4d1-a2f5d5e4a6c6",
+      "name": "2B — LLM Prepare"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt_user }}",
+        "options": {
+          "systemMessage": "={{ $json.prompt_system }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        720,
+        2048
+      ],
+      "id": "c6daae12-2065-4ca2-9f22-d08a2f7ff81b",
+      "name": "2B — AI Agent"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1072,
+        2320
+      ],
+      "id": "fb8bc2e7-d443-45dc-adcd-336585b50740",
+      "name": "2B — Merge LLM"
+    },
+    {
+      "parameters": {
+        "jsCode": "function extractJsonString(value) {\n  if (value === null || value === undefined) return null;\n  if (typeof value === 'object') return JSON.stringify(value);\n  let text = String(value).trim();\n  const codeFenceMatch = text.match(/^```(?:json)?\\s*\\n?([\\s\\S]+?)\\n?```\\s*$/i);\n  if (codeFenceMatch) text = codeFenceMatch[1].trim();\n  return text;\n}\n\nfunction safeParseJson(value) {\n  const text = extractJsonString(value);\n  if (!text) return { ok: false, error: 'empty_output', parsed: null, raw_text: null };\n  try {\n    return { ok: true, error: null, parsed: JSON.parse(text), raw_text: text };\n  } catch (e) {\n    return { ok: false, error: 'invalid_json', parsed: null, raw_text: text };\n  }\n}\n\nfunction normalizeInt(v) {\n  if (v === null || v === undefined || v === '') return null;\n  const n = Number(v);\n  return Number.isFinite(n) ? Math.trunc(n) : null;\n}\n\nfunction normalizeConfidence(v) {\n  if (v === null || v === undefined || v === '') return null;\n  const n = Number(v);\n  if (!Number.isFinite(n)) return null;\n  if (n < 0 || n > 1) return null;\n  return n;\n}\n\nfunction safeText(v) {\n  if (v === undefined || v === null || v === '') return null;\n  const s = String(v).trim();\n  return s === '' ? null : s;\n}\n\nfunction safeNumber(v) {\n  if (v === undefined || v === null || v === '') return null;\n  const n = Number(v);\n  return Number.isFinite(n) ? n : null;\n}\n\nfunction safeJson(v) {\n  if (v === undefined || v === null) return null;\n  return v;\n}\n\nreturn items.map((item, index) => {\n  const root = item.json || {};\n  const ctx = root.context || {};\n  const C = root.constants || {};\n\n  const STAGE = C.stage || { fallback_2b: 'fallback_2b' };\n  const DECISION = C.decision_status || {\n    classified: 'classified',\n    needs_human_review: 'needs_human_review',\n    error: 'error',\n  };\n  const FINAL = C.final_source || { fallback_2b: 'fallback_2b', system: 'system' };\n  const NEXT = C.next_action || { none: 'none', judge: 'judge', human_review: 'human_review' };\n  const ACTOR = C.actor_type || { llm: 'llm' };\n  const LOG = C.log_status || { success: 'success', needs_review: 'needs_review', rejected: 'rejected' };\n  const THRESHOLDS = C.thresholds || { min_confidence_2b_ok: 0.60 };\n  const MODEL = C.model || { fallback_actor_name: 'deepseek-chat' };\n\n  const WORKFLOW_VERSION = root.workflow_version || 'stage2_fallback_2b_v1';\n  const PROMPT_VERSION = root.prompt_version || 'prompt_fallback_2b_v1';\n\n  const runId = normalizeInt(ctx.run_id ?? root.run_id);\n  const productId = normalizeInt(ctx.product_id ?? root.product_id);\n  const productRawId = normalizeInt(ctx.product_raw_id ?? root.product_raw_id);\n  const llmCategoryId = normalizeInt(root.llm_category_id);\n\n  const shortlist = Array.isArray(ctx.branch_shortlist_json)\n    ? ctx.branch_shortlist_json\n    : (Array.isArray(root.branch_shortlist_json) ? root.branch_shortlist_json : []);\n\n  const shortlistIds = new Set(\n    shortlist.map(c => normalizeInt(c.category_id)).filter(v => v !== null).map(String)\n  );\n\n  const skipLlm = root.skip_llm === true || ctx.skip_llm === true || shortlist.length === 0;\n\n  let fallback2bCategoryId = null;\n  let fallback2bConfidence = null;\n  let fallback2bExplanation = null;\n  let fallback2bValidationPassed = false;\n  let fallback2bRejectReason = null;\n  let fallback2bRawJson = null;\n  let fallback2bRawOutputText = null;\n  let categoryOutsideShortlist = false;\n\n  if (skipLlm) {\n    fallback2bRejectReason = 'empty_branch_shortlist';\n  } else {\n    const rawModelOutput = root.output ?? root.text ?? root.response ?? root.content ?? root.result ?? null;\n    const parsedResult = safeParseJson(rawModelOutput);\n    fallback2bRawOutputText = safeText(parsedResult.raw_text);\n    fallback2bRawJson = safeJson(parsedResult.ok ? parsedResult.parsed : null);\n\n    if (!parsedResult.ok) {\n      fallback2bRejectReason = parsedResult.error;\n    } else {\n      const parsed = parsedResult.parsed || {};\n      fallback2bCategoryId = normalizeInt(parsed.category_id);\n      fallback2bConfidence = normalizeConfidence(parsed.confidence);\n      fallback2bExplanation = safeText(parsed.explanation);\n\n      if (!fallback2bExplanation) {\n        fallback2bRejectReason = 'missing_explanation';\n      } else if (fallback2bConfidence === null) {\n        fallback2bRejectReason = 'invalid_confidence';\n      } else if (fallback2bCategoryId === null) {\n        fallback2bRejectReason = 'null_category';\n      } else if (!shortlistIds.has(String(fallback2bCategoryId))) {\n        categoryOutsideShortlist = true;\n        fallback2bRejectReason = 'category_outside_shortlist';\n      } else {\n        fallback2bValidationPassed = true;\n      }\n    }\n  }\n\n  const primaryConflict = llmCategoryId !== null && fallback2bCategoryId !== null && llmCategoryId !== fallback2bCategoryId;\n\n  let decisionStatus = DECISION.needs_human_review;\n  let finalSource = FINAL.system;\n  let finalCategoryId = null;\n  let finalConfidence = null;\n  let finalExplanation = null;\n  let nextAction = NEXT.human_review;\n  let logStatus = LOG.needs_review;\n\n  if (skipLlm || fallback2bRejectReason === 'empty_branch_shortlist') {\n    decisionStatus = DECISION.needs_human_review;\n    nextAction = NEXT.human_review;\n    logStatus = LOG.rejected;\n  } else if (!fallback2bValidationPassed) {\n    decisionStatus = DECISION.needs_human_review;\n    nextAction = (fallback2bRejectReason === 'null_category' || categoryOutsideShortlist)\n      ? NEXT.judge\n      : NEXT.human_review;\n    logStatus = LOG.rejected;\n  } else if (primaryConflict) {\n    decisionStatus = DECISION.needs_human_review;\n    nextAction = NEXT.judge;\n    logStatus = LOG.needs_review;\n  } else if (fallback2bConfidence > THRESHOLDS.min_confidence_2b_ok) {\n    decisionStatus = DECISION.classified;\n    finalSource = FINAL.fallback_2b;\n    finalCategoryId = fallback2bCategoryId;\n    finalConfidence = fallback2bConfidence;\n    finalExplanation = fallback2bExplanation;\n    nextAction = NEXT.none;\n    logStatus = LOG.success;\n  } else {\n    decisionStatus = DECISION.needs_human_review;\n    nextAction = NEXT.judge;\n    logStatus = LOG.needs_review;\n  }\n\n  const routingHint = {\n    stage: STAGE.fallback_2b,\n    branch_shortlist_count: shortlist.length,\n    fallback_2b_validation_passed: fallback2bValidationPassed,\n    fallback_2b_confidence: fallback2bConfidence,\n    fallback_2b_reject_reason: fallback2bRejectReason,\n    category_outside_shortlist: categoryOutsideShortlist,\n    primary_conflict: primaryConflict,\n    suggested_next_action: nextAction,\n  };\n\n  const productClassificationUpdate = {\n    product_id: productId,\n    product_raw_id: productRawId,\n    latest_run_id: runId,\n    workflow_version: WORKFLOW_VERSION,\n    prompt_version: PROMPT_VERSION,\n    rule_top_category_id: safeNumber(root.rule_top_category_id),\n    rule_top_score: safeNumber(root.rule_top_score),\n    rule_shortlist_id: safeNumber(root.rule_shortlist_id),\n    rule_decision_status: safeText(root.rule_decision_status),\n    llm_category_id: safeNumber(root.llm_category_id),\n    llm_confidence: safeNumber(root.llm_confidence),\n    llm_explanation: safeText(root.llm_explanation),\n    llm_needs_review: root.llm_needs_review ?? null,\n    llm_validation_passed: root.llm_validation_passed ?? null,\n    llm_reject_reason: safeText(root.llm_reject_reason),\n    llm_raw_json: safeJson(root.llm_raw_json),\n    fallback_2a_direction: safeText(root.fallback_2a_direction),\n    fallback_2a_block_family: safeText(root.fallback_2a_block_family),\n    fallback_2a_family_code: safeText(root.fallback_2a_family_code),\n    fallback_2a_nosology_hint: safeText(root.fallback_2a_nosology_hint),\n    fallback_2a_confidence: safeNumber(root.fallback_2a_confidence),\n    fallback_2a_explanation: safeText(root.fallback_2a_explanation),\n    fallback_2a_raw_json: safeJson(root.fallback_2a_raw_json),\n    fallback_2b_category_id: fallback2bCategoryId,\n    fallback_2b_confidence: fallback2bConfidence,\n    fallback_2b_explanation: fallback2bExplanation,\n    fallback_2b_raw_json: fallback2bRawJson,\n    final_category_id: finalCategoryId,\n    final_confidence: finalConfidence,\n    final_explanation: finalExplanation,\n    final_source: finalSource,\n    decision_status: decisionStatus,\n    next_action: nextAction,\n    routing_hint: routingHint,\n  };\n\n  return {\n    json: {\n      ...root,\n      run_id: runId,\n      product_id: productId,\n      product_raw_id: productRawId,\n      stage: STAGE.fallback_2b,\n      actor_type: ACTOR.llm,\n      actor_name: MODEL.fallback_actor_name,\n      workflow_version: WORKFLOW_VERSION,\n      prompt_version: PROMPT_VERSION,\n      fallback_2b_category_id: fallback2bCategoryId,\n      fallback_2b_confidence: fallback2bConfidence,\n      fallback_2b_explanation: fallback2bExplanation,\n      fallback_2b_validation_passed: fallback2bValidationPassed,\n      fallback_2b_reject_reason: fallback2bRejectReason,\n      fallback_2b_raw_json: fallback2bRawJson,\n      fallback_2b_raw_output_text: fallback2bRawOutputText,\n      branch_shortlist_json: shortlist,\n      branch_shortlist_count: shortlist.length,\n      validation_passed: fallback2bValidationPassed,\n      error_message: fallback2bRejectReason,\n      decision_status: decisionStatus,\n      next_action: nextAction,\n      final_source: finalSource,\n      final_category_id: finalCategoryId,\n      final_confidence: finalConfidence,\n      final_explanation: finalExplanation,\n      routing_hint: routingHint,\n      product_classification_update: productClassificationUpdate,\n    },\n    pairedItem: index,\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1232,
+        2512
+      ],
+      "id": "6324e38b-8970-48bb-b542-330ee7c04668",
+      "name": "2B — Post-process"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, category_code, category_name, direction, hierarchy_level, need_nosology, product_type, administration_route, age_segment, mnn_cluster, differentiation_degree, include_keywords, exclude_keywords, inclusion_comment, is_active FROM categories_dict WHERE is_active = true ORDER BY id",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -704,
+        2416
+      ],
+      "id": "d2b99765-653c-4c6d-a2b3-5868efc8081c",
+      "name": "2B — Load Categories",
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "72c8e1b7-075d-43c7-b999-c7c5e763881f",
+                    "leftValue": "={{ $json.next_action }}",
+                    "rightValue": "judge",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "judge"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -768,
+        3120
+      ],
+      "id": "65be6c50-f609-400f-92c4-bda61de610d3",
+      "name": "Judge — Route",
+      "notes": "out[0]: judge + log | out[1]: direct → DB"
+    },
+    {
+      "parameters": {
+        "jsCode": "function withoutStaleLlmOutput(j) {\n  const src = j || {};\n  const {\n    output,\n    text,\n    response,\n    content,\n    result,\n    llm_raw_output_text,\n    ...rest\n  } = src;\n  return rest;\n}\n\nreturn items.map((item, index) => {\n  const j = withoutStaleLlmOutput(item.json);\n  const C = j.constants || {};\n  const WORKFLOW_VERSION = 'stage2_judge_v1';\n  const PROMPT_VERSION = 'prompt_judge_v1';\n\n  const ruleShortlist = Array.isArray(j.shortlist_json) ? j.shortlist_json : [];\n  const branchShortlist = Array.isArray(j.branch_shortlist_json) ? j.branch_shortlist_json : [];\n\n  const formatShortlist = (list, label) => {\n    if (!list.length) return `${label}: EMPTY`;\n    return list.map((c, idx) => {\n      const reasons = Array.isArray(c.reasons) ? c.reasons.join(', ') : '';\n      return `${idx + 1}. id=${c.category_id}, code=${c.category_code || ''}, name=${c.category_name || ''}, score=${c.score ?? ''}, reasons=${reasons}`;\n    }).join('\\n');\n  };\n\n  const primaryRound = {\n    llm_category_id: j.llm_category_id ?? null,\n    llm_confidence: j.llm_confidence ?? null,\n    llm_explanation: j.llm_explanation ?? null,\n    llm_validation_passed: j.llm_validation_passed ?? null,\n    llm_reject_reason: j.llm_reject_reason ?? null,\n    rule_top_category_id: j.rule_top_category_id ?? null,\n    rule_top_score: j.rule_top_score ?? null,\n  };\n\n  const fallback2a = {\n    direction: j.fallback_2a_direction ?? null,\n    block_family: j.fallback_2a_block_family ?? null,\n    family_code: j.fallback_2a_family_code ?? null,\n    nosology_hint: j.fallback_2a_nosology_hint ?? null,\n    confidence: j.fallback_2a_confidence ?? null,\n    explanation: j.fallback_2a_explanation ?? null,\n  };\n\n  const fallback2b = {\n    category_id: j.fallback_2b_category_id ?? null,\n    confidence: j.fallback_2b_confidence ?? null,\n    explanation: j.fallback_2b_explanation ?? null,\n    validation_passed: j.fallback_2b_validation_passed ?? null,\n    reject_reason: j.fallback_2b_reject_reason ?? null,\n  };\n\n  const disputeContext = {\n    routing_hint: j.routing_hint ?? null,\n    primary_conflict: j.routing_hint?.primary_conflict ?? null,\n    fallback_2b_reject_reason: j.fallback_2b_reject_reason ?? null,\n    suggested_next_action: j.next_action ?? null,\n  };\n\n  const promptSystem =\n    'You are a senior pharmacy product classification judge. Review prior automated rounds and return ONLY valid JSON with keys: winner_source, category_id, confidence, explanation, needs_human_review. winner_source must be one of: llm, fallback_2b, none. category_id must be from the allowed candidate ids or null if none fits.';\n\n  const promptUser = `\nТовар:\n${j.combined_text || ''}\n\nТип товара: ${j.product_type_guess || 'unknown'}\nrun_id: ${j.run_id ?? ''}\n\nPrimary LLM (P1):\n${JSON.stringify(primaryRound, null, 2)}\n\nFallback 2A (ветка):\n${JSON.stringify(fallback2a, null, 2)}\n\nFallback 2B (категория в ветке):\n${JSON.stringify(fallback2b, null, 2)}\n\nКонтекст спора:\n${JSON.stringify(disputeContext, null, 2)}\n\nRule shortlist (primary):\n${formatShortlist(ruleShortlist, 'rule')}\n\nBranch shortlist (fallback 2B):\n${formatShortlist(branchShortlist, 'branch')}\n\nЗадача:\n- Выбери финальную category_id из объединения shortlist-ов выше, либо null если ни одна не подходит.\n- winner_source: чей ответ вы предпочитаете (llm | fallback_2b | none).\n- confidence: 0.0–1.0; explanation: 1–3 предложения на русском.\n- needs_human_review=true если уверенность низкая или кандидаты противоречивы.\n- Верни только JSON без markdown.\n`.trim();\n\n  return {\n    json: {\n      ...j,\n      workflow_version: WORKFLOW_VERSION,\n      prompt_version: PROMPT_VERSION,\n      context: {\n        run_id: j.run_id !== undefined && j.run_id !== null && j.run_id !== '' ? Number(j.run_id) : null,\n        product_id: j.product_id !== undefined && j.product_id !== null && j.product_id !== '' ? Number(j.product_id) : null,\n        product_raw_id: j.product_raw_id !== undefined && j.product_raw_id !== null && j.product_raw_id !== '' ? Number(j.product_raw_id) : null,\n        primary_round: primaryRound,\n        fallback_2a: fallback2a,\n        fallback_2b: fallback2b,\n        dispute_context: disputeContext,\n        rule_shortlist_json: ruleShortlist,\n        branch_shortlist_json: branchShortlist,\n      },\n      prompt_system: promptSystem,\n      prompt_user: promptUser,\n    },\n    pairedItem: index,\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -320,
+        3200
+      ],
+      "id": "9713eb88-c6f1-403c-90b4-16c06e33622b",
+      "name": "Judge — LLM Prepare"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt_user }}",
+        "options": {
+          "systemMessage": "={{ $json.prompt_system }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -96,
+        3200
+      ],
+      "id": "59c4fdb9-3bf0-40d8-9a88-8e364cdb94d5",
+      "name": "Judge — AI Agent"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        128,
+        3072
+      ],
+      "id": "c4943c4a-9a79-46a6-8b0b-45ff8e597674",
+      "name": "Judge — Merge LLM"
+    },
+    {
+      "parameters": {
+        "jsCode": "function extractJsonString(value) {\n  if (value === null || value === undefined) return null;\n  if (typeof value === 'object') return JSON.stringify(value);\n  let text = String(value).trim();\n  const codeFenceMatch = text.match(/^```(?:json)?\\s*\\n?([\\s\\S]+?)\\n?```\\s*$/i);\n  if (codeFenceMatch) text = codeFenceMatch[1].trim();\n  return text;\n}\n\nfunction safeParseJson(value) {\n  const text = extractJsonString(value);\n  if (!text) return { ok: false, error: 'empty_output', parsed: null, raw_text: null };\n  try {\n    return { ok: true, error: null, parsed: JSON.parse(text), raw_text: text };\n  } catch (e) {\n    return { ok: false, error: 'invalid_json', parsed: null, raw_text: text };\n  }\n}\n\nfunction normalizeInt(v) {\n  if (v === null || v === undefined || v === '') return null;\n  const n = Number(v);\n  return Number.isFinite(n) ? Math.trunc(n) : null;\n}\n\nfunction normalizeConfidence(v) {\n  if (v === null || v === undefined || v === '') return null;\n  const n = Number(v);\n  if (!Number.isFinite(n)) return null;\n  if (n < 0 || n > 1) return null;\n  return n;\n}\n\nfunction safeText(v) {\n  if (v === undefined || v === null || v === '') return null;\n  const s = String(v).trim();\n  return s === '' ? null : s;\n}\n\nfunction safeNumber(v) {\n  if (v === undefined || v === null || v === '') return null;\n  const n = Number(v);\n  return Number.isFinite(n) ? n : null;\n}\n\nfunction safeJson(v) {\n  if (v === undefined || v === null) return null;\n  return v;\n}\n\nfunction safeBoolean(v) {\n  if (v === undefined || v === null || v === '') return null;\n  if (typeof v === 'boolean') return v;\n  if (typeof v === 'string') {\n    const s = v.trim().toLowerCase();\n    if (['true', '1', 'yes', 'y'].includes(s)) return true;\n    if (['false', '0', 'no', 'n'].includes(s)) return false;\n  }\n  return null;\n}\n\nreturn items.map((item, index) => {\n  const root = item.json || {};\n  const ctx = root.context || {};\n  const C = root.constants || {};\n\n  const STAGE = C.stage || { judge: 'judge' };\n  const DECISION = C.decision_status || {\n    classified: 'classified',\n    needs_human_review: 'needs_human_review',\n    error: 'error',\n  };\n  const FINAL = C.final_source || { judge: 'judge', system: 'system' };\n  const NEXT = C.next_action || { none: 'none', human_review: 'human_review' };\n  const ACTOR = C.actor_type || { llm: 'llm' };\n  const LOG = C.log_status || { success: 'success', needs_review: 'needs_review', rejected: 'rejected' };\n  const THRESHOLDS = C.thresholds || { min_confidence_judge_ok: 0.60 };\n  const MODEL = C.model || { judge_actor_name: 'openai/gpt-4.1-mini' };\n\n  const WORKFLOW_VERSION = root.workflow_version || 'stage2_judge_v1';\n  const PROMPT_VERSION = root.prompt_version || 'prompt_judge_v1';\n\n  const runId = normalizeInt(ctx.run_id ?? root.run_id);\n  const productId = normalizeInt(ctx.product_id ?? root.product_id);\n  const productRawId = normalizeInt(ctx.product_raw_id ?? root.product_raw_id);\n\n  const ruleShortlist = Array.isArray(ctx.rule_shortlist_json)\n    ? ctx.rule_shortlist_json\n    : (Array.isArray(root.shortlist_json) ? root.shortlist_json : []);\n  const branchShortlist = Array.isArray(ctx.branch_shortlist_json)\n    ? ctx.branch_shortlist_json\n    : (Array.isArray(root.branch_shortlist_json) ? root.branch_shortlist_json : []);\n\n  const allowedIds = new Set();\n  for (const list of [ruleShortlist, branchShortlist]) {\n    for (const c of list) {\n      const id = normalizeInt(c.category_id);\n      if (id !== null) allowedIds.add(String(id));\n    }\n  }\n  const llmId = normalizeInt(root.llm_category_id);\n  const fb2bId = normalizeInt(root.fallback_2b_category_id);\n  if (llmId !== null) allowedIds.add(String(llmId));\n  if (fb2bId !== null) allowedIds.add(String(fb2bId));\n\n  const rawModelOutput = root.output ?? root.text ?? root.response ?? root.content ?? root.result ?? null;\n  const parsedResult = safeParseJson(rawModelOutput);\n\n  let judgeCategoryId = null;\n  let judgeConfidence = null;\n  let judgeExplanation = null;\n  let judgeNeedsReview = null;\n  let judgeWinnerSource = null;\n  let judgeValidationPassed = false;\n  let judgeRejectReason = null;\n  let judgeRawJson = safeJson(parsedResult.ok ? parsedResult.parsed : null);\n  let judgeRawOutputText = safeText(parsedResult.raw_text);\n\n  const validWinnerSources = new Set(['llm', 'fallback_2b', 'none']);\n\n  if (!parsedResult.ok) {\n    judgeRejectReason = parsedResult.error;\n  } else {\n    const parsed = parsedResult.parsed || {};\n    judgeCategoryId = normalizeInt(parsed.category_id ?? parsed.final_category_id);\n    judgeConfidence = normalizeConfidence(parsed.confidence);\n    judgeExplanation = safeText(parsed.explanation);\n    judgeNeedsReview = safeBoolean(parsed.needs_human_review);\n    judgeWinnerSource = safeText(parsed.winner_source);\n\n    if (!judgeExplanation) {\n      judgeRejectReason = 'missing_explanation';\n    } else if (judgeConfidence === null) {\n      judgeRejectReason = 'invalid_confidence';\n    } else if (judgeWinnerSource && !validWinnerSources.has(judgeWinnerSource)) {\n      judgeRejectReason = 'invalid_winner_source';\n    } else if (judgeCategoryId === null && judgeWinnerSource !== 'none') {\n      judgeRejectReason = 'null_category';\n    } else if (judgeCategoryId !== null && allowedIds.size > 0 && !allowedIds.has(String(judgeCategoryId))) {\n      judgeRejectReason = 'category_outside_candidates';\n    } else {\n      judgeValidationPassed = true;\n    }\n  }\n\n  let decisionStatus = DECISION.needs_human_review;\n  let finalSource = FINAL.system;\n  let finalCategoryId = null;\n  let finalConfidence = null;\n  let finalExplanation = null;\n  let nextAction = NEXT.human_review;\n  let logStatus = LOG.needs_review;\n\n  if (!judgeValidationPassed) {\n    decisionStatus = DECISION.needs_human_review;\n    nextAction = NEXT.human_review;\n    logStatus = LOG.rejected;\n  } else if (judgeNeedsReview === true) {\n    decisionStatus = DECISION.needs_human_review;\n    nextAction = NEXT.human_review;\n    logStatus = LOG.needs_review;\n  } else if (judgeCategoryId === null || judgeWinnerSource === 'none') {\n    decisionStatus = DECISION.needs_human_review;\n    nextAction = NEXT.human_review;\n    logStatus = LOG.needs_review;\n  } else if (judgeConfidence > THRESHOLDS.min_confidence_judge_ok) {\n    decisionStatus = DECISION.classified;\n    finalSource = FINAL.judge;\n    finalCategoryId = judgeCategoryId;\n    finalConfidence = judgeConfidence;\n    finalExplanation = judgeExplanation;\n    nextAction = NEXT.none;\n    logStatus = LOG.success;\n  } else {\n    decisionStatus = DECISION.needs_human_review;\n    nextAction = NEXT.human_review;\n    logStatus = LOG.needs_review;\n  }\n\n  const routingHint = {\n    stage: STAGE.judge,\n    judge_validation_passed: judgeValidationPassed,\n    judge_confidence: judgeConfidence,\n    judge_reject_reason: judgeRejectReason,\n    judge_winner_source: judgeWinnerSource,\n    judge_needs_review: judgeNeedsReview,\n    allowed_candidate_count: allowedIds.size,\n    suggested_next_action: nextAction,\n  };\n\n  const productClassificationUpdate = {\n    product_id: productId,\n    product_raw_id: productRawId,\n    latest_run_id: runId,\n    workflow_version: WORKFLOW_VERSION,\n    prompt_version: PROMPT_VERSION,\n    rule_top_category_id: safeNumber(root.rule_top_category_id),\n    rule_top_score: safeNumber(root.rule_top_score),\n    rule_shortlist_id: safeNumber(root.rule_shortlist_id),\n    rule_decision_status: safeText(root.rule_decision_status),\n    llm_category_id: safeNumber(root.llm_category_id),\n    llm_confidence: safeNumber(root.llm_confidence),\n    llm_explanation: safeText(root.llm_explanation),\n    llm_needs_review: root.llm_needs_review ?? null,\n    llm_validation_passed: root.llm_validation_passed ?? null,\n    llm_reject_reason: safeText(root.llm_reject_reason),\n    llm_raw_json: safeJson(root.llm_raw_json),\n    judge_category_id: judgeCategoryId,\n    judge_confidence: judgeConfidence,\n    judge_explanation: judgeExplanation,\n    judge_needs_review: judgeNeedsReview,\n    judge_raw_json: judgeRawJson,\n    fallback_2a_direction: safeText(root.fallback_2a_direction),\n    fallback_2a_block_family: safeText(root.fallback_2a_block_family),\n    fallback_2a_family_code: safeText(root.fallback_2a_family_code),\n    fallback_2a_nosology_hint: safeText(root.fallback_2a_nosology_hint),\n    fallback_2a_confidence: safeNumber(root.fallback_2a_confidence),\n    fallback_2a_explanation: safeText(root.fallback_2a_explanation),\n    fallback_2a_raw_json: safeJson(root.fallback_2a_raw_json),\n    fallback_2b_category_id: safeNumber(root.fallback_2b_category_id),\n    fallback_2b_confidence: safeNumber(root.fallback_2b_confidence),\n    fallback_2b_explanation: safeText(root.fallback_2b_explanation),\n    fallback_2b_raw_json: safeJson(root.fallback_2b_raw_json),\n    final_category_id: finalCategoryId,\n    final_confidence: finalConfidence,\n    final_explanation: finalExplanation,\n    final_source: finalSource,\n    decision_status: decisionStatus,\n    next_action: nextAction,\n    routing_hint: routingHint,\n  };\n\n  return {\n    json: {\n      ...root,\n      run_id: runId,\n      product_id: productId,\n      product_raw_id: productRawId,\n      stage: STAGE.judge,\n      actor_type: ACTOR.llm,\n      actor_name: MODEL.judge_actor_name,\n      workflow_version: WORKFLOW_VERSION,\n      prompt_version: PROMPT_VERSION,\n      judge_category_id: judgeCategoryId,\n      judge_confidence: judgeConfidence,\n      judge_explanation: judgeExplanation,\n      judge_needs_review: judgeNeedsReview,\n      judge_winner_source: judgeWinnerSource,\n      judge_validation_passed: judgeValidationPassed,\n      judge_reject_reason: judgeRejectReason,\n      judge_raw_json: judgeRawJson,\n      judge_raw_output_text: judgeRawOutputText,\n      validation_passed: judgeValidationPassed,\n      error_message: judgeRejectReason,\n      decision_status: decisionStatus,\n      next_action: nextAction,\n      final_source: finalSource,\n      final_category_id: finalCategoryId,\n      final_confidence: finalConfidence,\n      final_explanation: finalExplanation,\n      routing_hint: routingHint,\n      product_classification_update: productClassificationUpdate,\n    },\n    pairedItem: index,\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1216,
+        3072
+      ],
+      "id": "2d1b999f-46ee-424b-b949-7e85d55afad9",
+      "name": "Judge — Post-process"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "id",
+          "value": "qwen/qwen3.5-flash-02-23@reasoning_effort=none"
+        },
+        "options": {
+          "responseFormat": "json_object",
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -96,
+        3392
+      ],
+      "id": "f4cbfca3-4d6b-4806-a9c8-fc2255499ea7",
+      "name": "Shared — Polza",
+      "credentials": {
+        "openAiApi": {
+          "id": "YFMznqpi3SeJdYod",
+          "name": "Polza account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Субпроцесс 2B\n\nRoute → branch shortlist → Insert → Skip? → Agent → Post\n\ncategory_id **строго** в branch shortlist",
+        "height": 940,
+        "width": 2220,
+        "color": 2
+      },
+      "id": "e430beca-8086-46d7-9e5a-f879a49cbad1",
+      "name": "🎯 2B — Fallback категория",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -832,
+        1712
+      ]
+    },
+    {
+      "parameters": {
+        "content": "**DeepSeek** → P1, 2A, 2B",
+        "height": 120,
+        "color": 7
+      },
+      "id": "0c85e423-ea1e-4068-a6c4-b15a8b3ee73b",
+      "name": "🔗 Shared — LLM",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "content": "**Polza / Qwen** → Judge",
+        "height": 120,
+        "width": 260,
+        "color": 7
+      },
+      "id": "1e18ba46-5996-46d8-bfb8-9581fda9a1b7",
+      "name": "🔗 Shared — Polza",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        3344
+      ]
+    },
+    {
+      "parameters": {
+        "model": "deepseek-v4-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "position": [
+        656,
+        1296
+      ],
+      "id": "0ee5b9a0-24f5-491e-a4ef-568131058065",
+      "name": "Shared — DeepSeek1",
+      "credentials": {
+        "deepSeekApi": {
+          "id": "xyaJwQg88odvtCfC",
+          "name": "DeepSeek account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "deepseek-v4-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "position": [
+        736,
+        2176
+      ],
+      "id": "f518b06e-2ceb-41e9-92f6-f7560401c92e",
+      "name": "Shared — DeepSeek2",
+      "credentials": {
+        "deepSeekApi": {
+          "id": "xyaJwQg88odvtCfC",
+          "name": "DeepSeek account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Субпроцесс 2A\n\nCategories (parallel) → Merge → Rule filter → Skip? → Agent → Post\n\nВыход: `direction`, `block_family` — **без category_id**",
+        "height": 940,
+        "width": 2220,
+        "color": 3
+      },
+      "id": "edf09f37-4200-4121-b188-50203d4f41fe",
+      "name": "🎯 2B — Fallback категория1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -816,
+        496
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Setup\n\n**In** — триггеры (manual / webhook)\n**Run** — `run_id`, constants\n**Load** — SQL batch → attach run → limit",
+        "height": 940,
+        "width": 2220,
+        "color": 5
+      },
+      "id": "d64f2f8a-bc24-4cd7-a66f-d69595af5c24",
+      "name": "🎯 2B — Fallback категория2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -816,
+        -1664
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## classification-stage2-dev\n\n**Контракт:** `Categories/stage2_workflow_contract.md`\n\nSwimlanes: Setup → P1 → 2A → 2B → Judge → DB/Fin\n\nЗапуск: UI manual | `python3 scripts/run_workflow.py --wait`",
+        "height": 220,
+        "width": 520,
+        "color": 7
+      },
+      "id": "d007b38d-96b0-4552-a7fd-4bb3d93b68c0",
+      "name": "📋 Обзор1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        752,
+        -1632
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Субпроцесс P1\n\nBuild → Prepare → Agent → Merge → Post → **Route**\n\n| Route out | Куда |\n|---|---|\n| 0 fallback | 2A + log |\n| 1 classified | DB ↓ |",
+        "height": 940,
+        "width": 2220,
+        "color": 4
+      },
+      "id": "3675f360-37dd-44e4-b504-c810b091322c",
+      "name": "🎯 2B — Fallback категория3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -816,
+        -592
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Субпроцесс Judge (Polza / Qwen)\n\nRoute → Prepare → Agent → Merge → Post → DB ↓\n\nАрбитраж P1 + 2A + 2B при конфликте",
+        "height": 940,
+        "width": 2220,
+        "color": 6
+      },
+      "id": "3fd082f3-7d9a-406f-ab66-80f3b232d305",
+      "name": "🎯 2B — Fallback категория4",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -848,
+        2912
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## DB + Fin (общий слой)\n\nВсе Route/Post-process ведут сюда:\nSnapshot + Log → Barrier → Close run",
+        "height": 940,
+        "width": 2220
+      },
+      "id": "be496184-8cc8-495e-acdb-97ff5cd715f8",
+      "name": "🎯 2B — Fallback категория5",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2528,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "iQo3b3VdmTlGdhbj"
+        },
+        "options": {}
+      },
+      "id": "b6cfccb2-2567-48c4-9133-fdf9a1faf16a",
+      "name": "Fin — Batch Acceptance",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        3996,
+        880
+      ],
+      "onError": "continueRegularOutput",
+      "notes": "Export Sheets A/B + Telegram links/balances"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const run = $('Run — Create Run').first().json;\nif (!run?.id) {\n  throw new Error('Run — Create Run did not return classification_runs.id');\n}\n// B2 skeleton: always emit one closer item; cascade/LLM path is disconnected.\nreturn [{\n  json: {\n    id: Number(run.id),\n    skeleton_empty: true,\n    product_count: items.length\n  }\n}];"
+      },
+      "id": "b49bbc31-fcce-4272-a437-d23933c4d624",
+      "name": "Shell — Ensure Empty Fin",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -24,
+        -1076
+      ],
+      "notes": "B2 skeleton: parallel to Load; close run as finished_empty without cascade/LLM"
+    },
+    {
+      "parameters": {
+        "content": "## RETIRED (B2)\n\nP1 / 2A / 2B / legacy Judge — **do not reconnect**.\nHierarchy cascade (Norm→Sem→…) lands in B3+.",
+        "height": 220,
+        "width": 360,
+        "color": 3
+      },
+      "id": "369b04d4-bc72-4c1a-b3fc-e5d2cd902f77",
+      "name": "🔗 RETIRED — P1/2A/2B/Judge",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "classification-stage2-hierarchy-dev",
+        "options": {}
+      },
+      "id": "a33d6aec-85aa-4fc4-83fb-9682c1e6ee7c",
+      "name": "In — Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -768,
+        -1456
+      ],
+      "webhookId": "e5df8d1a-f835-435e-ae0f-7c28b410163c"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json || {};\nconst batchRaw = Number(body.batch_size);\nconst batchSize = Number.isFinite(batchRaw) && batchRaw > 0\n  ? Math.min(Math.trunc(batchRaw), 500)\n  : 5;\n\nreturn [{\n  json: {\n    trigger: 'webhook',\n    batch_size: batchSize\n  }\n}];"
+      },
+      "id": "522754a4-655a-44f5-b8b7-f42fb3a61d33",
+      "name": "In — Webhook Start",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -544,
+        -1456
+      ]
+    }
+  ],
+  "connections": {
+    "In — Manual": {
+      "main": [
+        [
+          {
+            "node": "Run — Create Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load — Select Batch": {
+      "main": [
+        [
+          {
+            "node": "Load — Attach Run ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load — Limit Batch": {
+      "main": [
+        []
+      ]
+    },
+    "Shared — DeepSeek": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "P1 — AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ],
+      "main": []
+    },
+    "P1 — Build Prompt": {
+      "main": [
+        [
+          {
+            "node": "P1 — LLM Prepare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P1 — AI Agent": {
+      "main": [
+        [
+          {
+            "node": "P1 — Merge LLM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P1 — LLM Prepare": {
+      "main": [
+        [
+          {
+            "node": "P1 — AI Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "P1 — Merge LLM",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "P1 — Merge LLM": {
+      "main": [
+        [
+          {
+            "node": "P1 — Post-process",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P1 — Post-process": {
+      "main": [
+        [
+          {
+            "node": "P1 — Route",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DB — Prepare Snapshot": {
+      "main": [
+        [
+          {
+            "node": "DB — Upsert Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DB — Upsert Snapshot": {
+      "main": [
+        [
+          {
+            "node": "Fin — Merge Barrier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DB — Prepare Log": {
+      "main": [
+        [
+          {
+            "node": "DB — Insert Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run — Create Run": {
+      "main": [
+        [
+          {
+            "node": "Run — Init Constants",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load — Attach Run ID": {
+      "main": [
+        [
+          {
+            "node": "Load — Limit Batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DB — Insert Log": {
+      "main": [
+        [
+          {
+            "node": "Fin — Merge Barrier",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Fin — Merge Barrier": {
+      "main": [
+        [
+          {
+            "node": "Fin — Pick Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fin — Pick Run": {
+      "main": [
+        [
+          {
+            "node": "Fin — Close Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run — Init Constants": {
+      "main": [
+        [
+          {
+            "node": "Load — Select Batch",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Shell — Ensure Empty Fin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P1 — Route": {
+      "main": [
+        [
+          {
+            "node": "DB — Prepare Log",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "2A — Merge Context",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "2A — Categories Trigger",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "DB — Prepare Snapshot",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "DB — Prepare Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2A — Rule Branch Filter": {
+      "main": [
+        [
+          {
+            "node": "2A — Skip LLM?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2A — Skip LLM?": {
+      "main": [
+        [
+          {
+            "node": "2A — Post-process",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "2A — LLM Prepare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2A — LLM Prepare": {
+      "main": [
+        [
+          {
+            "node": "2A — AI Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "2A — Merge LLM",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "2A — AI Agent": {
+      "main": [
+        [
+          {
+            "node": "2A — Merge LLM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2A — Merge LLM": {
+      "main": [
+        [
+          {
+            "node": "2A — Post-process",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2A — Post-process": {
+      "main": [
+        [
+          {
+            "node": "2B — Route",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2A — Categories Trigger": {
+      "main": [
+        [
+          {
+            "node": "2A — Load Categories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2A — Load Categories": {
+      "main": [
+        [
+          {
+            "node": "2A — Merge Context",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "2A — Merge Context": {
+      "main": [
+        [
+          {
+            "node": "2A — Rule Branch Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2B — Route": {
+      "main": [
+        [
+          {
+            "node": "DB — Prepare Log",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "2B — Merge Context",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "2B — Categories Trigger",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "DB — Prepare Snapshot",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "DB — Prepare Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2B — Categories Trigger": {
+      "main": [
+        [
+          {
+            "node": "2B — Load Categories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2B — Load Categories": {
+      "main": [
+        [
+          {
+            "node": "2B — Merge Context",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "2B — Merge Context": {
+      "main": [
+        [
+          {
+            "node": "2B — Branch Shortlist Builder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2B — Branch Shortlist Builder": {
+      "main": [
+        [
+          {
+            "node": "2B — Prepare Shortlist Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2B — Prepare Shortlist Payload": {
+      "main": [
+        [
+          {
+            "node": "2B — Insert Branch Shortlist",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "2B — Skip LLM?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2B — Skip LLM?": {
+      "main": [
+        [
+          {
+            "node": "2B — Post-process",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "2B — LLM Prepare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2B — LLM Prepare": {
+      "main": [
+        [
+          {
+            "node": "2B — AI Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "2B — Merge LLM",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "2B — AI Agent": {
+      "main": [
+        [
+          {
+            "node": "2B — Merge LLM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2B — Merge LLM": {
+      "main": [
+        [
+          {
+            "node": "2B — Post-process",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2B — Post-process": {
+      "main": [
+        [
+          {
+            "node": "Judge — Route",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Judge — Route": {
+      "main": [
+        [
+          {
+            "node": "DB — Prepare Log",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Judge — LLM Prepare",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "DB — Prepare Snapshot",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "DB — Prepare Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Judge — LLM Prepare": {
+      "main": [
+        [
+          {
+            "node": "Judge — AI Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Judge — Merge LLM",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Judge — AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Judge — Merge LLM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Judge — Merge LLM": {
+      "main": [
+        [
+          {
+            "node": "Judge — Post-process",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Judge — Post-process": {
+      "main": [
+        [
+          {
+            "node": "DB — Prepare Snapshot",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "DB — Prepare Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shared — DeepSeek1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "2A — AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ],
+      "main": []
+    },
+    "Shared — DeepSeek2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "2B — AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ],
+      "main": []
+    },
+    "Shared — Polza": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Judge — AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ],
+      "main": []
+    },
+    "Fin — Close Run": {
+      "main": [
+        []
+      ]
+    },
+    "Shell — Ensure Empty Fin": {
+      "main": [
+        [
+          {
+            "node": "Fin — Close Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "In — Webhook": {
+      "main": [
+        [
+          {
+            "node": "In — Webhook Start",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "In — Webhook Start": {
+      "main": [
+        [
+          {
+            "node": "Run — Create Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

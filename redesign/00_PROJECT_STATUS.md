@@ -7,12 +7,13 @@ Canonical migration design: [`20_MIGRATION_PLAN.md`](20_MIGRATION_PLAN.md)
 
 **Hierarchy migration plan v1 is approved** (architecture decisions locked).  
 **§13 clearance is complete** (read-only schema + mapping + isolation design).  
-**Not implemented:** no hierarchy workflow clone, no cascade SQL ALTER applied, no Sem/Dir/Need/Cat/Mnn nodes shipped under this plan.
+**B1 applied (dev):** additive columns + `hierarchy_*` settings seed — see [`24_B1_APPLY_REPORT.md`](24_B1_APPLY_REPORT.md).  
+**B2 skeleton clone done:** `classification-stage2-hierarchy-dev` (`o8sugljHYuUs7IEC`); Manual run **297** + webhook run **298** → `finished_empty`. Workflow **active** for webhook tests only; Load stubbed (`WHERE false`). Sem/Dir/Need/Cat/Mnn not implemented; `hierarchy_experiment_enabled` remains `false`.
 
 | Track | Status |
 |-------|--------|
-| Current Stage 2 (`classification-stage2-dev`) | Implemented (production-like working pipeline) |
-| Hierarchy cascade redesign | Approved design; **§13 cleared** — B1/B2 *unblocked*, not started |
+| Current Stage 2 (`classification-stage2-dev`) | Implemented (production-like working pipeline) — **unchanged** |
+| Hierarchy cascade redesign | Approved design; **§13 cleared**; **B1 applied**; **B2 complete** (skeleton + empty smokes) |
 | Sem validation 100/500/1000 | Not started (gates Dir+ / B5+) |
 
 ---
@@ -21,10 +22,12 @@ Canonical migration design: [`20_MIGRATION_PLAN.md`](20_MIGRATION_PLAN.md)
 
 | Item | Artifact | Result |
 |------|----------|--------|
-| Schema dump + CHECK/INDEX | [`21a_SCHEMA_DUMP.md`](21a_SCHEMA_DUMP.md) | No CHECK on `stage`/`decision_status`; UNIQUE `(product_id, stage)` present; no semantic/cascade columns yet |
+| Schema dump + CHECK/INDEX | [`21a_SCHEMA_DUMP.md`](21a_SCHEMA_DUMP.md) | Pre-B1 baseline: no CHECK on `stage`/`decision_status`; UNIQUE `(product_id, stage)` present |
 | Mapping stats + verdicts | [`21b_MAPPING_STATS.md`](21b_MAPPING_STATS.md) | need=`need_nosology`, mnn=`mnn_cluster` — **Confirmed with caveats** |
 | Dirty/ambiguous samples | [`21_HIERARCHY_MAPPING_SAMPLES.md`](21_HIERARCHY_MAPPING_SAMPLES.md) | ≥20 examples |
-| Experiment isolation design | [`22_EXPERIMENT_ISOLATION.md`](22_EXPERIMENT_ISOLATION.md) | Allowlist mode; keys frozen; no DB INSERT yet |
+| Experiment isolation design | [`22_EXPERIMENT_ISOLATION.md`](22_EXPERIMENT_ISOLATION.md) | Allowlist mode; keys frozen in design |
+| B1 additive apply (dev) | [`24_B1_APPLY_REPORT.md`](24_B1_APPLY_REPORT.md) | 18 columns + 4 `hierarchy_*` keys; enabled=false |
+| B2 hierarchy skeleton clone | [`26_B2_EXECUTION_REPORT.md`](26_B2_EXECUTION_REPORT.md) | `o8sugljHYuUs7IEC`, active for webhook; Load=0 stub |
 
 ---
 
@@ -63,19 +66,33 @@ Norm → semantic_primary → direction → need → category → optional mnn �
 | Intermediate `decision_status` | Historical **`pending_fallback`** (= pending next hierarchy stage); precise hop in `next_action` |
 | Snapshot policy | **Terminal-only**; log after every stage |
 | Human review v1 | **Sheets batch acceptance** primary; **Telegram inactive** until a later stage |
-| Experiment isolation | **Allowlist** via `pipeline_settings` (design in [`22_EXPERIMENT_ISOLATION.md`](22_EXPERIMENT_ISOLATION.md); keys not inserted yet) |
-| Implementation gate | **§13 cleared** — B1 (additive SQL) / B2 (clone skeleton) may start on explicit request only |
+| Experiment isolation | **Allowlist** via `pipeline_settings` — keys **seeded in dev** ([`24_B1_APPLY_REPORT.md`](24_B1_APPLY_REPORT.md)); `hierarchy_experiment_enabled=false` |
+| Implementation gate | **§13 cleared**; **B1 done (dev)**; **B2 skeleton done** ([`26_B2_EXECUTION_REPORT.md`](26_B2_EXECUTION_REPORT.md)) |
 
 ### Explicitly not claimed
 
-- Hierarchy workflow does not exist in n8n yet
-- Additive cascade/semantic columns are designed, **not applied**
+- Hierarchy cascade LLM stages (B3+) not implemented — skeleton only
 - Sem validation 100/500/1000 not started
-- `pipeline_settings` hierarchy keys not inserted; prod Load SQL not patched
+- Prod Stage 2 Load SQL not patched; experiment kill switch remains off; hierarchy Load still stubbed (no pending drain)
+
+### B1 apply (dev) — 2026-07-20
+
+- Script: `sql/2026-07-20_stage2_hierarchy_additive.sql` via pgAdmin → `COMMIT` in 506 msec
+- Report: [`24_B1_APPLY_REPORT.md`](24_B1_APPLY_REPORT.md)
+- 18 columns on `product_classification`; 4 `hierarchy_*` keys in `pipeline_settings`
+- No CHECK on `stage`/`decision_status`; PK/FK set unchanged
+
+### B2 skeleton clone — 2026-07-20
+
+- Workflow: `classification-stage2-hierarchy-dev` (`o8sugljHYuUs7IEC`)
+- Report: [`26_B2_EXECUTION_REPORT.md`](26_B2_EXECUTION_REPORT.md)
+- Manual run **297** + webhook run **298** → `finished_empty`
+- Active for webhook tests; path `POST /webhook/classification-stage2-hierarchy-dev`; Load stub `WHERE false`
+- P1/2A/2B/Judge unreachable; prod Stage 2 unchanged
 
 ---
 
 ## Next gate
 
-**B1 / B2** may start only after an explicit implementation request (still no silent start).  
+**B3** (Norm + Sem E2E + log) only on explicit request after Manual dry-run confirms `finished_empty`.  
 **B5+** (Dir+ cascade) remains gated by Sem user validation 100→500→1000 after Norm+Sem exist.
