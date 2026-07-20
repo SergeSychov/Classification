@@ -336,6 +336,13 @@
 * **Итог:** полный автопуть до Judge подтверждён; production-пороги после smoke восстановлены.
 * **Следующий крупный блок:** Telegram human review + policy borderline primary (п.3 / п.5).
 
+24. **Borderline policy P1 + Telegram human review (2026-07-17)**
+
+* **P1 routing:** `min_confidence_borderline_low=0.40`; valid conf в `(0.40, 0.60]` → `pending_fallback` / `fallback_2a` (раньше сразу `human_review`); valid conf ≤ 0.40 → `human_review`; broken/null/outside shortlist → `fallback_2a`.
+* **Контракт:** `Categories/human_review_contract.md`; очередь `classification_review_queue` (статусы + payload карточки).
+* **Workflows:** `classification-human-review-enqueue`, `classification-human-review-send`, `classification-human-review-callback`.
+* **Tech debt:** один `Fin — Close Run` на run (счётчик batch), индекс `product_classification_log(run_id, stage)`, диагностические SQL.
+
 14. **Решение по языку Code-нод**
 
 * Проверена возможность использовать Python в Code-нодах n8n. [file:1]
@@ -402,13 +409,11 @@
 * ~~Fallback 2B (branch shortlist + DeepSeek)~~ → п.20.
 * ~~Judge (OpenRouter → Polza / Qwen)~~ → п.22 / п.22a.
 * ~~Smoke-test полного пути до Judge~~ → п.23 (exec `5529`/`5530`).
-* **Осталось:** Telegram human review + policy borderline primary.
+* **Осталось:** ~~Telegram human review + policy borderline primary~~ → п.24.
 
-**Решение (2026-06-27):**
+**Решение (2026-07-17, внедрено):**
 
-* Текущая v1: confidence ≤ 0.60 → `needs_human_review`, `next_action='human_review'`.
-* Целевая policy: «сломанные» ответы → `fallback_2a`; borderline 0.40–0.60 → сначала fallback 2A/2B; очень низкая уверенность (<0.40) — опционально сразу human; human review — если после fallback уверенность низкая или решения конфликтуют.
-* Пороги 0.40 / 0.60 — к уточнению с заказчиком при внедрении fallback.
+* «Сломанные» ответы → `fallback_2a`; borderline `(0.40, 0.60]` → `fallback_2a`; ≤ 0.40 → `human_review`; human review после fallback/judge — через очередь + Telegram.
 
 4. **Judge-слой**
 
@@ -426,21 +431,12 @@
   * `final_source='judge'`, `decision_status='classified'` или `needs_human_review`; [file:1]
   * запись judge output в уже существующие `judge_*` поля snapshot. [file:1]
 
-5. **Human-in-the-loop / Telegram**
+5. **Human-in-the-loop / Telegram** — **выполнено (п.24)**
 
-* Спроектировать SQL-представление или отдельную таблицу очереди human review: [file:1]
-  * выборка товаров с `decision_status='needs_human_review'` и актуальным `latest_run_id`; [file:1]
-  * хранение статуса очереди (`pending`, `sent_to_telegram`, `in_review`, `resolved`). [file:1]
-* Спроектировать payload для Telegram-бота: [file:1]
-  * нормализованный текст товара; [file:1]
-  * rule-shortlist (топ-3–5 кандидатов); [file:1]
-  * предложения LLM / fallback / judge с confidence и объяснениями; [file:1]
-  * метаданные запуска (`run_id`, версии, источник решения). [file:1]
-* Настроить Telegram-бот через ноды Telegram в n8n: [file:1]
-  * выдача карточек на ревью с inline-кнопками (`approve / change / mark unresolved`); [file:1]
-  * обработка callback query и запись результата в БД. [file:1]
-* Логировать ручные решения как `stage='human_review'` с `actor_type='human'` и `actor_name` из Telegram. [file:1]
-* Обновлять snapshot: `final_source='human'`, `decision_status='classified'`. [file:1]
+* Очередь `classification_review_queue` + `pipeline_settings.telegram_review_chat_id`.
+* Контракт: `Categories/human_review_contract.md`.
+* Workflows: enqueue / send / callback (approve · change · unresolved · other→текст).
+* Resolve пишет `final_source='human'`, log `stage='human_review'`, `actor_type='human'`.
 
 6. **Усиление правил пространства (documentation / governance)**
 
@@ -456,9 +452,6 @@
 7. **Технический долг и улучшения**
 
 * Постепенно перейти от ручной сборки SQL-строк к параметризованным запросам Postgres-ноды. [file:1]
-* Добавить минимальные индексы по `run_id`, `product_id`, `stage`, `decision_status` для аналитики и мониторинга. [file:1]
-* Подготовить небольшой набор диагностических запросов/дашбордов: [file:1]
-  * доля `needs_human_review` и `pending_fallback` по запуску; [file:1]
-  * распределение confidence; [file:1]
-  * топ-ошибок `llm_reject_reason`; [file:1]
-  * соотношение `classified / fallback / review` по `run_id`. [file:1]
+* ~~Индексы~~: `product_classification(decision_status, final_source)`, `product_classification_log(run_id, stage)`, partial unique open queue. [file:1]
+* Диагностические SQL: `sql/diagnostics_run_stats.sql`. [file:1]
+* `Fin — Pick Run`: один Close Run на batch (`$getWorkflowStaticData` + `batch_size`). [file:1]

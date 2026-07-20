@@ -14,26 +14,8 @@
     },
     {
       "parameters": {
-        "operation": "select",
-        "schema": {
-          "__rl": true,
-          "mode": "list",
-          "value": "public"
-        },
-        "table": {
-          "__rl": true,
-          "value": "products_prepared",
-          "mode": "list",
-          "cachedResultName": "products_prepared"
-        },
-        "limit": 100,
-        "sort": {
-          "values": [
-            {
-              "column": "product_raw_id"
-            }
-          ]
-        },
+        "operation": "executeQuery",
+        "query": "SELECT\n  pp.id AS product_id,\n  pp.id,\n  pp.product_raw_id,\n  pp.product_name_effective,\n  pp.manufacturer_effective,\n  pp.brand_guess,\n  pp.form_guess,\n  pp.dosage_guess,\n  pp.pack_size_guess,\n  pp.combined_text\nFROM products_prepared pp\nLEFT JOIN classification_shortlist cs\n  ON cs.product_id = pp.id\n AND (cs.stage IS NULL OR cs.stage = 'primary_rules')\nWHERE cs.product_id IS NULL\nORDER BY random()\nLIMIT 100",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
@@ -190,6 +172,23 @@
           "name": "Postgres account"
         }
       }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "classification-shortlist",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -560,
+        -40
+      ],
+      "id": "f5def57e-4cef-4082-ad6d-519848a024ce",
+      "name": "Webhook",
+      "webhookId": "1a30cdb6-4caf-4249-9bc0-f5b58535f01c"
     }
   ],
   "connections": {
@@ -269,6 +268,22 @@
         [
           {
             "node": "product_classification_log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Товары",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "категории",
             "type": "main",
             "index": 0
           }

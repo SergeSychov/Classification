@@ -191,7 +191,7 @@ gantt
 - [x] Primary + Finish Run стабильны на 3+ прогонах (runs 6, 9 + backfill 7/8)
 - [ ] Fallback 2A/2B покрывают `pending_fallback` кейсы
 - [ ] Judge обрабатывает конфликты
-- [ ] Telegram review закрывает `needs_human_review`
+- [x] Telegram review закрывает `needs_human_review`
 - [ ] Все стадии пишут log с `run_id`, `stage`, версиями
 - [ ] Диагностические запросы по run_id работают
 - [ ] `stage2_workflow_plan.md` актуален

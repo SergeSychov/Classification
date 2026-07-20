@@ -1,0 +1,85 @@
+{
+  "name": "classification-human-review-enqueue",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "cde13763-4814-4714-b4cf-dfa1cba2a68f",
+      "name": "HR — Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "id": "7a2aa216-05bf-425f-9e1d-b400c9717630",
+      "name": "HR — Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "\nWITH settings AS (\n  SELECT NULLIF(TRIM(COALESCE(value->>'chat_id', '')), '') AS chat_id\n  FROM pipeline_settings\n  WHERE key = 'telegram_review_chat_id'\n),\ncandidates AS (\n  SELECT\n    pc.product_id,\n    pc.product_raw_id,\n    pc.latest_run_id AS run_id,\n    pc.workflow_version,\n    pc.prompt_version,\n    pc.llm_category_id,\n    pc.llm_confidence,\n    pc.llm_explanation,\n    pc.fallback_2a_direction,\n    pc.fallback_2a_block_family,\n    pc.fallback_2a_confidence,\n    pc.fallback_2a_explanation,\n    pc.fallback_2b_category_id,\n    pc.fallback_2b_confidence,\n    pc.fallback_2b_explanation,\n    pc.judge_category_id,\n    pc.judge_confidence,\n    pc.judge_explanation,\n    pc.judge_raw_json,\n    pc.final_category_id,\n    pc.next_action,\n    pp.combined_text,\n    pp.product_name_effective AS product_name,\n    cs.shortlist_json,\n    COALESCE(\n      pc.judge_category_id,\n      pc.fallback_2b_category_id,\n      pc.llm_category_id,\n      pc.final_category_id,\n      CASE\n        WHEN jsonb_typeof(cs.shortlist_json) = 'array'\n          THEN NULLIF(cs.shortlist_json->0->>'category_id', '')::bigint\n        ELSE NULL\n      END\n    ) AS suggested_category_id\n  FROM product_classification pc\n  JOIN products_prepared pp ON pp.id = pc.product_id\n  LEFT JOIN classification_shortlist cs\n    ON cs.product_id = pc.product_id\n   AND cs.stage = 'primary_rules'\n  WHERE pc.decision_status = 'needs_human_review'\n    AND NOT EXISTS (\n      SELECT 1\n      FROM classification_review_queue q\n      WHERE q.product_id = pc.product_id\n        AND q.status IN ('pending', 'sent_to_telegram', 'in_review')\n    )\n  ORDER BY pc.updated_at DESC\n  LIMIT 50\n)\nINSERT INTO classification_review_queue (\n  product_id,\n  status,\n  priority,\n  review_reason,\n  telegram_chat_id,\n  run_id,\n  payload\n)\nSELECT\n  c.product_id,\n  'pending',\n  100,\n  'needs_human_review',\n  s.chat_id,\n  c.run_id,\n  jsonb_build_object(\n    'product_id', c.product_id,\n    'product_raw_id', c.product_raw_id,\n    'run_id', c.run_id,\n    'combined_text', COALESCE(c.combined_text, ''),\n    'product_name', COALESCE(c.product_name, ''),\n    'shortlist_top', COALESCE(\n      (\n        SELECT jsonb_agg(x)\n        FROM (\n          SELECT elem\n          FROM jsonb_array_elements(COALESCE(c.shortlist_json, '[]'::jsonb)) WITH ORDINALITY AS t(elem, ord)\n          ORDER BY ord\n          LIMIT 5\n        ) s(x)\n      ),\n      '[]'::jsonb\n    ),\n    'proposals', jsonb_build_object(\n      'primary_llm', jsonb_strip_nulls(jsonb_build_object(\n        'category_id', c.llm_category_id,\n        'confidence', c.llm_confidence,\n        'explanation', c.llm_explanation\n      )),\n      'fallback_2a', jsonb_strip_nulls(jsonb_build_object(\n        'direction', c.fallback_2a_direction,\n        'block_family', c.fallback_2a_block_family,\n        'confidence', c.fallback_2a_confidence,\n        'explanation', c.fallback_2a_explanation\n      )),\n      'fallback_2b', jsonb_strip_nulls(jsonb_build_object(\n        'category_id', c.fallback_2b_category_id,\n        'confidence', c.fallback_2b_confidence,\n        'explanation', c.fallback_2b_explanation\n      )),\n      'judge', jsonb_strip_nulls(jsonb_build_object(\n        'category_id', c.judge_category_id,\n        'confidence', c.judge_confidence,\n        'explanation', c.judge_explanation,\n        'winner_source', c.judge_raw_json->>'winner_source'\n      ))\n    ),\n    'suggested_category_id', c.suggested_category_id,\n    'workflow_version', c.workflow_version,\n    'prompt_version', c.prompt_version,\n    'review_reason', 'needs_human_review'\n  )\nFROM candidates c\nCROSS JOIN settings s\nRETURNING id, product_id, status, run_id, telegram_chat_id, payload;\n",
+        "options": {}
+      },
+      "id": "ce68341f-d8ae-4ac1-b065-2cb9a75717b2",
+      "name": "HR — Enqueue Pending",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        280,
+        80
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "HR — Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "HR — Enqueue Pending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HR — Schedule": {
+      "main": [
+        [
+          {
+            "node": "HR — Enqueue Pending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false
+}

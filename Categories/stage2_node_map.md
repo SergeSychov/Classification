@@ -68,7 +68,8 @@ flowchart TB
 |------|----------------|------------------|-------------|
 | **P1** | Валидный JSON, category в shortlist | > 0.60 | Классифицирован → БД |
 | **P1** | null / битый JSON / вне shortlist | — | Fallback 2A |
-| **P1** | Валидный, но низкая уверенность | ≤ 0.60 | Human review → БД |
+| **P1** | Borderline (valid) | `(0.40, 0.60]` | Fallback 2A |
+| **P1** | Очень низкая уверенность (valid) | ≤ 0.40 | Human review → БД |
 | **2A** | Валидная ветка в candidates | > 0.40 | Fallback 2B |
 | **2A** | Иначе / нет кандидатов | — | Human review → БД |
 | **2B** | category в branch shortlist, нет конфликта с P1 | > 0.60 | Классифицирован → БД |
@@ -203,6 +204,7 @@ flowchart TB
 | **Fin — Merge Barrier** | Ждёт завершения и snapshot, и log по каждому товару |
 | **Fin — Pick Run** | Оставляет один item с id запуска |
 | **Fin — Close Run** | Агрегирует статистику, закрывает `classification_runs` |
+| **Fin — Batch Acceptance** | Execute Workflow → Sheets A/B + Telegram (ссылки + балансы) |
 
 ---
 
@@ -221,10 +223,11 @@ flowchart TB
 
 ---
 
-## Что дальше (не в этом workflow)
+## Human review (отдельные workflow)
 
-- **Human review через Telegram** — карточки для товаров с `needs_human_review`
-- **Policy borderline** — кейсы с confidence 0.40–0.60 сначала в fallback, а не сразу на ревью
+Borderline P1 policy внедрена: `(0.40, 0.60]` → `fallback_2a`, не сразу Telegram.
+
+Карточки `needs_human_review` (HITL) — workflows enqueue/send **деактивированы**; приёмка батча через Google Sheets: `batch_acceptance_contract.md`.
 
 Автопуть **P1 → 2A → 2B → Judge** подтверждён smoke-тестами (executions `5529`/`5530`, 2026-07-17). См. `stage2_workflow_plan.md` п.23.
 
@@ -234,6 +237,8 @@ flowchart TB
 
 | Документ | Содержание |
 |----------|------------|
+| [`batch_acceptance_contract.md`](batch_acceptance_contract.md) | Приёмка батча: Sheets A/B, Telegram, балансы после batch |
+| [`human_review_contract.md`](human_review_contract.md) | Очередь + Telegram callback |
 | [`stage2_workflow_contract.md`](stage2_workflow_contract.md) | Контракт для разработки |
 | [`stage2_workflow_plan.md`](stage2_workflow_plan.md) | Журнал выполненных фаз |
 | [`stage2_project_description.md`](stage2_project_description.md) | Бизнес-описание этапов |

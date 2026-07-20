@@ -123,7 +123,8 @@ Manual Trigger
 - `product_classification` — snapshot классификации по товару (upsert по `product_id`)
 - `product_classification_log` — event log по стадиям (`stage`, `run_id`)
 - `classification_runs` — сущность запуска Stage 2
-- `classification_review_queue` — очередь human review (зарезервирована)
+- `classification_review_queue` — очередь human review (`pending` → `sent_to_telegram` → `in_review` → `resolved`/`unresolved`); см. `human_review_contract.md`
+- `pipeline_settings` — runtime-настройки (например `telegram_review_chat_id`)
 
 Таблиц `categories`, `product_categories`, `category_tree`, `rules_shortlist` в public schema нет.
 
@@ -196,18 +197,12 @@ flowchart TD
 |---------|-----------------|--------------|-------------|
 | Валидный ответ, confidence > 0.60, category в shortlist | `classified` | `llm` | `none` |
 | null category, invalid JSON, empty, outside shortlist | `pending_fallback` | `system` | `fallback_2a` |
-| Валидный, но confidence ≤ 0.60 | `needs_human_review` | `system` | `human_review` |
+| Валидный, conf в `(0.40, 0.60]` | `pending_fallback` | `system` | `fallback_2a` |
+| Валидный, conf ≤ 0.40 | `needs_human_review` | `system` | `human_review` |
 
-**Целевая policy (borderline, к внедрению):**
+**Borderline policy (внедрена):** broken → `fallback_2a`; `(0.40, 0.60]` → `fallback_2a`; ≤ 0.40 → `human_review`; после fallback/judge низкая уверенность → Telegram.
 
-| Условие | next_action |
-|---------|-------------|
-| «Сломанные» ответы (битый JSON, `category_id=null`, вне shortlist) | `fallback_2a` |
-| Формально валидный, но low-confidence (0.40–0.60) | сначала `fallback_2a` → 2B |
-| Очень низкая уверенность (< 0.40) | сразу `human_review` (опционально) |
-| После fallback уверенность низкая или конфликт | `judge` → `human_review` |
-
-Пороги 0.40 / 0.60 — к уточнению с заказчиком при внедрении fallback.
+Пороги зафиксированы: `min_confidence_ok=0.60`, `min_confidence_borderline_low=0.40`.
 
 ### Fallback 2A — зафиксированный подход
 
@@ -237,7 +232,7 @@ flowchart TD
 3. ~~**Fallback 2A**~~ — **готово** (run 11)
 4. **Fallback 2B** — branch shortlist + DeepSeek
 5. **Judge** — Polza / Qwen, арбитраж конфликтов
-6. **Human-in-the-loop** — Telegram + `classification_review_queue`
+6. **Human-in-the-loop** — Telegram workflows + `classification_review_queue` (см. `human_review_contract.md`)
 7. **Техдолг** — параметризованные SQL, индексы, диагностические запросы
 
 ## Рабочий процесс разработки

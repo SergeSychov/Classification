@@ -1,0 +1,524 @@
+{
+  "name": "classification-human-review-callback",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "callback_query",
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "af7ba132-a978-4452-875e-a4556f30a49a",
+      "name": "HR — Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "T48nEk1GS2E9PTHd",
+          "name": "Telegram — SergeSychFirstTime_bot"
+        }
+      },
+      "webhookId": "60a05b02-e3f5-4eb8-9f73-467f2ca66426"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst update = items[0].json;\nconst cb = update.callback_query;\nconst msg = update.message || update.edited_message;\n\nif (cb) {\n  const data = String(cb.data || '');\n  const parts = data.split('|');\n  if (parts[0] !== 'hr' || parts.length < 3) {\n    return [{ json: { ok: false, error: 'unknown_callback', raw: data } }];\n  }\n  const queue_id = Number(parts[1]);\n  const action = parts[2];\n  const category_id = parts[3] != null ? Number(parts[3]) : null;\n  const from = cb.from || {};\n  const chat = cb.message?.chat || {};\n  return [{\n    json: {\n      ok: true,\n      kind: 'callback',\n      queue_id,\n      action,\n      category_id: Number.isFinite(category_id) ? category_id : null,\n      callback_query_id: cb.id,\n      telegram_user_id: String(from.id || ''),\n      telegram_username: from.username || from.first_name || String(from.id || ''),\n      telegram_chat_id: String(chat.id || ''),\n      telegram_message_id: cb.message?.message_id != null ? String(cb.message.message_id) : null,\n    },\n  }];\n}\n\nif (msg && msg.text) {\n  const text = String(msg.text).trim();\n  const from = msg.from || {};\n  const chat = msg.chat || {};\n  // follow-up: plain category_id while queue is in_review for this chat\n  const cat = Number(text);\n  return [{\n    json: {\n      ok: true,\n      kind: 'text',\n      action: 'other_text',\n      category_id: Number.isFinite(cat) ? Math.trunc(cat) : null,\n      raw_text: text,\n      telegram_user_id: String(from.id || ''),\n      telegram_username: from.username || from.first_name || String(from.id || ''),\n      telegram_chat_id: String(chat.id || ''),\n      telegram_message_id: msg.message_id != null ? String(msg.message_id) : null,\n    },\n  }];\n}\n\nreturn [{ json: { ok: false, error: 'unsupported_update' } }];\n"
+      },
+      "id": "832ac863-210b-4d10-a8f9-9e6c1045ae12",
+      "name": "HR — Parse Update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.kind }}",
+              "rightValue": "callback",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "0990feb1-96fd-4757-af91-cd8802b9da0d",
+      "name": "HR — Is Callback?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM classification_review_queue WHERE id = {{ Number($json.queue_id) }} LIMIT 1;",
+        "options": {}
+      },
+      "id": "b143f739-701a-4260-a5fb-e23d31c08bdb",
+      "name": "HR — Load Queue By Id",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        680,
+        -120
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM classification_review_queue\nWHERE telegram_chat_id = '{{ $json.telegram_chat_id }}'\n  AND status = 'in_review'\nORDER BY created_at DESC\nLIMIT 1;",
+        "options": {}
+      },
+      "id": "ea688607-0490-454f-a5cd-52cef6f28c2b",
+      "name": "HR — Load Queue By Chat",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        680,
+        120
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst ev = $('HR — Parse Update').first().json;\nconst queueItem = items[0]?.json || {};\n// postgres may return the row directly\nconst queue = queueItem.id ? queueItem : {};\nreturn [{ json: { event: ev, queue } }];\n"
+      },
+      "id": "ea2aab95-67eb-4aba-bf65-407d4109fa34",
+      "name": "HR — Merge Event Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst wrapped = items[0].json;\nconst ev = wrapped.event || $('HR — Parse Update').first().json;\nconst queue = wrapped.queue || {};\nif (!ev.ok) return [{ json: ev }];\n\nconst payload = typeof queue.payload === 'string' ? JSON.parse(queue.payload || '{}') : (queue.payload || {});\n\nlet action = ev.action;\nlet categoryId = ev.category_id;\nlet decision = 'needs_human_review';\nlet queueStatus = 'unresolved';\nlet resolution = action;\nlet explanation = '';\n\nif (ev.kind === 'text') {\n  if (!queue.id) {\n    return [{ json: { ok: false, error: 'no_open_in_review_for_chat', telegram_chat_id: ev.telegram_chat_id } }];\n  }\n  if (categoryId == null) {\n    return [{\n      json: {\n        ok: false,\n        error: 'expected_category_id_number',\n        telegram_chat_id: ev.telegram_chat_id,\n        reply_text: 'Пришлите число category_id или нажмите кнопку на карточке.',\n        mode: 'reply_only',\n      },\n    }];\n  }\n  action = 'change';\n  resolution = 'change';\n}\n\nif (action === 'a') {\n  categoryId = payload.suggested_category_id != null ? Number(payload.suggested_category_id) : null;\n  if (categoryId == null) return [{ json: { ok: false, error: 'no_suggested_category', queue_id: queue.id } }];\n  decision = 'classified';\n  queueStatus = 'resolved';\n  resolution = 'approve';\n  explanation = `Approved suggested category_id=${categoryId}`;\n} else if (action === 'c' || action === 'change') {\n  if (categoryId == null) return [{ json: { ok: false, error: 'missing_category_id', queue_id: queue.id } }];\n  decision = 'classified';\n  queueStatus = 'resolved';\n  resolution = 'change';\n  explanation = `Changed to category_id=${categoryId}`;\n} else if (action === 'u') {\n  categoryId = null;\n  decision = 'needs_human_review';\n  queueStatus = 'unresolved';\n  resolution = 'unresolved';\n  explanation = 'Marked unresolved by reviewer';\n} else if (action === 'o') {\n  return [{\n    json: {\n      ok: true,\n      mode: 'await_other',\n      queue_id: Number(queue.id),\n      product_id: Number(queue.product_id),\n      telegram_chat_id: ev.telegram_chat_id,\n      callback_query_id: ev.callback_query_id,\n      telegram_username: ev.telegram_username,\n      reply_text: `Ок. Пришлите category_id числом для product ${queue.product_id} (queue #${queue.id}).`,\n    },\n  }];\n} else {\n  return [{ json: { ok: false, error: 'unknown_action', action } }];\n}\n\nreturn [{\n  json: {\n    ok: true,\n    mode: 'resolve',\n    queue_id: Number(queue.id),\n    product_id: Number(queue.product_id || payload.product_id),\n    product_raw_id: payload.product_raw_id != null ? Number(payload.product_raw_id) : null,\n    run_id: queue.run_id != null ? Number(queue.run_id) : (payload.run_id != null ? Number(payload.run_id) : null),\n    category_id: categoryId,\n    decision_status: decision,\n    queue_status: queueStatus,\n    resolution,\n    explanation,\n    human_reviewer: ev.telegram_username,\n    human_comment: explanation,\n    callback_query_id: ev.callback_query_id || null,\n    telegram_chat_id: ev.telegram_chat_id,\n    telegram_message_id: ev.telegram_message_id,\n    workflow_version: payload.workflow_version || 'stage2_human_review_v1',\n    prompt_version: payload.prompt_version || 'prompt_human_review_v1',\n    input_payload_json: JSON.stringify(ev),\n  },\n}];\n"
+      },
+      "id": "0250f40c-164a-46aa-9f23-7485130cc97b",
+      "name": "HR — Resolve Decision",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.mode }}",
+                    "rightValue": "resolve",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "resolve"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.mode }}",
+                    "rightValue": "await_other",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "await_other"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.mode }}",
+                    "rightValue": "reply_only",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "reply_only"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9b8ace51-d852-4611-8df7-48f89506ec04",
+      "name": "HR — Mode Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1340,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE classification_review_queue\nSET status = 'in_review', telegram_chat_id = COALESCE(telegram_chat_id, '{{ $json.telegram_chat_id }}')\nWHERE id = {{ Number($json.queue_id) }}\nRETURNING id, status;",
+        "options": {}
+      },
+      "id": "695badbb-0c06-43c5-9718-99d2a603d3dc",
+      "name": "HR — Mark In Review",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1580,
+        80
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nasync function getBotToken() {\n  try {\n    const creds = await this.getCredentials('telegramApi');\n    return creds?.accessToken || creds?.apiKey || creds?.token || null;\n  } catch (_) {\n    return null;\n  }\n}\nconst token = await getBotToken.call(this);\nconst j = items[0].json;\nconst chatId = j.telegram_chat_id;\nconst text = j.reply_text || (\n  j.mode === 'resolve'\n    ? `Готово: ${j.resolution} · product ${j.product_id} · cat=${j.category_id ?? '—'} · ${j.decision_status}`\n    : (j.error || 'ok')\n);\nconst reqs = [];\nif (token && j.callback_query_id) {\n  reqs.push({\n    method: 'POST',\n    url: `https://api.telegram.org/bot${token}/answerCallbackQuery`,\n    body: { callback_query_id: j.callback_query_id, text: String(text).slice(0, 180) },\n  });\n}\nif (token && chatId) {\n  reqs.push({\n    method: 'POST',\n    url: `https://api.telegram.org/bot${token}/sendMessage`,\n    body: { chat_id: chatId, text: String(text).slice(0, 3500) },\n  });\n}\nif (!reqs.length) return [{ json: { ok: false, error: 'no_telegram_out', ...j } }];\nreturn reqs.map((r) => ({ json: { ...j, ...r } }));\n"
+      },
+      "id": "3c325c60-d40c-4ab3-b08d-c87b375f28ca",
+      "name": "HR — Prepare TG Reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        0
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "T48nEk1GS2E9PTHd",
+          "name": "Telegram — SergeSychFirstTime_bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "={{ $json.method }}",
+        "url": "={{ $json.url }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "id": "b6367a3f-6224-4a0a-92a3-d0d461754945",
+      "name": "HR — Telegram HTTP",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2460,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nfunction sqlStr(v) {\n  if (v === null || v === undefined) return 'NULL';\n  return \"'\" + String(v).replace(/'/g, \"''\") + \"'\";\n}\nfunction sqlNum(v) {\n  if (v === null || v === undefined || v === '') return 'NULL';\n  const n = Number(v);\n  return Number.isFinite(n) ? String(n) : 'NULL';\n}\n\nconst j = items[0].json;\nif (!j.ok || j.mode !== 'resolve') return [{ json: j }];\n\nconst classified = j.decision_status === 'classified';\nconst logStatus = j.queue_status === 'unresolved' ? 'unresolved' : 'success';\nconst inputJson = j.input_payload_json || '{}';\n\nconst query = `\nWITH snap AS (\n  INSERT INTO product_classification AS pc (\n    product_id, product_raw_id, latest_run_id,\n    final_category_id, final_confidence, final_explanation,\n    final_source, decision_status, human_reviewer, human_comment, reviewed_at,\n    next_action, workflow_version, prompt_version, updated_at\n  ) VALUES (\n    ${sqlNum(j.product_id)},\n    ${sqlNum(j.product_raw_id)},\n    ${sqlNum(j.run_id)},\n    ${sqlNum(j.category_id)},\n    ${classified ? '1.0' : 'NULL'},\n    ${sqlStr(j.explanation)},\n    'human',\n    ${sqlStr(j.decision_status)},\n    ${sqlStr(j.human_reviewer)},\n    ${sqlStr(j.human_comment)},\n    NOW(),\n    'none',\n    ${sqlStr(j.workflow_version)},\n    ${sqlStr(j.prompt_version)},\n    NOW()\n  )\n  ON CONFLICT (product_id) DO UPDATE SET\n    product_raw_id = COALESCE(EXCLUDED.product_raw_id, pc.product_raw_id),\n    latest_run_id = COALESCE(EXCLUDED.latest_run_id, pc.latest_run_id),\n    final_category_id = EXCLUDED.final_category_id,\n    final_confidence = EXCLUDED.final_confidence,\n    final_explanation = EXCLUDED.final_explanation,\n    final_source = 'human',\n    decision_status = EXCLUDED.decision_status,\n    human_reviewer = EXCLUDED.human_reviewer,\n    human_comment = EXCLUDED.human_comment,\n    reviewed_at = NOW(),\n    next_action = 'none',\n    workflow_version = COALESCE(EXCLUDED.workflow_version, pc.workflow_version),\n    prompt_version = COALESCE(EXCLUDED.prompt_version, pc.prompt_version),\n    updated_at = NOW()\n  RETURNING product_id\n),\nlog_ins AS (\n  INSERT INTO product_classification_log (\n    run_id, product_id, product_raw_id, stage, actor_type, actor_name, status,\n    input_payload, output_payload, selected_category_id, confidence, explanation,\n    validation_passed, decision_status, next_action, workflow_version, prompt_version\n  ) VALUES (\n    ${sqlNum(j.run_id)},\n    ${sqlNum(j.product_id)},\n    ${sqlNum(j.product_raw_id)},\n    'human_review',\n    'human',\n    ${sqlStr(j.human_reviewer)},\n    ${sqlStr(logStatus)},\n    ${sqlStr(inputJson)}::jsonb,\n    jsonb_build_object(\n      'resolution', ${sqlStr(j.resolution)},\n      'queue_id', ${sqlNum(j.queue_id)},\n      'category_id', ${j.category_id == null ? 'null' : sqlNum(j.category_id)}\n    ),\n    ${sqlNum(j.category_id)},\n    ${classified ? '1.0' : 'NULL'},\n    ${sqlStr(j.explanation)},\n    true,\n    ${sqlStr(j.decision_status)},\n    'none',\n    ${sqlStr(j.workflow_version)},\n    ${sqlStr(j.prompt_version)}\n  )\n  RETURNING id\n),\nq AS (\n  UPDATE classification_review_queue\n  SET\n    status = ${sqlStr(j.queue_status)},\n    resolution = ${sqlStr(j.resolution)},\n    resolved_category_id = ${sqlNum(j.category_id)},\n    resolved_at = NOW(),\n    classification_log_id = (SELECT id FROM log_ins)\n  WHERE id = ${sqlNum(j.queue_id)}\n  RETURNING id, status, resolution, resolved_category_id\n)\nSELECT q.*, (SELECT id FROM log_ins) AS log_id\nFROM q;\n`;\n\nreturn [{ json: { ...j, query } }];\n"
+      },
+      "id": "5f8bbbc1-ceb2-4c63-935a-8f9371ce3b76",
+      "name": "HR — Apply Resolve SQL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1580,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.query }}",
+        "options": {}
+      },
+      "id": "aaa76904-afd3-42e4-93b0-e784dbcaf33f",
+      "name": "HR — Execute Resolve",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1800,
+        -160
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst prev = $('HR — Apply Resolve SQL').first().json;\nconst row = items[0].json;\nreturn [{\n  json: {\n    ...prev,\n    db: row,\n    reply_text: `Готово: ${prev.resolution} · product ${prev.product_id} · cat=${prev.category_id ?? '—'} · ${prev.decision_status}`,\n  },\n}];\n"
+      },
+      "id": "947385db-de0b-4785-b1a5-f7e630e445fc",
+      "name": "HR — Attach Resolve Meta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2020,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst prev = $('HR — Resolve Decision').first().json;\nreturn [{ json: { ...prev, db: items[0].json } }];\n"
+      },
+      "id": "aa812455-97a5-4aaa-9474-9ef96e757b41",
+      "name": "HR — Attach Await Meta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1800,
+        80
+      ]
+    }
+  ],
+  "connections": {
+    "HR — Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "HR — Parse Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HR — Parse Update": {
+      "main": [
+        [
+          {
+            "node": "HR — Is Callback?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HR — Is Callback?": {
+      "main": [
+        [
+          {
+            "node": "HR — Load Queue By Id",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HR — Load Queue By Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HR — Load Queue By Id": {
+      "main": [
+        [
+          {
+            "node": "HR — Merge Event Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HR — Load Queue By Chat": {
+      "main": [
+        [
+          {
+            "node": "HR — Merge Event Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HR — Merge Event Context": {
+      "main": [
+        [
+          {
+            "node": "HR — Resolve Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HR — Resolve Decision": {
+      "main": [
+        [
+          {
+            "node": "HR — Mode Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HR — Mode Switch": {
+      "main": [
+        [
+          {
+            "node": "HR — Apply Resolve SQL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HR — Mark In Review",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HR — Prepare TG Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HR — Apply Resolve SQL": {
+      "main": [
+        [
+          {
+            "node": "HR — Execute Resolve",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HR — Execute Resolve": {
+      "main": [
+        [
+          {
+            "node": "HR — Attach Resolve Meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HR — Attach Resolve Meta": {
+      "main": [
+        [
+          {
+            "node": "HR — Prepare TG Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HR — Mark In Review": {
+      "main": [
+        [
+          {
+            "node": "HR — Attach Await Meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HR — Prepare TG Reply": {
+      "main": [
+        [
+          {
+            "node": "HR — Telegram HTTP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HR — Attach Await Meta": {
+      "main": [
+        [
+          {
+            "node": "HR — Prepare TG Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false
+}

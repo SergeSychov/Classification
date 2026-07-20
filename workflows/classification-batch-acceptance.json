@@ -1,0 +1,746 @@
+{
+  "name": "classification-batch-acceptance",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "6315a9bd-c868-4759-a40a-3f19d41e4582",
+      "name": "BA — Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "b5a54573-492a-47e2-99be-33d2e1cea8d8",
+      "name": "BA — Execute Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "classification-batch-acceptance",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "e510428b-72a7-490a-8398-37f7f574bc12",
+      "name": "BA — Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        360
+      ],
+      "webhookId": "9f6a2c89-3b3c-46ca-9c92-54c5b0df9375",
+      "notes": "POST /webhook/classification-batch-acceptance {run_id}"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst j = items[0].json || {};\nconst body = j.body || {};\nconst runRaw = j.run_id ?? j.id ?? body.run_id ?? body.id;\nconst runId = Number(runRaw);\nif (!Number.isFinite(runId) || runId <= 0) {\n  throw new Error('batch_acceptance requires run_id (got: ' + JSON.stringify(runRaw) + ')');\n}\nconst forceRaw = j.force ?? body.force ?? false;\nconst force = forceRaw === true || forceRaw === 'true' || forceRaw === 1 || forceRaw === '1';\nreturn [{ json: { run_id: Math.trunc(runId), force } }];\n"
+      },
+      "id": "78637a6d-421d-46ca-950d-13dee820d538",
+      "name": "BA — Normalize",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "\nINSERT INTO batch_acceptance (run_id, status, updated_at)\nVALUES ({{ Number($json.run_id) }}, 'exporting', NOW())\nON CONFLICT (run_id) DO UPDATE\nSET\n  status = 'exporting',\n  error_message = NULL,\n  spreadsheet_id = NULL,\n  spreadsheet_url = NULL,\n  sheet_a_url = NULL,\n  sheet_b_url = NULL,\n  classified_count = NULL,\n  open_count = NULL,\n  balances_json = NULL,\n  notified_at = NULL,\n  updated_at = NOW()\nWHERE batch_acceptance.status IN ('pending', 'error', 'exporting')\n   OR {{ $json.force ? 'TRUE' : 'FALSE' }}\nRETURNING\n  run_id,\n  status,\n  spreadsheet_id,\n  spreadsheet_url,\n  sheet_a_url,\n  sheet_b_url,\n  classified_count,\n  open_count;\n",
+        "options": {}
+      },
+      "id": "ecd96f3e-b03d-4fc7-a218-0afdda52462f",
+      "name": "BA — Claim",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        440,
+        80
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "bc96fcba-5947-446f-b73a-145f92eb45b9",
+              "leftValue": "={{ $json.run_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c81a8151-66b1-47ca-98e1-45d2568b76b5",
+      "name": "BA — Claimed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        660,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "\nWITH settings AS (\n  SELECT\n    (\n      SELECT NULLIF(TRIM(COALESCE(value->>'chat_id', '')), '')\n      FROM pipeline_settings WHERE key = 'telegram_ops_chat_id'\n    ) AS ops_chat_id,\n    (\n      SELECT COALESCE(NULLIF(TRIM(value->>'value'), '')::numeric, 1)\n      FROM pipeline_settings WHERE key = 'balance_alert_threshold_usd'\n    ) AS threshold_usd,\n    (\n      SELECT COALESCE(NULLIF(TRIM(value->>'value'), '')::numeric, 80)\n      FROM pipeline_settings WHERE key = 'usd_rub_rate'\n    ) AS usd_rub_rate,\n    (\n      SELECT NULLIF(TRIM(COALESCE(value->>'folder_id', '')), '')\n      FROM pipeline_settings WHERE key = 'google_sheets_folder_id'\n    ) AS sheets_folder_id\n),\nrun_ref AS (\n  SELECT {{ Number($('BA — Normalize').first().json.run_id) }}::bigint AS run_id\n),\nclassified AS (\n  SELECT COALESCE(jsonb_agg(row_to_json(x) ORDER BY x.product_name), '[]'::jsonb) AS rows_a\n  FROM (\n    SELECT\n      COALESCE(pp.product_name_effective, '') AS product_name,\n      COALESCE(cd.category_code, '') AS category_code,\n      COALESCE(cd.category_name, '') AS category_name,\n      pc.final_confidence AS confidence,\n      COALESCE(pc.final_explanation, '') AS explanation\n    FROM run_ref r\n    CROSS JOIN product_classification pc\n    LEFT JOIN products_prepared pp ON pp.id = pc.product_id\n    LEFT JOIN categories_dict cd ON cd.id = pc.final_category_id\n    WHERE pc.decision_status = 'classified'\n    ORDER BY pc.product_id\n  ) x\n),\nopen_rows AS (\n  SELECT COALESCE(jsonb_agg(row_to_json(x) ORDER BY x.product_name), '[]'::jsonb) AS rows_b\n  FROM (\n    SELECT\n      COALESCE(pp.product_name_effective, '') AS product_name,\n      COALESCE((\n        SELECT string_agg(\n          COALESCE(e->>'category_id', '') || ':' || COALESCE(e->>'category_name', e->>'category_code', ''),\n          '; '\n          ORDER BY ordinality\n        )\n        FROM jsonb_array_elements(\n          CASE WHEN jsonb_typeof(cs.shortlist_json) = 'array' THEN cs.shortlist_json ELSE '[]'::jsonb END\n        ) WITH ORDINALITY AS t(e, ordinality)\n        WHERE ordinality <= 8\n      ), '') AS shortlist\n    FROM run_ref r\n    CROSS JOIN product_classification pc\n    LEFT JOIN products_prepared pp ON pp.id = pc.product_id\n    LEFT JOIN classification_shortlist cs\n      ON cs.product_id = pc.product_id\n     AND (cs.stage IS NULL OR cs.stage = 'primary_rules')\n    WHERE pc.decision_status IN ('needs_human_review', 'error')\n    ORDER BY pc.product_id\n  ) x\n)\nSELECT\n  r.run_id,\n  s.ops_chat_id,\n  s.threshold_usd,\n  s.usd_rub_rate,\n  s.sheets_folder_id,\n  c.rows_a,\n  o.rows_b,\n  jsonb_array_length(c.rows_a) AS classified_count,\n  jsonb_array_length(o.rows_b) AS open_count,\n  COALESCE(cr.status, '') AS run_status\nFROM run_ref r\nCROSS JOIN settings s\nCROSS JOIN classified c\nCROSS JOIN open_rows o\nLEFT JOIN classification_runs cr ON cr.id = r.run_id;\n",
+        "options": {}
+      },
+      "id": "cf170e12-e2f0-4914-9e45-ba8bd6800dd6",
+      "name": "BA — Load Bundle",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        880,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst j = items[0].json || {};\nconst runId = Number(j.run_id);\nconst d = new Date();\nconst y = d.getUTCFullYear();\nconst m = String(d.getUTCMonth() + 1).padStart(2, '0');\nconst day = String(d.getUTCDate()).padStart(2, '0');\nconst title = `batch_${runId}_${y}${m}${day}`;\n\nfunction asArray(v) {\n  if (Array.isArray(v)) return v;\n  if (v == null || v === '') return [];\n  if (typeof v === 'string') {\n    try { return JSON.parse(v); } catch (_) { return []; }\n  }\n  return [];\n}\n\nreturn [{\n  json: {\n    run_id: runId,\n    title,\n    ops_chat_id: j.ops_chat_id || '',\n    threshold_usd: Number(j.threshold_usd) || 1,\n    usd_rub_rate: Number(j.usd_rub_rate) || 80,\n    sheets_folder_id: j.sheets_folder_id || '',\n    rows_a: asArray(j.rows_a),\n    rows_b: asArray(j.rows_b),\n    classified_count: Number(j.classified_count) || 0,\n    open_count: Number(j.open_count) || 0,\n    run_status: j.run_status || '',\n  },\n}];\n"
+      },
+      "id": "ccf93dcc-dd22-482f-abd5-63af78ec7b6b",
+      "name": "BA — Prepare Create",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "spreadsheet",
+        "operation": "create",
+        "title": "={{ $json.title }}",
+        "sheetsUi": {
+          "sheetValues": [
+            {
+              "title": "A_classified"
+            },
+            {
+              "title": "B_open"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9708ee3b-73d8-431a-befa-99f354f92591",
+      "name": "BA — Create Spreadsheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1320,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "v2NiEo8MpFLub2Fq",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst bundle = $('BA — Prepare Create').first().json;\nconst created = items[0].json || {};\nconst spreadsheetId = created.spreadsheetId || created.id || '';\nconst spreadsheetUrl = created.spreadsheetUrl\n  || (spreadsheetId ? `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit` : '');\n\nconst sheets = Array.isArray(created.sheets) ? created.sheets : [];\nfunction gidFor(title) {\n  const hit = sheets.find((s) => (s.properties && s.properties.title) === title);\n  const gid = hit && hit.properties ? hit.properties.sheetId : null;\n  return gid == null ? null : Number(gid);\n}\n\nconst gidA = gidFor('A_classified');\nconst gidB = gidFor('B_open');\nconst sheetAUrl = spreadsheetId\n  ? `${spreadsheetUrl.split('/edit')[0]}/edit#gid=${gidA == null ? 0 : gidA}`\n  : '';\nconst sheetBUrl = spreadsheetId\n  ? `${spreadsheetUrl.split('/edit')[0]}/edit#gid=${gidB == null ? 0 : gidB}`\n  : '';\n\nreturn [{\n  json: {\n    ...bundle,\n    spreadsheet_id: spreadsheetId,\n    spreadsheet_url: spreadsheetUrl,\n    sheet_a_url: sheetAUrl,\n    sheet_b_url: sheetBUrl,\n    sheet_a_gid: gidA,\n    sheet_b_gid: gidB,\n  },\n}];\n"
+      },
+      "id": "ed1cd8c0-03ec-40c1-9542-818d608f3f0b",
+      "name": "BA — After Create",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.googleapis.com/drive/v3/files/{{ $('BA — After Create').first().json.spreadsheet_id }}/permissions?supportsAllDrives=true",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ role: 'writer', type: 'anyone', allowFileDiscovery: false }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "c04dad4b-a56e-48c7-9b38-c6a329334a38",
+      "name": "BA — Share Anyone Writer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1650,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "v2NiEo8MpFLub2Fq",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "continueOnFail": true,
+      "notes": "Anyone with link can edit (via Sheets OAuth owner)"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst meta = $('BA — After Create').first().json;\nconst rows = Array.isArray(meta.rows_a) ? meta.rows_a : [];\nconst empty = {\n  product_name: '',\n  category_code: '',\n  category_name: '',\n  confidence: '',\n  explanation: '',\n};\nif (!rows.length) return [{ json: empty }];\nreturn rows.map((r) => ({\n  json: {\n    product_name: r.product_name ?? '',\n    category_code: r.category_code ?? '',\n    category_name: r.category_name ?? '',\n    confidence: r.confidence ?? '',\n    explanation: r.explanation ?? '',\n  },\n}));\n"
+      },
+      "id": "b727d478-2c91-473a-956f-f26073c2d397",
+      "name": "BA — Expand A",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('BA — After Create').first().json.spreadsheet_id }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "A_classified"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": null
+        },
+        "options": {
+          "useAppend": true
+        }
+      },
+      "id": "5e2e95d1-3edb-4953-b19f-912be8adda98",
+      "name": "BA — Append A",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1980,
+        -100
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "v2NiEo8MpFLub2Fq",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst meta = $('BA — After Create').first().json;\nconst rows = Array.isArray(meta.rows_b) ? meta.rows_b : [];\nconst empty = {\n  product_name: '',\n  shortlist: '',\n};\nif (!rows.length) return [{ json: empty }];\nreturn rows.map((r) => ({\n  json: {\n    product_name: r.product_name ?? '',\n    shortlist: r.shortlist ?? '',\n  },\n}));\n"
+      },
+      "id": "da969712-d0fd-4196-ae31-f66f8508cdf2",
+      "name": "BA — Expand B",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2200,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('BA — After Create').first().json.spreadsheet_id }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "B_open"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": null
+        },
+        "options": {
+          "useAppend": true
+        }
+      },
+      "id": "beb20d8f-0b50-43d8-83c1-677b1a018a42",
+      "name": "BA — Append B",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2420,
+        -100
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "v2NiEo8MpFLub2Fq",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.deepseek.com/user/balance",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "734d8b4f-70d0-4b64-9294-13d7ecd3746a",
+      "name": "BA — HTTP DeepSeek",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2640,
+        -160
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Gmg28IgPyPk5vSBf",
+          "name": "DeepSeek Balance Auth"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://polza.ai/api/v1/balance",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "533a5c1d-d6be-4ed6-97f7-bd70fa737ae3",
+      "name": "BA — HTTP Polza",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2640,
+        -20
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "XBSW3qpVBUfoEMXK",
+          "name": "Polza Balance Auth"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const meta = $('BA — After Create').first().json;\nreturn [{ json: { run_id: meta.run_id } }];"
+      },
+      "id": "44637c9f-efbb-4e68-8529-4b3cc3d1d500",
+      "name": "BA — Start Balances",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2420,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "id": "0ac0565d-3015-4d52-9c55-cdd1043ea245",
+      "name": "BA — Merge Balances",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        2860,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst meta = $('BA — After Create').first().json;\nconst deepseek = $('BA — HTTP DeepSeek').first().json;\nconst polza = $('BA — HTTP Polza').first().json;\nconst thrUsd = Number(meta.threshold_usd);\nconst rate = Number(meta.usd_rub_rate);\nconst thresholdUsd = Number.isFinite(thrUsd) ? thrUsd : 1;\nconst usdRubRate = Number.isFinite(rate) && rate > 0 ? rate : 80;\n\nfunction money(amount, currency) {\n  const n = Number(amount);\n  if (!Number.isFinite(n)) return '?';\n  const cur = String(currency || '').toUpperCase();\n  if (cur === 'USD') return `$${n.toFixed(2)}`;\n  if (cur === 'RUB') return `${n.toFixed(2)} RUB`;\n  return `${n.toFixed(2)} ${currency}`;\n}\n\nfunction thrFor(currency) {\n  return String(currency).toUpperCase() === 'RUB' ? thresholdUsd * usdRubRate : thresholdUsd;\n}\n\nfunction parseDeepseek(raw) {\n  if (!raw || raw.error) return { ok: false, error: (raw && (raw.error || raw.message)) || 'unavailable' };\n  const infos = raw.balance_infos || [];\n  const chosen = infos.find((i) => String(i.currency || '').toUpperCase() === 'USD') || infos[0];\n  if (!chosen) return { ok: false, error: 'no_balance_infos' };\n  const amount = Number(chosen.total_balance);\n  if (!Number.isFinite(amount)) return { ok: false, error: 'bad_amount' };\n  return { ok: true, amount, currency: chosen.currency || 'USD' };\n}\n\nfunction parsePolza(raw) {\n  if (!raw || raw.error) return { ok: false, error: (raw && (raw.error || raw.message)) || 'unavailable' };\n  const amount = Number(raw.amount);\n  if (!Number.isFinite(amount)) return { ok: false, error: 'bad_amount' };\n  return { ok: true, amount, currency: 'RUB' };\n}\n\nconst ds = parseDeepseek(deepseek);\nconst pz = parsePolza(polza);\n\nconst now = new Date();\nconst parts = new Intl.DateTimeFormat('en-CA', {\n  timeZone: 'Europe/Moscow',\n  year: 'numeric', month: '2-digit', day: '2-digit',\n  hour: '2-digit', minute: '2-digit', hour12: false,\n}).formatToParts(now);\nconst get = (t) => (parts.find((p) => p.type === t) || {}).value;\nconst stamp = `${get('year')}-${get('month')}-${get('day')} ${get('hour')}:${get('minute')}`;\n\nconst agents = [\n  { name: 'DeepSeek', ...ds },\n  { name: 'Polza (Judge)', ...pz },\n];\nconst balancesJson = agents.map((a) => ({\n  name: a.name,\n  ok: !!a.ok,\n  amount: a.ok ? a.amount : null,\n  currency: a.currency || null,\n  error: a.ok ? null : (a.error || 'unavailable'),\n}));\n\nconst balLines = [`Balances · ${stamp} MSK`, ''];\nconst low = [];\nfor (const a of agents) {\n  if (!a.ok) {\n    balLines.push(`• ${a.name}: error (${a.error || 'unavailable'})`);\n    continue;\n  }\n  const thr = thrFor(a.currency);\n  const warn = a.amount < thr ? ' !' : '';\n  if (a.amount < thr) low.push(a.name);\n  balLines.push(`• ${a.name}: ${money(a.amount, a.currency)}${warn}`);\n}\nbalLines.push('');\nconst usdLabel = Number.isInteger(thresholdUsd) ? String(thresholdUsd) : thresholdUsd.toFixed(2);\nconst rubThr = thrFor('RUB');\nconst rubLabel = Number.isInteger(rubThr) ? String(rubThr) : String(Math.round(rubThr));\nbalLines.push(`Below $${usdLabel} / ${rubLabel} RUB: ${low.length ? low.join(', ') : '— none —'}`);\n\nconst lines = [\n  `Batch run #${meta.run_id} · ${meta.run_status || 'finished'}`,\n  `A classified: ${meta.classified_count} — ${meta.sheet_a_url}`,\n  `B open: ${meta.open_count} — ${meta.sheet_b_url}`,\n  'Sheets are shared: anyone with the link can edit.',\n  'Pipeline stopped — wait for customer review.',\n  '',\n  ...balLines,\n];\n\nconst chatId = String(meta.ops_chat_id || '').trim();\nif (!chatId) {\n  return [{\n    json: {\n      ok: false,\n      error: 'missing_telegram_ops_chat_id',\n      run_id: meta.run_id,\n      spreadsheet_id: meta.spreadsheet_id,\n      spreadsheet_url: meta.spreadsheet_url,\n      sheet_a_url: meta.sheet_a_url,\n      sheet_b_url: meta.sheet_b_url,\n      classified_count: meta.classified_count,\n      open_count: meta.open_count,\n      balances_json: balancesJson,\n      skip_telegram: true,\n      message_text: lines.join('\\n'),\n    },\n  }];\n}\n\nreturn [{\n  json: {\n    ok: true,\n    run_id: meta.run_id,\n    telegram_chat_id: chatId,\n    message_text: lines.join('\\n'),\n    spreadsheet_id: meta.spreadsheet_id,\n    spreadsheet_url: meta.spreadsheet_url,\n    sheet_a_url: meta.sheet_a_url,\n    sheet_b_url: meta.sheet_b_url,\n    classified_count: meta.classified_count,\n    open_count: meta.open_count,\n    balances_json: balancesJson,\n    skip_telegram: false,\n  },\n}];\n"
+      },
+      "id": "071ef431-dbc1-4f87-b771-c4ac613a2061",
+      "name": "BA — Format Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3080,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $json.telegram_chat_id }}",
+        "text": "={{ $json.message_text }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "ad4fe429-97da-4ee1-899a-f72ca1002235",
+      "name": "BA — Send Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3520,
+        -160
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "T48nEk1GS2E9PTHd",
+          "name": "Telegram — SergeSychFirstTime_bot"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "\nUPDATE batch_acceptance\nSET\n  status = 'notified',\n  spreadsheet_id = '{{ String($(\"BA — Format Message\").first().json.spreadsheet_id || \"\").replace(/'/g, \"''\") }}',\n  spreadsheet_url = '{{ String($(\"BA — Format Message\").first().json.spreadsheet_url || \"\").replace(/'/g, \"''\") }}',\n  sheet_a_url = '{{ String($(\"BA — Format Message\").first().json.sheet_a_url || \"\").replace(/'/g, \"''\") }}',\n  sheet_b_url = '{{ String($(\"BA — Format Message\").first().json.sheet_b_url || \"\").replace(/'/g, \"''\") }}',\n  classified_count = {{ Number($(\"BA — Format Message\").first().json.classified_count) || 0 }},\n  open_count = {{ Number($(\"BA — Format Message\").first().json.open_count) || 0 }},\n  balances_json = '{{ JSON.stringify($(\"BA — Format Message\").first().json.balances_json || []).replace(/'/g, \"''\") }}'::jsonb,\n  error_message = CASE\n    WHEN {{ $(\"BA — Format Message\").first().json.ok ? \"true\" : \"false\" }} THEN NULL\n    ELSE '{{ String($(\"BA — Format Message\").first().json.error || \"export_notify_issue\").replace(/'/g, \"''\").slice(0, 500) }}'\n  END,\n  notified_at = NOW(),\n  updated_at = NOW()\nWHERE run_id = {{ Number($(\"BA — Format Message\").first().json.run_id) }}\nRETURNING run_id, status, spreadsheet_url, sheet_a_url, sheet_b_url, classified_count, open_count, notified_at, error_message;\n",
+        "options": {}
+      },
+      "id": "4ee6d005-cd75-457a-acc2-7a92d51e4958",
+      "name": "BA — Mark Notified",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        3740,
+        -80
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "\nUPDATE batch_acceptance\nSET\n  status = 'error',\n  error_message = '{{ String($json.error || \"export_failed\").replace(/'/g, \"''\").slice(0, 500) }}',\n  updated_at = NOW()\nWHERE run_id = {{ Number($('BA — Normalize').first().json.run_id) }}\nRETURNING run_id, status, error_message;\n",
+        "options": {}
+      },
+      "id": "44ecb21e-8984-4d5f-bb89-e636e15c8165",
+      "name": "BA — Mark Skip Error",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        3520,
+        40
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "559bdb49-e10d-4d73-a689-1f57756a47b7",
+      "name": "BA — Already Done",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        880,
+        200
+      ]
+    }
+  ],
+  "connections": {
+    "BA — Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "BA — Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BA — Execute Trigger": {
+      "main": [
+        [
+          {
+            "node": "BA — Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BA — Webhook": {
+      "main": [
+        [
+          {
+            "node": "BA — Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BA — Normalize": {
+      "main": [
+        [
+          {
+            "node": "BA — Claim",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BA — Claim": {
+      "main": [
+        [
+          {
+            "node": "BA — Claimed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BA — Claimed?": {
+      "main": [
+        [
+          {
+            "node": "BA — Load Bundle",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "BA — Already Done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BA — Load Bundle": {
+      "main": [
+        [
+          {
+            "node": "BA — Prepare Create",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BA — Prepare Create": {
+      "main": [
+        [
+          {
+            "node": "BA — Create Spreadsheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BA — Create Spreadsheet": {
+      "main": [
+        [
+          {
+            "node": "BA — After Create",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BA — After Create": {
+      "main": [
+        [
+          {
+            "node": "BA — Share Anyone Writer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BA — Share Anyone Writer": {
+      "main": [
+        [
+          {
+            "node": "BA — Expand A",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BA — Expand A": {
+      "main": [
+        [
+          {
+            "node": "BA — Append A",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BA — Append A": {
+      "main": [
+        [
+          {
+            "node": "BA — Expand B",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BA — Expand B": {
+      "main": [
+        [
+          {
+            "node": "BA — Append B",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BA — Append B": {
+      "main": [
+        [
+          {
+            "node": "BA — Start Balances",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BA — Start Balances": {
+      "main": [
+        [
+          {
+            "node": "BA — HTTP DeepSeek",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "BA — HTTP Polza",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BA — HTTP DeepSeek": {
+      "main": [
+        [
+          {
+            "node": "BA — Merge Balances",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BA — HTTP Polza": {
+      "main": [
+        [
+          {
+            "node": "BA — Merge Balances",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "BA — Merge Balances": {
+      "main": [
+        [
+          {
+            "node": "BA — Format Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BA — Format Message": {
+      "main": [
+        [
+          {
+            "node": "BA — Send Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BA — Send Telegram": {
+      "main": [
+        [
+          {
+            "node": "BA — Mark Notified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}

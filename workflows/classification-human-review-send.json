@@ -1,0 +1,360 @@
+{
+  "name": "classification-human-review-send",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "12784518-6117-4522-95bb-2ab6233505d1",
+      "name": "HR — Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 10
+            }
+          ]
+        }
+      },
+      "id": "a9fac225-12eb-463a-85b2-d0c9a7e87cf6",
+      "name": "HR — Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT COALESCE(value->>'chat_id','') AS chat_id FROM pipeline_settings WHERE key = 'telegram_review_chat_id';",
+        "options": {}
+      },
+      "id": "427adbbb-f28b-4056-924e-0f59df6d8644",
+      "name": "HR — Load Settings",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        220,
+        80
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH picked AS (\n  SELECT id\n  FROM classification_review_queue\n  WHERE status = 'pending'\n  ORDER BY priority ASC, created_at ASC\n  LIMIT 1\n  FOR UPDATE SKIP LOCKED\n),\nclaimed AS (\n  UPDATE classification_review_queue q\n  SET status = 'sending'\n  FROM picked p\n  WHERE q.id = p.id\n  RETURNING q.id, q.product_id, q.run_id, q.telegram_chat_id, q.payload, q.status, q.priority, q.created_at\n)\nSELECT\n  c.id,\n  c.product_id,\n  c.run_id,\n  c.telegram_chat_id,\n  c.status,\n  c.priority,\n  c.created_at,\n  c.payload || jsonb_build_object(\n    'shortlist_top', (\n      SELECT COALESCE(jsonb_agg(enriched ORDER BY ord), '[]'::jsonb)\n      FROM (\n        SELECT\n          ord,\n          jsonb_strip_nulls(jsonb_build_object(\n            'category_id', cd.id,\n            'category_code', cd.category_code,\n            'category_name', cd.category_name,\n            'direction', cd.direction,\n            'hierarchy_level', cd.hierarchy_level,\n            'product_type', cd.product_type,\n            'administration_route', cd.administration_route,\n            'age_segment', cd.age_segment,\n            'mnn_cluster', cd.mnn_cluster,\n            'need_nosology', cd.need_nosology,\n            'differentiation_degree', cd.differentiation_degree,\n            'inclusion_comment', cd.inclusion_comment,\n            'notes', cd.notes,\n            'include_keywords', to_jsonb(cd.include_keywords),\n            'exclude_keywords', to_jsonb(cd.exclude_keywords),\n            'score', NULLIF(elem->>'score','')::numeric\n          )) AS enriched\n        FROM jsonb_array_elements(COALESCE(c.payload->'shortlist_top', '[]'::jsonb))\n          WITH ORDINALITY AS t(elem, ord)\n        LEFT JOIN categories_dict cd\n          ON cd.id = NULLIF(elem->>'category_id', '')::bigint\n      ) x\n    ),\n    'suggested_category', (\n      SELECT jsonb_strip_nulls(jsonb_build_object(\n        'category_id', cd.id,\n        'category_code', cd.category_code,\n        'category_name', cd.category_name,\n        'direction', cd.direction,\n        'hierarchy_level', cd.hierarchy_level,\n        'product_type', cd.product_type,\n        'administration_route', cd.administration_route,\n        'age_segment', cd.age_segment,\n        'mnn_cluster', cd.mnn_cluster,\n        'need_nosology', cd.need_nosology,\n        'differentiation_degree', cd.differentiation_degree,\n        'inclusion_comment', cd.inclusion_comment,\n        'notes', cd.notes,\n        'include_keywords', to_jsonb(cd.include_keywords),\n        'exclude_keywords', to_jsonb(cd.exclude_keywords)\n      ))\n      FROM categories_dict cd\n      WHERE cd.id = NULLIF(c.payload->>'suggested_category_id', '')::bigint\n    )\n  ) AS payload\nFROM claimed c;",
+        "options": {}
+      },
+      "id": "30b3d8ec-6601-4f6a-b421-ed898be87b06",
+      "name": "HR — Select Pending",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        440,
+        80
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nfunction sanitizeTg(s) {\n  return String(s || '').replace(/[_*`\\[\\]]/g, ' ');\n}\n\nfunction clip(s, n) {\n  const t = String(s || '').replace(/\\s+/g, ' ').trim();\n  if (t.length <= n) return t;\n  return t.slice(0, n - 1) + '…';\n}\n\nfunction kw(v) {\n  if (Array.isArray(v)) return v.filter(Boolean).join(', ');\n  if (v == null) return '';\n  return String(v);\n}\n\nfunction fmtCatBlock(c, idx) {\n  if (!c || typeof c !== 'object') return [];\n  const id = c.category_id ?? '—';\n  const head = `${idx}. id=${id} | ${clip(c.category_name || '', 90)}`;\n  const meta = [\n    c.category_code ? `code=${c.category_code}` : null,\n    c.direction ? `dir=${c.direction}` : null,\n    c.hierarchy_level ? `lvl=${c.hierarchy_level}` : null,\n    c.product_type ? `type=${c.product_type}` : null,\n    c.administration_route ? `route=${c.administration_route}` : null,\n    c.age_segment ? `age=${c.age_segment}` : null,\n    c.mnn_cluster ? `mnn=${c.mnn_cluster}` : null,\n    c.need_nosology ? `nosology=${c.need_nosology}` : null,\n  ].filter(Boolean).join(' | ');\n  const lines = [head];\n  if (meta) lines.push(`   ${clip(meta, 220)}`);\n  if (c.inclusion_comment) lines.push(`   описание: ${clip(c.inclusion_comment, 280)}`);\n  if (c.notes) lines.push(`   notes: ${clip(c.notes, 160)}`);\n  const inc = kw(c.include_keywords);\n  const exc = kw(c.exclude_keywords);\n  if (inc) lines.push(`   include: ${clip(inc, 140)}`);\n  if (exc) lines.push(`   exclude: ${clip(exc, 100)}`);\n  return lines;\n}\n\nfunction fmtProp(label, p, byId) {\n  if (!p || typeof p !== 'object') return null;\n  const cid = p.category_id != null ? Number(p.category_id) : null;\n  const cat = (cid != null && byId[cid]) ? byId[cid] : null;\n  const parts = [];\n  if (p.category_id != null) parts.push(`cat=${p.category_id}`);\n  if (cat?.category_name) parts.push(clip(cat.category_name, 60));\n  if (p.direction) parts.push(`dir=${p.direction}`);\n  if (p.block_family) parts.push(`block=${p.block_family}`);\n  if (p.confidence != null) parts.push(`conf=${p.confidence}`);\n  if (p.winner_source) parts.push(`winner=${p.winner_source}`);\n  if (p.explanation) parts.push(clip(p.explanation, 140));\n  if (!parts.length) return null;\n  return `• ${label}: ${parts.join(' | ')}`;\n}\n\nconst settingsChat = String($('HR — Load Settings').first().json.chat_id || '').trim();\n\nreturn items.map((item) => {\n  const row = item.json;\n  const payload = typeof row.payload === 'string' ? JSON.parse(row.payload) : (row.payload || {});\n  const qid = Number(row.id);\n  const chatId = String(row.telegram_chat_id || settingsChat || '').trim();\n  const shortlist = Array.isArray(payload.shortlist_top) ? payload.shortlist_top : [];\n  const proposals = payload.proposals || {};\n  const suggested = payload.suggested_category || (\n    payload.suggested_category_id != null\n      ? { category_id: payload.suggested_category_id }\n      : null\n  );\n\n  const byId = {};\n  for (const c of shortlist) {\n    const id = Number(c.category_id);\n    if (Number.isFinite(id)) byId[id] = c;\n  }\n  if (suggested && suggested.category_id != null) {\n    byId[Number(suggested.category_id)] = { ...byId[Number(suggested.category_id)], ...suggested };\n  }\n\n  const lines = [\n    `Review #${qid} · product ${payload.product_id}`,\n    `run_id=${payload.run_id || row.run_id || '—'}`,\n    '',\n    clip(payload.product_name || payload.combined_text || '—', 300),\n    '',\n    'Предложения модели:',\n  ];\n\n  for (const label of ['judge', 'fallback_2b', 'primary_llm', 'fallback_2a']) {\n    const line = fmtProp(label, proposals[label], byId);\n    if (line) lines.push(line);\n  }\n\n  lines.push('', 'Кандидаты (полное описание):');\n  if (!shortlist.length) {\n    lines.push('(shortlist пуст)');\n  } else {\n    shortlist.slice(0, 5).forEach((c, i) => {\n      lines.push(...fmtCatBlock(c, i + 1));\n    });\n  }\n\n  if (suggested) {\n    lines.push('', 'Suggested:');\n    lines.push(...fmtCatBlock(suggested, '★'));\n  }\n\n  let message_text = sanitizeTg(lines.join('\\n'));\n  if (message_text.length > 3900) {\n    message_text = message_text.slice(0, 3899) + '…';\n  }\n\n  const approveBtns = [\n    { text: '✅ Approve', callback_data: `hr|${qid}|a` },\n    { text: '❓ Unresolved', callback_data: `hr|${qid}|u` },\n  ];\n  const changeRow = [];\n  for (const c of shortlist.slice(0, 4)) {\n    const cid = Number(c.category_id);\n    if (!Number.isFinite(cid)) continue;\n    changeRow.push({ text: `→ ${cid}`, callback_data: `hr|${qid}|c|${cid}` });\n  }\n  changeRow.push({ text: '✏️ Other', callback_data: `hr|${qid}|o` });\n\n  const toN8nRow = (btns) => ({\n    row: {\n      buttons: btns.map((b) => ({\n        text: b.text,\n        additionalFields: { callback_data: b.callback_data },\n      })),\n    },\n  });\n\n  const btns = {};\n  changeRow.slice(0, 4).forEach((b, i) => {\n    btns[`btn${i+1}_text`] = b.text;\n    btns[`btn${i+1}_data`] = b.callback_data;\n  });\n  // pad to 4 so expressions never empty\n  for (let i = 1; i <= 4; i++) {\n    if (!btns[`btn${i}_text`]) {\n      btns[`btn${i}_text`] = '·';\n      btns[`btn${i}_data`] = `hr|${qid}|noop`;\n    }\n  }\n\n  return {\n    json: {\n      queue_id: qid,\n      product_id: payload.product_id,\n      telegram_chat_id: chatId,\n      message_text,\n      reply_markup: { inline_keyboard: [approveBtns, changeRow] },\n      n8n_keyboard_rows: [toN8nRow(approveBtns), toN8nRow(changeRow)],\n      callback_approve: `hr|${qid}|a`,\n      callback_unresolved: `hr|${qid}|u`,\n      ...btns,\n      skip: !chatId,\n      skip_reason: chatId ? null : 'missing_telegram_chat_id',\n    },\n  };\n});\n"
+      },
+      "id": "c67e8586-b326-4e63-a0c6-274a64bd89a2",
+      "name": "HR — Format Card",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "75227456-f22e-48ae-8a01-94d3e8da1d27",
+      "name": "HR — Skip Empty?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1080,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.query }}",
+        "options": {}
+      },
+      "id": "694a4448-266d-45db-bd46-3338bdb76fc1",
+      "name": "HR — Mark Sent",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1740,
+        200
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "rcmpgUWgwB2BRYlW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nreturn items.map((item, index) => {\n  const prep = $('HR — Format Card').item.json;\n  const tg = item.json;\n  const result = tg.result || tg;\n  const messageId = result.message_id ?? tg.message_id;\n  const chatId = result.chat?.id ?? tg.chat?.id ?? prep.telegram_chat_id;\n  if (!prep.queue_id) {\n    return { json: { ok: false, error: 'missing_queue_id', tg }, pairedItem: index };\n  }\n  const qid = Number(prep.queue_id);\n  const mid = messageId != null ? String(messageId) : '';\n  const cid = chatId != null ? String(chatId) : '';\n  const query = `\nUPDATE classification_review_queue\nSET\n  status = 'sent_to_telegram',\n  sent_at = NOW(),\n  telegram_chat_id = COALESCE(NULLIF('${cid.replace(/'/g, \"''\")}', ''), telegram_chat_id),\n  telegram_message_id = COALESCE(NULLIF('${mid.replace(/'/g, \"''\")}', ''), telegram_message_id)\nWHERE id = ${qid}\n  AND status IN ('pending', 'sending')\nRETURNING id, product_id, status, telegram_message_id, telegram_chat_id;\n`;\n  return { json: { ...prep, telegram_message_id: mid, query }, pairedItem: index };\n});\n"
+      },
+      "id": "e0eb1474-5c35-4a81-91f0-900c3edcc9ac",
+      "name": "HR — Build Mark Sent",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1520,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hr-send-test",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "f07f29fa-2201-4cdc-96d0-a88df8067dca",
+      "name": "HR — Webhook Test",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        320
+      ],
+      "webhookId": "723498ae-36e4-4267-bc29-a832f823a45d"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $json.telegram_chat_id }}",
+        "text": "={{ $json.message_text }}",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "✅ Approve",
+                    "additionalFields": {
+                      "callback_data": "={{ $json.callback_approve }}"
+                    }
+                  },
+                  {
+                    "text": "❓ Unresolved",
+                    "additionalFields": {
+                      "callback_data": "={{ $json.callback_unresolved }}"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "={{ $json.btn1_text }}",
+                    "additionalFields": {
+                      "callback_data": "={{ $json.btn1_data }}"
+                    }
+                  },
+                  {
+                    "text": "={{ $json.btn2_text }}",
+                    "additionalFields": {
+                      "callback_data": "={{ $json.btn2_data }}"
+                    }
+                  },
+                  {
+                    "text": "={{ $json.btn3_text }}",
+                    "additionalFields": {
+                      "callback_data": "={{ $json.btn3_data }}"
+                    }
+                  },
+                  {
+                    "text": "={{ $json.btn4_text }}",
+                    "additionalFields": {
+                      "callback_data": "={{ $json.btn4_data }}"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "b3d9ba55-a884-4191-abe9-46760187dee6",
+      "name": "HR — Send Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1300,
+        200
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "T48nEk1GS2E9PTHd",
+          "name": "Telegram — SergeSychFirstTime_bot"
+        }
+      },
+      "webhookId": "221494bf-9c3f-4d56-b072-9527e91f801e"
+    }
+  ],
+  "connections": {
+    "HR — Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "HR — Load Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HR — Schedule": {
+      "main": [
+        [
+          {
+            "node": "HR — Load Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HR — Load Settings": {
+      "main": [
+        [
+          {
+            "node": "HR — Select Pending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HR — Select Pending": {
+      "main": [
+        [
+          {
+            "node": "HR — Format Card",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HR — Format Card": {
+      "main": [
+        [
+          {
+            "node": "HR — Skip Empty?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HR — Skip Empty?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "HR — Send Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HR — Send Telegram": {
+      "main": [
+        [
+          {
+            "node": "HR — Build Mark Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HR — Build Mark Sent": {
+      "main": [
+        [
+          {
+            "node": "HR — Mark Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HR — Webhook Test": {
+      "main": [
+        [
+          {
+            "node": "HR — Load Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false
+}

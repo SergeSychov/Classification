@@ -42,9 +42,18 @@ Load — Limit Batch
 
 | next_action | Куда |
 |-------------|------|
-| `none` | DB (classified) |
-| `human_review` | DB |
-| `fallback_2a` | 2A |
+| `none` | DB (classified, confidence > `min_confidence_ok`) |
+| `fallback_2a` | 2A — broken / outside shortlist / borderline `(borderline_low, min_ok]` |
+| `human_review` | DB — valid, но confidence ≤ `min_confidence_borderline_low` |
+
+**P1 routing policy (borderline):**
+
+| Условие | `decision_status` | `next_action` |
+|---------|-------------------|---------------|
+| valid, conf > 0.60 | `classified` | `none` |
+| invalid / null / outside shortlist / missing fields | `pending_fallback` | `fallback_2a` |
+| valid, conf в `(0.40, 0.60]` | `pending_fallback` | `fallback_2a` |
+| valid, conf ≤ 0.40 | `needs_human_review` | `human_review` |
 
 ---
 
@@ -187,6 +196,7 @@ $('Run — Create Run').first().json
 | Ключ | Значение | Стадия |
 |------|----------|--------|
 | `min_confidence_ok` | 0.60 | P1 auto-classify |
+| `min_confidence_borderline_low` | 0.40 | P1: ≤ → human; `(0.40, 0.60]` → fallback_2a |
 | `min_confidence_2a_ok` | 0.40 | 2A → 2B |
 | `min_confidence_2b_ok` | 0.60 | 2B auto-classify |
 | `min_confidence_judge_ok` | 0.60 | Judge auto-classify |

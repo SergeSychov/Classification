@@ -74,7 +74,11 @@ def main() -> int:
     remote_by_name = {node["name"]: node for node in remote.get("nodes", [])}
     for node in local["nodes"]:
         remote_node = remote_by_name.get(node["name"])
-        if remote_node and remote_node.get("credentials"):
+        if (
+            remote_node
+            and remote_node.get("credentials")
+            and remote_node.get("type") == node.get("type")
+        ):
             node["credentials"] = remote_node["credentials"]
 
     payload = {
