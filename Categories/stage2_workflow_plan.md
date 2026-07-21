@@ -455,3 +455,32 @@
 * ~~Индексы~~: `product_classification(decision_status, final_source)`, `product_classification_log(run_id, stage)`, partial unique open queue. [file:1]
 * Диагностические SQL: `sql/diagnostics_run_stats.sql`. [file:1]
 * `Fin — Pick Run`: один Close Run на batch (`$getWorkflowStaticData` + `batch_size`). [file:1]
+
+---
+
+## Hierarchy redesign progress (2026-07-21)
+
+Отдельный трек от current Stage 2. Канон: `redesign/20_MIGRATION_PLAN.md`, статус: `redesign/00_PROJECT_STATUS.md`, короткий roadmap: `redesign/29_SHORT_ROADMAP.md`.
+
+### Done
+
+* **§13 clearance** — schema dump (`21a`), mapping need/mnn (`21b`), dirty samples (`21`), isolation design (`22`).
+* **B1** — additive SQL applied in **dev**: 18 hierarchy columns on `product_classification` + 4 `hierarchy_*` keys in `pipeline_settings`; `hierarchy_experiment_enabled=false` (`24_B1_APPLY_REPORT.md`).
+* **B2** — skeleton `classification-stage2-hierarchy-dev` (`o8sugljHYuUs7IEC`): Load stub `WHERE false`; Manual run **297** + webhook run **298** / n8n exec **7768** → `finished_empty`; source `classification-stage2-dev` untouched (`26_B2_EXECUTION_REPORT.md`).
+* Hierarchy workflow status: **active but safe** (0 rows / no LLM path) — active only for webhook registration/testing; P1/2A/2B/Judge unreachable from In path.
+* **B3 Norm** (Code-only) — `Norm — Normalize Product` on live path (Attach → Norm → Limit); `Norm — Normalize Dict` on canvas unwired until B4/Dir; plan `28_B3_NORM_PLAN.md`; sources `scripts/hierarchy_nodes/`.
+
+### Not done
+
+* **B3 Sem** `semantic_primary` E2E (next implementation gate).
+* Dir / Need / Cat / optional Mnn cascade + Judge rewiring for hierarchy.
+* Sem user validation waves 100 / 500 / 1000.
+* Prod Stage 2 Load allowlist-exclude patch.
+* Telegram / HITL beyond Sheets for hierarchy — **not started**.
+* Dedicated **error-handling track** for hierarchy — **not planned in detail yet** (follow existing Stage 2 log/reject patterns until a separate plan exists).
+
+### Next short steps
+
+1. **B3 Sem** (log each stage; terminal-only snapshot) — only on explicit request; keep Load stub / allowlist discipline.
+2. Sem human validation **100 → 500 → 1000** (gate before Dir+).
+3. Then Dir → Need → Cat → optional Mnn → Judge per `20_MIGRATION_PLAN.md`.

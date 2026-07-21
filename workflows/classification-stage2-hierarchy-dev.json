@@ -242,6 +242,50 @@
       "name": "Load — Attach Run ID"
     },
     {
+      "parameters": {
+        "jsCode": "// Norm — Normalize Product (hierarchy B3). Embeds norm_helpers_v1.\n\nfunction asString(value) {\n  if (value === null || value === undefined) return null;\n  if (typeof value === 'string') return value;\n  if (typeof value === 'number' || typeof value === 'boolean') return String(value);\n  return null;\n}\n\nfunction collapseWhitespace(s) {\n  const t = asString(s);\n  if (t === null) return null;\n  return t.replace(/\\s+/g, ' ').trim();\n}\n\nfunction asciiHyphen(s) {\n  const t = asString(s);\n  if (t === null) return null;\n  return t.replace(/[\\u2011\\u2010\\u2012\\u2013\\u2014\\u2212]/g, '-');\n}\n\nfunction unifyQuotes(s) {\n  const t = asString(s);\n  if (t === null) return null;\n  return t\n    .replace(/[\\u00AB\\u00BB\\u201C\\u201D\\u201E\\u201F]/g, '\"')\n    .replace(/[\\u2018\\u2019\\u201A\\u201B]/g, \"'\");\n}\n\nfunction stripHtmlNoise(s) {\n  const t = asString(s);\n  if (t === null) return null;\n  return t\n    .replace(/<[^>]+>/g, ' ')\n    .replace(/&nbsp;/gi, ' ')\n    .replace(/&amp;/gi, '&')\n    .replace(/&lt;/gi, '<')\n    .replace(/&gt;/gi, '>')\n    .replace(/&quot;/gi, '\"')\n    .replace(/&#39;/g, \"'\")\n    .replace(/&apos;/gi, \"'\");\n}\n\nfunction normDirection(s) {\n  const t = asString(s);\n  if (t === null) return null;\n  const out = t.trim().toLowerCase();\n  return out === '' ? null : out;\n}\n\nfunction normNeed(s) {\n  const collapsed = collapseWhitespace(s);\n  if (collapsed === null || collapsed === '') return null;\n  return asciiHyphen(collapsed).toLowerCase();\n}\n\nfunction normCategory(s) {\n  const collapsed = collapseWhitespace(s);\n  if (collapsed === null || collapsed === '') return null;\n  return asciiHyphen(collapsed).toLowerCase();\n}\n\nfunction normMnn(s) {\n  const collapsed = collapseWhitespace(s);\n  if (collapsed === null || collapsed === '') return null;\n  return asciiHyphen(collapsed).toLowerCase();\n}\n\nfunction normProductText(s) {\n  let t = asString(s);\n  if (t === null) return null;\n  t = stripHtmlNoise(t);\n  t = unifyQuotes(t);\n  t = asciiHyphen(t);\n  t = collapseWhitespace(t);\n  return t === '' ? null : t;\n}\n\nfunction isMultiSepMnn(raw) {\n  const t = asString(raw);\n  if (t === null || t === '') return false;\n  if (!/[,;/\\\\|]/.test(t)) return false;\n  const parts = t.split(/[,;/\\\\|]+/).map((p) => p.trim()).filter(Boolean);\n  return parts.length >= 2;\n}\n\nfunction isDeviceSkuLike(raw) {\n  const t = asString(raw);\n  if (t === null || t === '') return false;\n  const s = asciiHyphen(t).toLowerCase();\n  if (/\\d+(?:[.,]\\d+)?(?:\\s*[-–—]\\s*\\d+(?:[.,]\\d+)?)?\\s*(?:см|mm|мм)/.test(s)) return true;\n  if (/\\d+\\s*[×xх]\\s*\\d+/i.test(t)) return true;\n  if (/мме\\s*\\/\\s*мл|мме\\/мл/.test(s)) return true;\n  if (/чувствительность/.test(s)) return true;\n  if (/объ[её]м\\s*~?\\s*\\d/.test(s)) return true;\n  if (/тип\\s+[аa]\\s*№?\\s*\\d/i.test(t)) return true;\n  if (/размер\\s+\\d/i.test(t)) return true;\n  if (/длина\\s*~?\\s*\\d/.test(s)) return true;\n  return false;\n}\n\nfunction pushWarning(warnings, field, reason, raw) {\n  warnings.push({\n    field,\n    reason,\n    raw: raw === undefined ? null : raw,\n  });\n}\n\nconst MAX_NORMALIZED_TEXT = 12000;\n\nreturn items.map((item, index) => {\n  const j = item.json || {};\n  const warnings = [];\n\n  const sourceFields = [];\n  let rawText = asString(j.combined_text);\n  if (rawText !== null && rawText.trim() !== '') {\n    sourceFields.push('combined_text');\n  } else {\n    const parts = [];\n    for (const key of ['product_name', 'name', 'title', 'description', 'product_description']) {\n      const v = asString(j[key]);\n      if (v !== null && v.trim() !== '') {\n        parts.push(v.trim());\n        sourceFields.push(key);\n      }\n    }\n    rawText = parts.length ? parts.join(' ') : null;\n  }\n\n  let normalizedText = normProductText(rawText);\n  let truncated = false;\n  if (normalizedText !== null && normalizedText.length > MAX_NORMALIZED_TEXT) {\n    normalizedText = normalizedText.slice(0, MAX_NORMALIZED_TEXT);\n    truncated = true;\n  }\n\n  const emptyFlags = {\n    combined_text: !(asString(j.combined_text) || '').trim(),\n  };\n\n  if (!normalizedText) {\n    pushWarning(warnings, 'combined_text', 'empty', j.combined_text ?? null);\n  }\n\n  const mnnRaw =\n    j.mnn !== undefined && j.mnn !== null && j.mnn !== ''\n      ? j.mnn\n      : j.mnn_cluster !== undefined && j.mnn_cluster !== null && j.mnn_cluster !== ''\n        ? j.mnn_cluster\n        : null;\n  const normMnnProduct = mnnRaw !== null ? normMnn(mnnRaw) : null;\n\n  const attrNorm = {};\n  for (const key of [\n    'brand_guess',\n    'form_guess',\n    'dosage_guess',\n    'pack_size_guess',\n    'product_type_guess',\n  ]) {\n    if (j[key] === undefined || j[key] === null || j[key] === '') continue;\n    const n = normProductText(j[key]);\n    if (n !== null) attrNorm[`norm_${key}`] = n.toLowerCase();\n  }\n\n  const stageName =\n    (j.constants && j.constants.stage && j.constants.stage.normalize) || 'normalize';\n\n  // merge-safe: keep existing cascade_trace keys; append normalize stage\n  const prevTrace =\n    j.cascade_trace && typeof j.cascade_trace === 'object' && !Array.isArray(j.cascade_trace)\n      ? j.cascade_trace\n      : {};\n  const path = Array.isArray(prevTrace.path) ? [...prevTrace.path] : [];\n  if (!path.includes(stageName)) path.push(stageName);\n  const stages = Array.isArray(prevTrace.stages) ? [...prevTrace.stages] : [];\n  stages.push({\n    stage: stageName,\n    actor_type: 'system',\n    norm_warnings: warnings,\n    notes: 'product_norm_v1',\n  });\n\n  return {\n    json: {\n      ...j,\n      normalized_text: normalizedText,\n      normalize_meta: {\n        source_fields: sourceFields,\n        truncated,\n        empty_flags: emptyFlags,\n      },\n      norm_mnn_product: normMnnProduct,\n      ...attrNorm,\n      norm_warnings: warnings,\n      cascade_trace: {\n        ...prevTrace,\n        path,\n        stages,\n      },\n    },\n    pairedItem: index,\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        -1296
+      ],
+      "id": "865e20d6-b907-487d-91aa-0fa00b4fe629",
+      "name": "Norm — Normalize Product",
+      "notes": "B3 Norm: product text + attrs; no SQL/LLM"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Norm — Normalize Dict (hierarchy B3). Embeds norm_helpers_v1.\n// On canvas but NOT in live In-path. Wire in B4/Dir:\n//   Dir — Load Categories → this node → Dir Merge Context.\n// is_device_sku_like is a heuristic flag only — never a reject.\n\nfunction asString(value) {\n  if (value === null || value === undefined) return null;\n  if (typeof value === 'string') return value;\n  if (typeof value === 'number' || typeof value === 'boolean') return String(value);\n  return null;\n}\n\nfunction collapseWhitespace(s) {\n  const t = asString(s);\n  if (t === null) return null;\n  return t.replace(/\\s+/g, ' ').trim();\n}\n\nfunction asciiHyphen(s) {\n  const t = asString(s);\n  if (t === null) return null;\n  return t.replace(/[\\u2011\\u2010\\u2012\\u2013\\u2014\\u2212]/g, '-');\n}\n\nfunction unifyQuotes(s) {\n  const t = asString(s);\n  if (t === null) return null;\n  return t\n    .replace(/[\\u00AB\\u00BB\\u201C\\u201D\\u201E\\u201F]/g, '\"')\n    .replace(/[\\u2018\\u2019\\u201A\\u201B]/g, \"'\");\n}\n\nfunction stripHtmlNoise(s) {\n  const t = asString(s);\n  if (t === null) return null;\n  return t\n    .replace(/<[^>]+>/g, ' ')\n    .replace(/&nbsp;/gi, ' ')\n    .replace(/&amp;/gi, '&')\n    .replace(/&lt;/gi, '<')\n    .replace(/&gt;/gi, '>')\n    .replace(/&quot;/gi, '\"')\n    .replace(/&#39;/g, \"'\")\n    .replace(/&apos;/gi, \"'\");\n}\n\nfunction normDirection(s) {\n  const t = asString(s);\n  if (t === null) return null;\n  const out = t.trim().toLowerCase();\n  return out === '' ? null : out;\n}\n\nfunction normNeed(s) {\n  const collapsed = collapseWhitespace(s);\n  if (collapsed === null || collapsed === '') return null;\n  return asciiHyphen(collapsed).toLowerCase();\n}\n\nfunction normCategory(s) {\n  const collapsed = collapseWhitespace(s);\n  if (collapsed === null || collapsed === '') return null;\n  return asciiHyphen(collapsed).toLowerCase();\n}\n\nfunction normMnn(s) {\n  const collapsed = collapseWhitespace(s);\n  if (collapsed === null || collapsed === '') return null;\n  return asciiHyphen(collapsed).toLowerCase();\n}\n\nfunction normProductText(s) {\n  let t = asString(s);\n  if (t === null) return null;\n  t = stripHtmlNoise(t);\n  t = unifyQuotes(t);\n  t = asciiHyphen(t);\n  t = collapseWhitespace(t);\n  return t === '' ? null : t;\n}\n\nfunction isMultiSepMnn(raw) {\n  const t = asString(raw);\n  if (t === null || t === '') return false;\n  if (!/[,;/\\\\|]/.test(t)) return false;\n  const parts = t.split(/[,;/\\\\|]+/).map((p) => p.trim()).filter(Boolean);\n  return parts.length >= 2;\n}\n\nfunction isDeviceSkuLike(raw) {\n  const t = asString(raw);\n  if (t === null || t === '') return false;\n  const s = asciiHyphen(t).toLowerCase();\n  if (/\\d+(?:[.,]\\d+)?(?:\\s*[-–—]\\s*\\d+(?:[.,]\\d+)?)?\\s*(?:см|mm|мм)/.test(s)) return true;\n  if (/\\d+\\s*[×xх]\\s*\\d+/i.test(t)) return true;\n  if (/мме\\s*\\/\\s*мл|мме\\/мл/.test(s)) return true;\n  if (/чувствительность/.test(s)) return true;\n  if (/объ[её]м\\s*~?\\s*\\d/.test(s)) return true;\n  if (/тип\\s+[аa]\\s*№?\\s*\\d/i.test(t)) return true;\n  if (/размер\\s+\\d/i.test(t)) return true;\n  if (/длина\\s*~?\\s*\\d/.test(s)) return true;\n  return false;\n}\n\nfunction pushWarning(warnings, field, reason, raw) {\n  warnings.push({\n    field,\n    reason,\n    raw: raw === undefined ? null : raw,\n  });\n}\n\nreturn items.map((item, index) => {\n  const j = item.json || {};\n  const warnings = [];\n\n  const directionRaw = j.direction;\n  const needRaw = j.need_nosology;\n  const categoryRaw = j.category_name;\n  const mnnRaw = j.mnn_cluster;\n\n  const norm_direction = normDirection(directionRaw);\n  const norm_need = normNeed(needRaw);\n  const norm_category = normCategory(categoryRaw);\n  const norm_mnn = normMnn(mnnRaw);\n\n  if (directionRaw === null || directionRaw === undefined || String(directionRaw).trim() === '') {\n    pushWarning(warnings, 'direction', 'empty', directionRaw ?? null);\n  } else if (norm_direction === null) {\n    pushWarning(warnings, 'direction', 'unusable', directionRaw);\n  }\n\n  if (needRaw === null || needRaw === undefined || String(needRaw).trim() === '') {\n    pushWarning(warnings, 'need_nosology', 'empty', needRaw ?? null);\n  } else if (norm_need === null) {\n    pushWarning(warnings, 'need_nosology', 'unusable', needRaw);\n  }\n\n  if (categoryRaw === null || categoryRaw === undefined || String(categoryRaw).trim() === '') {\n    pushWarning(warnings, 'category_name', 'empty', categoryRaw ?? null);\n  } else if (norm_category === null) {\n    pushWarning(warnings, 'category_name', 'unusable', categoryRaw);\n  }\n\n  const is_multi_sep = isMultiSepMnn(mnnRaw);\n  const is_eq_category =\n    norm_mnn !== null && norm_category !== null && norm_mnn === norm_category;\n  const is_device_sku_like = isDeviceSkuLike(mnnRaw);\n  const need_flat_like =\n    norm_need !== null && norm_category !== null && norm_need === norm_category;\n\n  const out = {\n    ...j,\n    norm_direction,\n    norm_need,\n    norm_category,\n    norm_mnn,\n    is_multi_sep,\n    is_eq_category,\n    is_device_sku_like,\n    need_flat_like,\n    norm_warnings: warnings,\n  };\n\n  if (is_multi_sep) {\n    out.mnn_raw = mnnRaw;\n  }\n\n  return {\n    json: out,\n    pairedItem: index,\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        -1100
+      ],
+      "id": "48533cb6-f910-41b7-87aa-2f71595c88e0",
+      "name": "Norm — Normalize Dict",
+      "notes": "B3 Norm: categories_dict keys + dirty flags; unwired until Dir"
+    },
+    {
+      "parameters": {
+        "content": "## Norm (B3)\n\n**Live:** Attach → Normalize Product → Limit\n\n**Dict:** Normalize Dict is on canvas but **not** in live In-path.\nWiring in **B4 / Dir**: `Dir — Load Categories` → `Norm — Normalize Dict` → Dir Merge.\n\nNo SQL writes. No LLM. Helpers: `norm_helpers_v1`.\n`is_device_sku_like` = heuristic flag only (not reject).",
+        "height": 280,
+        "width": 380,
+        "color": 4
+      },
+      "id": "256795b4-94f8-4ed7-b048-302bee3dd440",
+      "name": "🔗 Norm — B3 (wire Dict later)",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        320,
+        -1560
+      ]
+    },
+    {
       "parameters": {},
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
@@ -1269,7 +1313,7 @@
       "main": [
         [
           {
-            "node": "Load — Limit Batch",
+            "node": "Norm — Normalize Product",
             "type": "main",
             "index": 0
           }
@@ -1779,6 +1823,17 @@
         [
           {
             "node": "Run — Create Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Norm — Normalize Product": {
+      "main": [
+        [
+          {
+            "node": "Load — Limit Batch",
             "type": "main",
             "index": 0
           }
