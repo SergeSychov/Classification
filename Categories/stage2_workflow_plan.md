@@ -468,21 +468,21 @@
 * **§13 clearance** — schema dump (`21a`), mapping need/mnn (`21b`), dirty samples (`21`), isolation design (`22`).
 * **B1** — additive SQL applied in **dev**: 18 hierarchy columns on `product_classification` + 4 `hierarchy_*` keys in `pipeline_settings`; `hierarchy_experiment_enabled=false` (`24_B1_APPLY_REPORT.md`).
 * **B2** — skeleton `classification-stage2-hierarchy-dev` (`o8sugljHYuUs7IEC`): Load stub `WHERE false`; Manual run **297** + webhook run **298** / n8n exec **7768** → `finished_empty`; source `classification-stage2-dev` untouched (`26_B2_EXECUTION_REPORT.md`).
-* Hierarchy workflow status: **active but safe** (0 rows / no LLM path) — active only for webhook registration/testing; P1/2A/2B/Judge unreachable from In path.
-* **B3 Norm** (Code-only) — **закрыта** ✅ (см. п.25 ниже).
+* Hierarchy workflow status: **active but safe** (0 rows / no LLM path on empty Load) — Load stub intact; kill switch / allowlist defaults not relaxed.
+* **B3 Norm** (Code-only) — **закрыта** ✅ (см. п.25).
+* **B3 Sem** (`semantic_primary`, log-only) — **закрыта в git** ✅ (см. п.26); Dir не подключён; snapshot не пишется.
 
 ### Not done
 
-* **B3 Sem** `semantic_primary` E2E (next implementation gate).
+* Gated Sem smoke 10 (allowlist) + Sem validation waves 100 / 500 / 1000.
 * Dir / Need / Cat / optional Mnn cascade + Judge rewiring for hierarchy.
-* Sem user validation waves 100 / 500 / 1000.
 * Prod Stage 2 Load allowlist-exclude patch.
 * Telegram / HITL beyond Sheets for hierarchy — **not started**.
-* Dedicated **error-handling track** for hierarchy — **not planned in detail yet** (follow existing Stage 2 log/reject patterns until a separate plan exists).
+* Dedicated **error-handling track** for hierarchy — **not planned in detail yet**.
 
 ### Next short steps
 
-1. **B3 Sem** (log each stage; terminal-only snapshot) — only on explicit request; keep Load stub / allowlist discipline.
+1. Optional gated Sem smoke (allowlist) on explicit request — then restore stub/kill switch.
 2. Sem human validation **100 → 500 → 1000** (gate before Dir+).
 3. Then Dir → Need → Cat → optional Mnn → Judge per `20_MIGRATION_PLAN.md`.
 
@@ -546,4 +546,97 @@
 #### Статус
 
 * **B3 Norm:** **закрыта** ✅ (Code-only в hierarchy-dev).
-* **Следующий gate:** **B3 Sem** (`semantic_primary`) — только по явному запросу; Load stub / allowlist discipline сохранить.
+* **Следующий gate после Norm:** B3 Sem — реализован в п.26 (Limit теперь → Sem; P1 по-прежнему недостижим).
+
+---
+
+26. **B3 Sem — `semantic_primary` log-only в hierarchy-dev (2026-07-22)**
+
+* **Workflow:** `classification-stage2-hierarchy-dev` (`o8sugljHYuUs7IEC`).
+* **Источники:** `scripts/hierarchy_nodes/sem_*.js`; патчер `scripts/_b3_patch_sem.js`.
+* **Ограничения:** clone-only; **нет** DDL; **нет** snapshot upsert после Sem; **нет** Dict Norm на live path; Load остаётся `WHERE false`; kill switch / allowlist defaults **не** ослаблены; prod Stage 2 не трогаем.
+
+#### Ноды (добавлены)
+
+| Нода | Тип | Роль |
+|------|-----|------|
+| `Sem — Build Prompt` | Code | System/user; запрет category_id / direction / need |
+| `Sem — LLM Prepare` | Code | versions + context; strip stale LLM fields |
+| `Sem — AI Agent` | LangChain Agent | prompt_user / prompt_system |
+| `Sem — DeepSeek` | Chat Model | zone-local DeepSeek (credential copy) |
+| `Sem — Merge LLM` | Merge | combineByPosition |
+| `Sem — Post-process` | Code | parse → `semantic_*`; soft-continue |
+| `Sem — Route` | Switch | future-safe seam; v1 `direction_select` (+ fallback) → Prepare Log |
+| `Sem — Prepare Log` | Code | hierarchy-specific log payload |
+| `🔗 Sem — B3 (log-only; Dir later)` | Sticky | notes |
+
+#### Live wiring
+
+```text
+… → Norm — Normalize Product → Load — Limit Batch
+  → Sem — Build Prompt → Sem — LLM Prepare
+      ├─ Sem — AI Agent ← Sem — DeepSeek
+      └─ Sem — Merge LLM → Sem — Post-process → Sem — Route
+           → Sem — Prepare Log → DB — Insert Log → Fin — Merge Barrier
+                → Fin — Pick Run → Fin — Close Run
+```
+
+Empty path **unchanged:** `Run — Init Constants` → `Shell — Ensure Empty Fin` → `Fin — Close Run`.
+
+#### Sem JSON schema (model output)
+
+| Field | Required in object? | Nullable | Notes |
+|-------|---------------------|----------|-------|
+| `mnn` | key expected | yes | string\|null |
+| `brand` | key expected | yes | string\|null |
+| `rx_otc` | key expected | yes | `rx`\|`otc`\|`unknown`\|null |
+| `nosology` | key expected | yes | string\|null |
+| `administration_route` | key expected | yes | string\|null |
+| `dosage_form` | key expected | yes | string\|null |
+| `dosage` | key expected | yes | string\|null |
+| `age_segment` | key expected | yes | string\|null |
+| `package_hint` | key expected | yes | string\|null |
+| `combination_hint` | key expected | yes | string\|null |
+| `confidence` | **yes** for valid | no (must be 0..1) | number |
+| `explanation` | **yes** for valid | no (non-empty string) | missing → soft-continue + `missing_explanation` |
+| `category_id` / `direction` / `need` | **forbidden** | — | non-null → `*_forbidden`, soft-continue |
+
+**Broken / invalid handling (always soft-continue):**
+
+| Case | `semantic_validation_passed` | `semantic_reject_reason` | `next_action` |
+|------|------------------------------|--------------------------|---------------|
+| empty / non-JSON | false | `empty_output` / `invalid_json` | `direction_select` |
+| non-object | false | `invalid_shape` | `direction_select` |
+| category_id/direction/need set | false | `category_id_forbidden` / … | `direction_select` |
+| bad confidence | false | `invalid_confidence` | `direction_select` |
+| missing explanation | false | `missing_explanation` | `direction_select` |
+| OK | true | null | `direction_select` |
+
+Never `decision_status=classified` at Sem. Always `pending_fallback`.
+
+#### Item / log fields after Sem
+
+**Item:** `semantic_attrs`, `semantic_confidence`, `semantic_explanation`, `semantic_raw_json`, `semantic_validation_passed`, `semantic_reject_reason`, `workflow_version=stage2_hierarchy_v1`, `prompt_version=prompt_semantic_v1`, `stage=semantic_primary`, `decision_status=pending_fallback`, `next_action=direction_select`, `selected_category_id=null`, `routing_hint`, `cascade_trace` append, `log_status`.
+
+**Log insert (`Sem — Prepare Log` → `DB — Insert Log`):** `stage=semantic_primary`, `selected_category_id=null`, `decision_status=pending_fallback`, `next_action=direction_select`, payloads with semantic_* + cascade_trace; **no** Prepare/Upsert Snapshot.
+
+#### Finish-chain (log-only)
+
+* With Load=0: Sem не исполняется; `Shell — Ensure Empty Fin` закрывает run (`finished_empty`) — как B2.
+* Sem → Insert Log → Merge Barrier (input 1) без Upsert — для будущего allowlist path; **не** подключает terminal snapshot.
+* При будущем открытии Load: потребуется отдельный gate для Shell empty-closer (сейчас stub держит 0 rows).
+
+#### Safety
+
+* Load `WHERE false` ✅
+* Dict Norm без connections ✅
+* Sem ↛ Upsert Snapshot / Prepare Snapshot ✅
+* Limit ↛ P1 ✅
+* prod `classification-stage2-dev` unchanged ✅
+
+#### Статус
+
+* **B3 Sem:** реализован **structurally** в git (9 нод + log-only wiring) ✅
+* **Safe defaults сохранены:** Load `WHERE false`; kill switch / allowlist untouched; snapshot path не подключён; Dict Norm unwired; empty Fin intact; prod Stage 2 unchanged.
+* **n8n sync:** см. строку деплоя ниже (после `push_workflow.py`).
+* **Следующий gate:** optional gated Sem smoke 10 / validation waves — только по явному запросу; затем Dir (B4).

@@ -9,13 +9,14 @@ Canonical migration design: [`20_MIGRATION_PLAN.md`](20_MIGRATION_PLAN.md)
 **§13 clearance is complete** (read-only schema + mapping + isolation design).  
 **B1 applied (dev):** additive columns + `hierarchy_*` settings seed — see [`24_B1_APPLY_REPORT.md`](24_B1_APPLY_REPORT.md).  
 **B2 skeleton clone done:** `classification-stage2-hierarchy-dev` (`o8sugljHYuUs7IEC`); Manual run **297** + webhook run **298** / n8n exec **7768** → `finished_empty`. Workflow status: **active but safe (0 rows / no LLM path)** — active only for webhook registration/testing; Load stubbed (`WHERE false`); P1/2A/2B/Judge unreachable.  
-**B3 Norm (Code-only) done** in hierarchy-dev: `Norm — Normalize Product` on live path; `Norm — Normalize Dict` on canvas unwired (B4/Dir). Sem/Dir/Need/Cat/Mnn not implemented; `hierarchy_experiment_enabled` remains `false`.
+**B3 Norm (Code-only) done** in hierarchy-dev: `Norm — Normalize Product` on live path; `Norm — Normalize Dict` on canvas unwired (B4/Dir).  
+**B3 Sem (log-only) done** in hierarchy-dev git: Limit → Sem zone → `Sem — Prepare Log` → Insert Log (no snapshot); `Sem — Route` seam for B4; Load still `WHERE false`. Dir/Need/Cat/Mnn not implemented; `hierarchy_experiment_enabled` remains `false`.
 
 | Track | Status |
 |-------|--------|
 | Current Stage 2 (`classification-stage2-dev`) | Implemented (production-like working pipeline) — **unchanged** |
-| Hierarchy cascade redesign | **§13 cleared**; **B1 applied**; **B2 complete**; **B3 Norm done** (Sem pending) |
-| Sem validation 100/500/1000 | Not started (gates Dir+ after B3 Sem) |
+| Hierarchy cascade redesign | **§13 cleared**; **B1–B2 done**; **B3 Norm done**; **B3 Sem done (git, log-only)**; Dir+ pending validation |
+| Sem validation 100/500/1000 | Not started (gates Dir+) |
 | Short roadmap | [`29_SHORT_ROADMAP.md`](29_SHORT_ROADMAP.md) |
 
 ---
@@ -75,8 +76,8 @@ Norm → semantic_primary → direction → need → category → optional mnn �
 
 ### Explicitly not claimed
 
-- Hierarchy cascade **LLM** stages (Sem / Dir / Need / Cat / Mnn / Judge) not implemented — Norm Code-only only
-- Sem validation 100/500/1000 not started
+- Hierarchy cascade **Dir / Need / Cat / Mnn / Judge** LLM stages not implemented
+- Sem validation 100/500/1000 not started; gated Sem smoke 10 optional
 - Prod Stage 2 Load SQL not patched; experiment kill switch remains off; hierarchy Load still stubbed (no pending drain)
 - Telegram/HITL beyond Sheets for hierarchy — not started
 - Dedicated hierarchy error-handling track — not planned in detail yet
@@ -96,12 +97,13 @@ Norm → semantic_primary → direction → need → category → optional mnn �
 - Workflow status: **active but safe (0 rows / no LLM path)** — webhook path `POST /webhook/classification-stage2-hierarchy-dev`; Load stub `WHERE false`
 - P1/2A/2B/Judge unreachable; prod Stage 2 unchanged
 
-### B3 Norm (Code-only) — 2026-07-21
+### B3 Sem (log-only) — 2026-07-22
 
-- Plan: [`28_B3_NORM_PLAN.md`](28_B3_NORM_PLAN.md)
-- Nodes: `Norm — Normalize Product` (Attach → Norm → Limit); `Norm — Normalize Dict` (canvas, unwired until B4/Dir)
-- Sources: `scripts/hierarchy_nodes/norm_*.js`; patcher `scripts/_b3_patch_norm.py`
-- No SQL/LLM; Load stub unchanged; prod Stage 2 unchanged
+- Sources: `scripts/hierarchy_nodes/sem_*.js`; patcher `scripts/_b3_patch_sem.js`
+- Live: Limit → Sem zone → Prepare Log → Insert Log → Fin Barrier (no Upsert Snapshot)
+- `Sem — Route` future-safe; v1 both outs → Prepare Log (`next_action=direction_select`)
+- Load stub / Dict Norm unwired / empty Fin unchanged; prod Stage 2 unchanged
+- Journal: `Categories/stage2_workflow_plan.md` п.26
 
 ---
 
@@ -109,7 +111,6 @@ Norm → semantic_primary → direction → need → category → optional mnn �
 
 Short roadmap: [`29_SHORT_ROADMAP.md`](29_SHORT_ROADMAP.md).
 
-**Next implementation step: B3 Sem** (`semantic_primary` E2E + log; terminal-only snapshot) — only on **explicit request**.  
-Keep Load stub / allowlist discipline until Sem validation waves.  
-**Dir+ / B5+** remain gated by Sem user validation 100→500→1000 after Sem.  
-Telegram/HITL beyond Sheets and a dedicated hierarchy error-handling track are **not started / not detailed yet**.
+**Next:** optional gated Sem smoke / Sem validation waves — only on **explicit request**.  
+Keep Load stub / allowlist discipline until then.  
+**Dir+** remains gated by Sem user validation 100→500→1000.

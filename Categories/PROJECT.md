@@ -253,12 +253,12 @@ flowchart TD
 
 ## Redesign status (2026-07-22)
 
-Hierarchy migration plan v1 **approved**; implementation track live in clone — see `redesign/20_MIGRATION_PLAN.md`, `redesign/00_PROJECT_STATUS.md`, канонический журнал: `Categories/stage2_workflow_plan.md` (п.25 / Hierarchy redesign).
+Hierarchy migration plan v1 **approved**; implementation track live in clone — see `redesign/20_MIGRATION_PLAN.md`, `redesign/00_PROJECT_STATUS.md`, канонический журнал: `Categories/stage2_workflow_plan.md` (п.25 Norm / п.26 Sem).
 
-- **Current Stage 2:** `classification-stage2-dev` — production-like pipeline (primary / 2A / 2B / judge / Sheets / Telegram HR) — **unchanged**.
-- **Hierarchy clone:** `classification-stage2-hierarchy-dev` (`o8sugljHYuUs7IEC`) — **active but safe** (Load `WHERE false`; Limit без выхода в P1).
-- **Done:** §13 clearance; **B1** additive SQL (dev); **B2** skeleton clone; **B3 Norm** Code-only (`Norm — Normalize Product` live; `Norm — Normalize Dict` unwired).
-- **Next gate:** **B3 Sem** (`semantic_primary`) — only on explicit request.
-- **Locked v1 design:** clone-only; `categories_dict` text mapping; intermediate `pending_fallback`; terminal-only snapshot; Sheets human path / Telegram inactive for hierarchy; allowlist isolation (`hierarchy_experiment_enabled=false`).
+- **Current Stage 2:** `classification-stage2-dev` — production-like pipeline — **unchanged**.
+- **Hierarchy clone:** `classification-stage2-hierarchy-dev` (`o8sugljHYuUs7IEC`) — **active but safe** (Load `WHERE false`; empty Fin intact).
+- **Done:** §13; **B1**; **B2**; **B3 Norm**; **B3 Sem** (log-only `semantic_primary`; no snapshot; Dir not wired).
+- **Next gate:** optional gated Sem smoke / validation waves 100→500→1000 — only on explicit request; then Dir+.
+- **Locked v1 design:** clone-only; terminal-only snapshot; Sheets human path; allowlist isolation (`hierarchy_experiment_enabled=false`).
 
 Note: sections above describing “primary-only / 19 nodes” may be outdated relative to the live `classification-stage2-dev` export; trust `stage2_workflow_contract.md` + workflow JSON for current Stage 2 detail.

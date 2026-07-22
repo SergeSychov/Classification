@@ -49,6 +49,173 @@
     },
     {
       "parameters": {
+        "jsCode": "// Sem — Build Prompt (hierarchy B3 Sem). No category_id / direction / need selection.\r\n\r\nreturn items.map((item, index) => {\r\n  const j = item.json || {};\r\n  const shortlist = Array.isArray(j.shortlist_json) ? j.shortlist_json : [];\r\n\r\n  const shortlistHint = shortlist.length\r\n    ? shortlist\r\n        .slice(0, 5)\r\n        .map((c, idx) => {\r\n          const name = c.category_name || c.name || '';\r\n          const code = c.category_code || c.code || '';\r\n          return `${idx + 1}. code=${code}, name=${name}`;\r\n        })\r\n        .join('\\n')\r\n    : 'NONE';\r\n\r\n  const attrHints = {\r\n    norm_mnn_product: j.norm_mnn_product ?? null,\r\n    norm_brand_guess: j.norm_brand_guess ?? null,\r\n    norm_form_guess: j.norm_form_guess ?? null,\r\n    norm_dosage_guess: j.norm_dosage_guess ?? null,\r\n    norm_pack_size_guess: j.norm_pack_size_guess ?? null,\r\n    norm_product_type_guess: j.norm_product_type_guess ?? j.product_type_guess ?? null,\r\n  };\r\n\r\n  const promptSystem =\r\n    'You extract semantic attributes for a pharmacy product. Return ONLY valid JSON with keys: mnn, brand, rx_otc, nosology, administration_route, dosage_form, dosage, age_segment, package_hint, combination_hint, confidence, explanation. Do NOT return category_id, direction, need, block_family, or any final leaf category. All attribute fields may be null. confidence must be a number from 0.0 to 1.0. explanation must be a short Russian string (1–3 sentences).';\r\n\r\n  const promptUser = `\r\nТовар (normalized_text):\r\n${j.normalized_text || j.combined_text || ''}\r\n\r\nПодсказки после Norm (могут быть null):\r\n${JSON.stringify(attrHints, null, 2)}\r\n\r\nМягкая подсказка Stage 1 shortlist (НЕ обязательный набор, НЕ выбирай category_id):\r\n${shortlistHint}\r\n\r\nnormalize_meta:\r\n${JSON.stringify(j.normalize_meta || {}, null, 2)}\r\n\r\nЗадача:\r\n- Извлеки семантические атрибуты товара.\r\n- НЕ выбирай category_id / направление / потребность / финальную категорию.\r\n- Если признак неизвестен — верни null (не выдумывай).\r\n- confidence: 0.0–1.0; explanation: 1–3 предложения на русском.\r\n- Верни только JSON без markdown.\r\n`.trim();\r\n\r\n  return {\r\n    json: {\r\n      ...j,\r\n      prompt_system: promptSystem,\r\n      prompt_user: promptUser,\r\n      llm_prompt_debug: {\r\n        system: promptSystem,\r\n        user: promptUser,\r\n      },\r\n    },\r\n    pairedItem: index,\r\n  };\r\n});\r\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        -1296
+      ],
+      "id": "136231a6-3511-4d6a-8ea4-96885ea4e184",
+      "name": "Sem — Build Prompt",
+      "notes": "B3 Sem: attrs only; no category_id"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Sem — LLM Prepare (hierarchy B3 Sem).\r\n\r\nfunction withoutStaleLlmOutput(j) {\r\n  const src = j || {};\r\n  const {\r\n    output,\r\n    text,\r\n    response,\r\n    content,\r\n    result,\r\n    llm_raw_output_text,\r\n    ...rest\r\n  } = src;\r\n  return rest;\r\n}\r\n\r\nreturn items.map((item, index) => {\r\n  const j = withoutStaleLlmOutput(item.json);\r\n  const WORKFLOW_VERSION = 'stage2_hierarchy_v1';\r\n  const PROMPT_VERSION = 'prompt_semantic_v1';\r\n  const C = j.constants || {};\r\n\r\n  return {\r\n    json: {\r\n      ...j,\r\n      workflow_version: WORKFLOW_VERSION,\r\n      prompt_version: PROMPT_VERSION,\r\n      stage: (C.stage && C.stage.semantic_primary) || 'semantic_primary',\r\n      actor_type: (C.actor_type && C.actor_type.llm) || 'llm',\r\n      actor_name:\r\n        (C.model && C.model.cascade_actor_name) ||\r\n        (C.model && C.model.primary_actor_name) ||\r\n        'deepseek-chat',\r\n      context: {\r\n        run_id:\r\n          j.run_id !== undefined && j.run_id !== null && j.run_id !== ''\r\n            ? Number(j.run_id)\r\n            : null,\r\n        product_id:\r\n          j.product_id !== undefined && j.product_id !== null && j.product_id !== ''\r\n            ? Number(j.product_id)\r\n            : null,\r\n        product_raw_id:\r\n          j.product_raw_id !== undefined && j.product_raw_id !== null && j.product_raw_id !== ''\r\n            ? Number(j.product_raw_id)\r\n            : null,\r\n        normalized_text: j.normalized_text ?? null,\r\n        normalize_meta: j.normalize_meta ?? null,\r\n        norm_warnings: j.norm_warnings ?? [],\r\n        shortlist_json: Array.isArray(j.shortlist_json) ? j.shortlist_json : [],\r\n      },\r\n      prompt_system: j.prompt_system || '',\r\n      prompt_user: j.prompt_user || '',\r\n    },\r\n    pairedItem: index,\r\n  };\r\n});\r\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1620,
+        -1296
+      ],
+      "id": "e4c6ac11-49bf-4846-8367-1acd1966e3d8",
+      "name": "Sem — LLM Prepare"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt_user }}",
+        "options": {
+          "systemMessage": "={{ $json.prompt_system }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1840,
+        -1296
+      ],
+      "id": "450371aa-ef0d-461a-ac0e-0ab43c349e9e",
+      "name": "Sem — AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "deepseek-v4-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "position": [
+        1840,
+        -1120
+      ],
+      "id": "c3ac3bc4-b001-42bb-acc7-a140bf1dbc55",
+      "name": "Sem — DeepSeek",
+      "credentials": {
+        "deepSeekApi": {
+          "id": "xyaJwQg88odvtCfC",
+          "name": "DeepSeek account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2060,
+        -1296
+      ],
+      "id": "7895dba5-a6f5-43ac-b182-283d084338c0",
+      "name": "Sem — Merge LLM"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Sem — Post-process (hierarchy B3 Sem).\r\n// Soft-continue always → next_action=direction_select.\r\n// Never classified. Never persist category_id from Sem.\r\n\r\nfunction extractJsonString(value) {\r\n  if (value === null || value === undefined) return null;\r\n  if (typeof value === 'object') return JSON.stringify(value);\r\n  let text = String(value).trim();\r\n  const codeFenceMatch = text.match(/^```(?:json)?\\s*\\n?([\\s\\S]+?)\\n?```\\s*$/i);\r\n  if (codeFenceMatch) text = codeFenceMatch[1].trim();\r\n  return text;\r\n}\r\n\r\nfunction safeParseJson(value) {\r\n  const text = extractJsonString(value);\r\n  if (!text) return { ok: false, error: 'empty_output', parsed: null, raw_text: null };\r\n  try {\r\n    return { ok: true, error: null, parsed: JSON.parse(text), raw_text: text };\r\n  } catch (e) {\r\n    return { ok: false, error: 'invalid_json', parsed: null, raw_text: text };\r\n  }\r\n}\r\n\r\nfunction normalizeConfidence(v) {\r\n  if (v === null || v === undefined || v === '') return null;\r\n  const n = Number(v);\r\n  if (!Number.isFinite(n)) return null;\r\n  if (n < 0 || n > 1) return null;\r\n  return n;\r\n}\r\n\r\nfunction safeText(v) {\r\n  if (v === undefined || v === null || v === '') return null;\r\n  const s = String(v).trim();\r\n  return s === '' ? null : s;\r\n}\r\n\r\nfunction pickLlmRaw(root) {\r\n  if (root.output !== undefined) return root.output;\r\n  if (root.text !== undefined) return root.text;\r\n  if (root.response !== undefined) return root.response;\r\n  if (root.content !== undefined) return root.content;\r\n  if (root.result !== undefined) return root.result;\r\n  return null;\r\n}\r\n\r\nconst ATTR_KEYS = [\r\n  'mnn',\r\n  'brand',\r\n  'rx_otc',\r\n  'nosology',\r\n  'administration_route',\r\n  'dosage_form',\r\n  'dosage',\r\n  'age_segment',\r\n  'package_hint',\r\n  'combination_hint',\r\n];\r\n\r\nconst RX_OTC_ALLOWED = new Set(['rx', 'otc', 'unknown', null]);\r\n\r\nreturn items.map((item, index) => {\r\n  const root = item.json || {};\r\n  const ctx = root.context || {};\r\n  const C = root.constants || {};\r\n\r\n  const WORKFLOW_VERSION = root.workflow_version || 'stage2_hierarchy_v1';\r\n  const PROMPT_VERSION = root.prompt_version || 'prompt_semantic_v1';\r\n  const STAGE = (C.stage && C.stage.semantic_primary) || 'semantic_primary';\r\n  const DECISION_PENDING =\r\n    (C.decision_status && C.decision_status.pending_fallback) || 'pending_fallback';\r\n  const NEXT_DIR =\r\n    (C.next_action && C.next_action.direction_select) || 'direction_select';\r\n  const ACTOR_LLM = (C.actor_type && C.actor_type.llm) || 'llm';\r\n  const LOG = C.log_status || {\r\n    success: 'success',\r\n    rejected: 'rejected',\r\n    needs_review: 'needs_review',\r\n  };\r\n  const MODEL_NAME =\r\n    (C.model && C.model.cascade_actor_name) ||\r\n    (C.model && C.model.primary_actor_name) ||\r\n    'deepseek-chat';\r\n\r\n  const raw = pickLlmRaw(root);\r\n  const parsed = safeParseJson(raw);\r\n\r\n  let validationPassed = false;\r\n  let rejectReason = null;\r\n  let semanticAttrs = null;\r\n  let semanticConfidence = null;\r\n  let semanticExplanation = null;\r\n  let logStatus = LOG.rejected || 'rejected';\r\n\r\n  if (!parsed.ok) {\r\n    rejectReason = parsed.error || 'empty_output';\r\n  } else if (!parsed.parsed || typeof parsed.parsed !== 'object' || Array.isArray(parsed.parsed)) {\r\n    rejectReason = 'invalid_shape';\r\n  } else {\r\n    const obj = parsed.parsed;\r\n    const forbiddenCat = obj.category_id;\r\n    if (forbiddenCat !== undefined && forbiddenCat !== null && String(forbiddenCat).trim() !== '') {\r\n      rejectReason = 'category_id_forbidden';\r\n    } else if (\r\n      obj.direction !== undefined &&\r\n      obj.direction !== null &&\r\n      String(obj.direction).trim() !== ''\r\n    ) {\r\n      rejectReason = 'direction_forbidden';\r\n    } else if (obj.need !== undefined && obj.need !== null && String(obj.need).trim() !== '') {\r\n      rejectReason = 'need_forbidden';\r\n    } else {\r\n      const conf = normalizeConfidence(obj.confidence);\r\n      const explanation = safeText(obj.explanation);\r\n      if (conf === null) {\r\n        rejectReason = 'invalid_confidence';\r\n      } else if (explanation === null) {\r\n        // soft-continue per migration: missing explanation only\r\n        rejectReason = 'missing_explanation';\r\n        semanticConfidence = conf;\r\n        semanticAttrs = {};\r\n        for (const key of ATTR_KEYS) {\r\n          if (key === 'rx_otc') {\r\n            const rx = safeText(obj.rx_otc);\r\n            semanticAttrs.rx_otc =\r\n              rx === null ? null : RX_OTC_ALLOWED.has(rx.toLowerCase()) ? rx.toLowerCase() : rx;\r\n          } else {\r\n            semanticAttrs[key] = safeText(obj[key]);\r\n          }\r\n        }\r\n        semanticExplanation = null;\r\n        validationPassed = false;\r\n        logStatus = LOG.needs_review || 'needs_review';\r\n      } else {\r\n        semanticConfidence = conf;\r\n        semanticExplanation = explanation;\r\n        semanticAttrs = {};\r\n        for (const key of ATTR_KEYS) {\r\n          if (key === 'rx_otc') {\r\n            const rx = safeText(obj.rx_otc);\r\n            if (rx === null) semanticAttrs.rx_otc = null;\r\n            else if (RX_OTC_ALLOWED.has(rx.toLowerCase())) semanticAttrs.rx_otc = rx.toLowerCase();\r\n            else {\r\n              semanticAttrs.rx_otc = rx;\r\n              // non-fatal: keep attr, mark soft warning via reject_reason only if otherwise OK\r\n            }\r\n          } else {\r\n            semanticAttrs[key] = safeText(obj[key]);\r\n          }\r\n        }\r\n        validationPassed = true;\r\n        rejectReason = null;\r\n        logStatus = LOG.success || 'success';\r\n      }\r\n    }\r\n  }\r\n\r\n  // Always soft-continue to Dir seam; never classified at Sem.\r\n  const decisionStatus = DECISION_PENDING;\r\n  const nextAction = NEXT_DIR;\r\n\r\n  const prevTrace =\r\n    root.cascade_trace && typeof root.cascade_trace === 'object' && !Array.isArray(root.cascade_trace)\r\n      ? root.cascade_trace\r\n      : {};\r\n  const path = Array.isArray(prevTrace.path) ? [...prevTrace.path] : [];\r\n  if (!path.includes(STAGE)) path.push(STAGE);\r\n  const stages = Array.isArray(prevTrace.stages) ? [...prevTrace.stages] : [];\r\n  stages.push({\r\n    stage: STAGE,\r\n    actor_type: ACTOR_LLM,\r\n    actor_name: MODEL_NAME,\r\n    validation_passed: validationPassed,\r\n    reject_reason: rejectReason,\r\n    notes: 'semantic_primary_v1',\r\n  });\r\n\r\n  const routingHint = {\r\n    sem_soft_continue: true,\r\n    semantic_validation_passed: validationPassed,\r\n    semantic_reject_reason: rejectReason,\r\n    next_stage: NEXT_DIR,\r\n  };\r\n\r\n  return {\r\n    json: {\r\n      ...root,\r\n      workflow_version: WORKFLOW_VERSION,\r\n      prompt_version: PROMPT_VERSION,\r\n      stage: STAGE,\r\n      actor_type: ACTOR_LLM,\r\n      actor_name: MODEL_NAME,\r\n      semantic_attrs: semanticAttrs,\r\n      semantic_confidence: semanticConfidence,\r\n      semantic_explanation: semanticExplanation,\r\n      semantic_raw_json: parsed.raw_text\r\n        ? { raw_text: parsed.raw_text, parsed: parsed.parsed }\r\n        : raw !== null && raw !== undefined\r\n          ? { raw: raw }\r\n          : null,\r\n      semantic_validation_passed: validationPassed,\r\n      semantic_reject_reason: rejectReason,\r\n      decision_status: decisionStatus,\r\n      next_action: nextAction,\r\n      routing_hint: routingHint,\r\n      log_status: logStatus,\r\n      // Explicit: Sem never sets category\r\n      selected_category_id: null,\r\n      cascade_trace: {\r\n        ...prevTrace,\r\n        path,\r\n        stages,\r\n      },\r\n    },\r\n    pairedItem: index,\r\n  };\r\n});\r\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2280,
+        -1296
+      ],
+      "id": "2e9e1ff5-ddb5-4e9e-8cdc-18634e529860",
+      "name": "Sem — Post-process"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "ae741237-db5e-4761-92fb-332780a83339",
+                    "leftValue": "={{ $json.next_action }}",
+                    "rightValue": "direction_select",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "direction_select"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        2500,
+        -1296
+      ],
+      "id": "c32f4db2-fa98-4731-9414-1ceebbe03b76",
+      "name": "Sem — Route",
+      "notes": "Future-safe seam for B4 Dir; v1 both outs → Sem Prepare Log"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Sem — Prepare Log (hierarchy-specific, B3 Sem).\r\n// stage=semantic_primary; selected_category_id=null;\r\n// decision_status=pending_fallback; next_action=direction_select.\r\n// Does NOT prepare snapshot upsert.\r\n\r\nfunction sqlText(value) {\r\n  if (value === undefined || value === null) return null;\r\n  const s = String(value).trim();\r\n  return s === '' ? null : s;\r\n}\r\n\r\nfunction sqlNumber(value) {\r\n  if (value === undefined || value === null || value === '') return null;\r\n  const n = Number(value);\r\n  return Number.isFinite(n) ? n : null;\r\n}\r\n\r\nfunction sqlBoolean(value) {\r\n  if (value === undefined || value === null || value === '') return null;\r\n  if (typeof value === 'boolean') return value;\r\n  if (typeof value === 'number') return value !== 0;\r\n  if (typeof value === 'string') {\r\n    const v = value.trim().toLowerCase();\r\n    if (['true', '1', 'yes', 'y'].includes(v)) return true;\r\n    if (['false', '0', 'no', 'n'].includes(v)) return false;\r\n  }\r\n  return null;\r\n}\r\n\r\nfunction sqlJson(value) {\r\n  if (value === undefined || value === null || value === '') return null;\r\n  return value;\r\n}\r\n\r\nreturn items.map((item, index) => {\r\n  const j = item.json || {};\r\n  const C = j.constants || {};\r\n\r\n  const stage =\r\n    sqlText(j.stage) ||\r\n    (C.stage && C.stage.semantic_primary) ||\r\n    'semantic_primary';\r\n  const decisionStatus =\r\n    sqlText(j.decision_status) ||\r\n    (C.decision_status && C.decision_status.pending_fallback) ||\r\n    'pending_fallback';\r\n  const nextAction =\r\n    sqlText(j.next_action) ||\r\n    (C.next_action && C.next_action.direction_select) ||\r\n    'direction_select';\r\n  const actorType = sqlText(j.actor_type) || 'llm';\r\n  const actorName = sqlText(j.actor_name) || 'deepseek-chat';\r\n  const workflowVersion = sqlText(j.workflow_version) || 'stage2_hierarchy_v1';\r\n  const promptVersion = sqlText(j.prompt_version) || 'prompt_semantic_v1';\r\n\r\n  const inputPayload = {\r\n    product_id: sqlNumber(j.product_id),\r\n    product_raw_id: sqlNumber(j.product_raw_id),\r\n    run_id: sqlNumber(j.run_id),\r\n    stage,\r\n    workflow_version: workflowVersion,\r\n    prompt_version: promptVersion,\r\n    normalized_text: sqlText(j.normalized_text),\r\n    combined_text: sqlText(j.combined_text),\r\n    normalize_meta: sqlJson(j.normalize_meta),\r\n    norm_warnings: sqlJson(j.norm_warnings),\r\n    norm_mnn_product: sqlText(j.norm_mnn_product),\r\n    product_type_guess: sqlText(j.product_type_guess),\r\n    rule_top_category_id: sqlNumber(j.rule_top_category_id),\r\n    rule_top_score: sqlNumber(j.rule_top_score),\r\n    shortlist_json: sqlJson(j.shortlist_json),\r\n  };\r\n\r\n  const outputPayload = {\r\n    semantic_attrs: sqlJson(j.semantic_attrs),\r\n    semantic_confidence: sqlNumber(j.semantic_confidence),\r\n    semantic_explanation: sqlText(j.semantic_explanation),\r\n    semantic_raw_json: sqlJson(j.semantic_raw_json),\r\n    semantic_validation_passed: sqlBoolean(j.semantic_validation_passed),\r\n    semantic_reject_reason: sqlText(j.semantic_reject_reason),\r\n    selected_category_id: null,\r\n    decision_status: decisionStatus,\r\n    next_action: nextAction,\r\n    routing_hint: sqlJson(j.routing_hint),\r\n    cascade_trace: sqlJson(j.cascade_trace),\r\n  };\r\n\r\n  const status =\r\n    sqlText(j.log_status) ||\r\n    (j.semantic_validation_passed === true\r\n      ? 'success'\r\n      : j.semantic_reject_reason\r\n        ? 'rejected'\r\n        : 'needs_review');\r\n\r\n  const productClassificationLogInsert = {\r\n    run_id: sqlNumber(j.run_id),\r\n    product_id: sqlNumber(j.product_id),\r\n    product_raw_id: sqlNumber(j.product_raw_id),\r\n    stage,\r\n    actor_type: actorType,\r\n    actor_name: actorName,\r\n    status,\r\n    input_payload: sqlJson(inputPayload),\r\n    output_payload: sqlJson(outputPayload),\r\n    selected_category_id: null,\r\n    confidence: sqlNumber(j.semantic_confidence),\r\n    explanation: sqlText(j.semantic_explanation),\r\n    validation_passed: sqlBoolean(j.semantic_validation_passed),\r\n    error_message: sqlText(j.semantic_reject_reason),\r\n    workflow_version: workflowVersion,\r\n    prompt_version: promptVersion,\r\n    decision_status: decisionStatus,\r\n    next_action: nextAction,\r\n    routing_hint: sqlJson(j.routing_hint),\r\n  };\r\n\r\n  return {\r\n    json: {\r\n      ...j,\r\n      stage,\r\n      decision_status: decisionStatus,\r\n      next_action: nextAction,\r\n      selected_category_id: null,\r\n      product_classification_log_insert: productClassificationLogInsert,\r\n    },\r\n    pairedItem: { item: index },\r\n  };\r\n});\r\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2720,
+        -1296
+      ],
+      "id": "20dea5a9-e45f-4208-bfdc-8cbc5f2e95bc",
+      "name": "Sem — Prepare Log",
+      "notes": "Hierarchy Sem log-only; selected_category_id=null; no snapshot"
+    },
+    {
+      "parameters": {
+        "content": "## Sem (B3)\n\n**Live:** Limit → Build → Prepare → Agent/DeepSeek → Merge → Post → Route → Prepare Log → Insert Log → Fin Barrier\n\n**No** Upsert Snapshot (terminal-only).\n**No** Dict Norm on this path.\n**No** category_id in Sem JSON.\nDefault `next_action=direction_select` (Dir not wired).\nLoad stays `WHERE false`.",
+        "height": 320,
+        "width": 420,
+        "color": 5
+      },
+      "id": "b72234e7-f9d9-4220-8d49-fb015fbd4b13",
+      "name": "🔗 Sem — B3 (log-only; Dir later)",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        -1600
+      ]
+    },
+    {
+      "parameters": {
         "jsCode": "return items.map((item, index) => {\n  const j = item.json || {};\n  const shortlist = Array.isArray(j.shortlist_json) ? j.shortlist_json : [];\n\n  const ruleTopScoreRaw = Number(j.rule_top_score);\n  const ruleTopScore = Number.isFinite(ruleTopScoreRaw) ? ruleTopScoreRaw : 0;\n\n  const highThreshold = 20;\n  const mediumThreshold = 10;\n\n  const shortlistText = shortlist.length\n    ? shortlist.map((c, idx) => {\n        const reasons = Array.isArray(c.reasons) ? c.reasons.join(', ') : '';\n        return `${idx + 1}. id=${c.category_id}, code=${c.category_code}, name=${c.category_name}, score=${c.score}, reasons=${reasons}`;\n      }).join('\\n')\n    : 'EMPTY';\n\n  const ruleTopCategoryId = j.rule_top_category_id !== undefined && j.rule_top_category_id !== null && j.rule_top_category_id !== ''\n    ? Number(j.rule_top_category_id)\n    : null;\n\n  const ruleHint = ruleTopCategoryId\n    ? `Rule engine suggests category_id=${ruleTopCategoryId} as top candidate with score=${ruleTopScore}.`\n    : 'Rule engine has no strong suggestion.';\n\n  let shortlistPolicyText = '';\n  if (!shortlist.length || ruleTopScore < mediumThreshold) {\n    shortlistPolicyText = `\nПолитика выбора:\n- Shortlist пустой или низкоуверенный.\n- Рассматривай shortlist как слабую подсказку, а не как ограничение.\n- Если видишь более подходящую категорию вне shortlist, можешь выбрать её.\n- Если уверенно выбрать нельзя, верни category_id = null и в объяснении укажи, что нужен review.\n`.trim();\n  } else if (ruleTopScore >= highThreshold) {\n    shortlistPolicyText = `\nПолитика выбора:\n- Rule-based слой дал сильный top candidate.\n- В первую очередь проверь, подходит ли top candidate.\n- Если top candidate не подходит, выбери лучшую категорию из shortlist.\n- Если ни одна категория не подходит, верни category_id = null и укажи причину.\n`.trim();\n  } else {\n    shortlistPolicyText = `\nПолитика выбора:\n- Shortlist выглядит разумным, но не окончательным.\n- Предпочитай выбор из shortlist.\n- Если ни один кандидат не подходит, можешь выбрать категорию вне shortlist или вернуть category_id = null.\n- Если выбор вне shortlist, кратко объясни почему shortlist оказался недостаточным.\n`.trim();\n  }\n\n  const userPrompt = `\nТовар (нормализованный текст):\n${j.combined_text || ''}\n\nТип товара по эвристике: ${j.product_type_guess || 'unknown'}\n\nShortlist кандидатов категорий:\n${shortlistText}\n\n${ruleHint}\n\n${shortlistPolicyText}\n\nЗадача:\n- Выбери наиболее подходящую категорию для товара.\n- Верни category_id, confidence и explanation.\n- confidence должен быть числом от 0.0 до 1.0.\n- explanation должен быть кратким, на русском, 1–3 предложения.\n- Не добавляй комментарии вне JSON.\n`.trim();\n\n  return {\n    json: {\n      ...j,\n\n      product_id: j.product_id !== undefined && j.product_id !== null && j.product_id !== ''\n        ? Number(j.product_id)\n        : null,\n\n      product_raw_id: j.product_raw_id !== undefined && j.product_raw_id !== null && j.product_raw_id !== ''\n        ? Number(j.product_raw_id)\n        : null,\n\n      run_id: j.run_id !== undefined && j.run_id !== null && j.run_id !== ''\n        ? Number(j.run_id)\n        : null,\n\n      rule_top_category_id: ruleTopCategoryId,\n      rule_top_score: ruleTopScore,\n      shortlist_count: shortlist.length,\n      shortlist_json: shortlist,\n\n      deepseek_body: {\n        model: 'deepseek-chat',\n        messages: [\n          {\n            role: 'system',\n            content: 'You classify pharmacy products into one category. Return ONLY a valid JSON object with keys: category_id, confidence, explanation.'\n          },\n          {\n            role: 'user',\n            content: userPrompt\n          }\n        ]\n      },\n\n      llm_prompt_debug: {\n        system: 'You classify pharmacy products into one category. Return ONLY a valid JSON object with keys: category_id, confidence, explanation.',\n        user: userPrompt\n      }\n    },\n    pairedItem: index\n  };\n});"
       },
       "type": "n8n-nodes-base.code",
@@ -1190,7 +1357,13 @@
     },
     "Load — Limit Batch": {
       "main": [
-        []
+        [
+          {
+            "node": "Sem — Build Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Shared — DeepSeek": {
@@ -1834,6 +2007,106 @@
         [
           {
             "node": "Load — Limit Batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sem — Build Prompt": {
+      "main": [
+        [
+          {
+            "node": "Sem — LLM Prepare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sem — LLM Prepare": {
+      "main": [
+        [
+          {
+            "node": "Sem — AI Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Sem — Merge LLM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sem — AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Sem — Merge LLM",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Sem — DeepSeek": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Sem — AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sem — Merge LLM": {
+      "main": [
+        [
+          {
+            "node": "Sem — Post-process",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sem — Post-process": {
+      "main": [
+        [
+          {
+            "node": "Sem — Route",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sem — Route": {
+      "main": [
+        [
+          {
+            "node": "Sem — Prepare Log",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sem — Prepare Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sem — Prepare Log": {
+      "main": [
+        [
+          {
+            "node": "DB — Insert Log",
             "type": "main",
             "index": 0
           }
