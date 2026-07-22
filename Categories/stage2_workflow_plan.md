@@ -458,9 +458,10 @@
 
 ---
 
-## Hierarchy redesign progress (2026-07-21)
+## Hierarchy redesign progress (updated 2026-07-22)
 
-Отдельный трек от current Stage 2. Канон: `redesign/20_MIGRATION_PLAN.md`, статус: `redesign/00_PROJECT_STATUS.md`, короткий roadmap: `redesign/29_SHORT_ROADMAP.md`.
+Отдельный трек от current Stage 2. Канон: `redesign/20_MIGRATION_PLAN.md`, статус: `redesign/00_PROJECT_STATUS.md`, короткий roadmap: `redesign/29_SHORT_ROADMAP.md`.  
+**Prod Stage 2** (`classification-stage2-dev`, `BaBjEPi78taRj2G5`) — **не менялся**.
 
 ### Done
 
@@ -468,7 +469,7 @@
 * **B1** — additive SQL applied in **dev**: 18 hierarchy columns on `product_classification` + 4 `hierarchy_*` keys in `pipeline_settings`; `hierarchy_experiment_enabled=false` (`24_B1_APPLY_REPORT.md`).
 * **B2** — skeleton `classification-stage2-hierarchy-dev` (`o8sugljHYuUs7IEC`): Load stub `WHERE false`; Manual run **297** + webhook run **298** / n8n exec **7768** → `finished_empty`; source `classification-stage2-dev` untouched (`26_B2_EXECUTION_REPORT.md`).
 * Hierarchy workflow status: **active but safe** (0 rows / no LLM path) — active only for webhook registration/testing; P1/2A/2B/Judge unreachable from In path.
-* **B3 Norm** (Code-only) — `Norm — Normalize Product` on live path (Attach → Norm → Limit); `Norm — Normalize Dict` on canvas unwired until B4/Dir; plan `28_B3_NORM_PLAN.md`; sources `scripts/hierarchy_nodes/`.
+* **B3 Norm** (Code-only) — **закрыта** ✅ (см. п.25 ниже).
 
 ### Not done
 
@@ -484,3 +485,65 @@
 1. **B3 Sem** (log each stage; terminal-only snapshot) — only on explicit request; keep Load stub / allowlist discipline.
 2. Sem human validation **100 → 500 → 1000** (gate before Dir+).
 3. Then Dir → Need → Cat → optional Mnn → Judge per `20_MIGRATION_PLAN.md`.
+
+---
+
+25. **B3 Norm — Code-only нормализация в hierarchy-dev (2026-07-21)**
+
+* **Дата фиксации в журнале:** 2026-07-22. **Workflow:** `classification-stage2-hierarchy-dev` (`o8sugljHYuUs7IEC`).
+* **План:** `redesign/28_B3_NORM_PLAN.md`. **Патчер:** `scripts/_b3_patch_norm.py`. **Источники:** `scripts/hierarchy_nodes/norm_helpers_v1.js`, `norm_normalize_product.js`, `norm_normalize_dict.js`.
+* **Ограничения B3 Norm:** только Code-ноды; **нет SQL writes**; **нет LLM**; `categories_dict` / product tables не UPDATE; prod Stage 2 не трогаем.
+
+#### Ноды
+
+| Нода | Тип | Wiring | Роль |
+|------|-----|--------|------|
+| `Norm — Normalize Product` | Code | **live:** `Load — Attach Run ID` → **эта нода** → `Load — Limit Batch` | Нормализация текста/атрибутов товара |
+| `Norm — Normalize Dict` | Code | **на canvas, connections пустые** (не в In-path) | Нормализация осей словаря + dirty-flags |
+| `🔗 Norm — B3 (wire Dict later)` | Sticky | — | Памятка: Dict подключить в B4/Dir |
+
+Целевое wiring Dict (ещё не сделано): `Dir — Load Categories` → `Norm — Normalize Dict` → Dir Merge Context.
+
+#### Контракт полей — Product (`Norm — Normalize Product`)
+
+Добавляет / обновляет в item (через `...item.json` + `pairedItem`):
+
+| Поле | Смысл |
+|------|--------|
+| `normalized_text` | Нормализованный текст товара (HTML strip, quotes, ASCII hyphen, collapse whitespace; cap 12000) |
+| `normalize_meta.source_fields` | Откуда взят текст (`combined_text` или fallback name/description) |
+| `normalize_meta.truncated` | Обрезка по длине |
+| `normalize_meta.empty_flags` | Флаги пустых исходников |
+| `norm_mnn_product` | Norm MNN с продукта (`mnn` / `mnn_cluster`), если есть |
+| `norm_brand_guess` / `norm_form_guess` / `norm_dosage_guess` / `norm_pack_size_guess` / `norm_product_type_guess` | Norm атрибутов, если были на item |
+| `norm_warnings[]` | `{ field, reason, raw }` — warnings, не hard-reject |
+| `cascade_trace.path` / `cascade_trace.stages` | Append stage `normalize` (merge-safe) |
+
+#### Контракт полей — Dict (`Norm — Normalize Dict`)
+
+| Поле | Смысл |
+|------|--------|
+| `norm_direction` | `lower(trim(direction))` |
+| `norm_need` | `lower(ascii_hyphen(collapse_whitespace(need_nosology)))` |
+| `norm_category` | `lower(ascii_hyphen(collapse_whitespace(category_name)))` |
+| `norm_mnn` | `lower(ascii_hyphen(collapse_whitespace(mnn_cluster)))` |
+| `is_multi_sep` | MNN slash-list / multi-token |
+| `is_eq_category` | `norm_mnn == norm_category` |
+| `is_device_sku_like` | эвристика SKU/spec (**флаг, не reject**) |
+| `need_flat_like` | `norm_need == norm_category` (near-flat ветки) |
+| `mnn_raw` | сырой MNN при `is_multi_sep` |
+| `norm_warnings[]` | empty/unusable по осям |
+
+#### Safety (подтверждено по export JSON)
+
+* `Load — Select Batch` остаётся stub: `WHERE false` → 0 rows.
+* Live In-path: `Select Batch` → `Attach Run ID` → **`Norm — Normalize Product`** → `Limit Batch`.
+* `Load — Limit Batch` → **исходящих связей нет** (`connections.main = [[]]`) → P1/2A/2B/Judge **недостижимы**.
+* `Norm — Normalize Dict` **без connections** → не влияет на runtime.
+* Kill switch: `hierarchy_experiment_enabled=false`; allowlist пустой.
+* Итог: workflow **active but safe** — webhook/smoke без drain pending и без LLM-path.
+
+#### Статус
+
+* **B3 Norm:** **закрыта** ✅ (Code-only в hierarchy-dev).
+* **Следующий gate:** **B3 Sem** (`semantic_primary`) — только по явному запросу; Load stub / allowlist discipline сохранить.

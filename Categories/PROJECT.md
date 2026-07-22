@@ -251,13 +251,14 @@ flowchart TD
    - `python3 scripts/push_workflow.py classification-stage2-dev`
    - `python3 scripts/pull_workflow.py shortlist` (Stage 1)
 
-## Redesign status (2026-07-20)
+## Redesign status (2026-07-22)
 
-Hierarchy migration plan v1 **approved as architecture design** — see `redesign/20_MIGRATION_PLAN.md` and `redesign/00_PROJECT_STATUS.md`.
+Hierarchy migration plan v1 **approved**; implementation track live in clone — see `redesign/20_MIGRATION_PLAN.md`, `redesign/00_PROJECT_STATUS.md`, канонический журнал: `Categories/stage2_workflow_plan.md` (п.25 / Hierarchy redesign).
 
-- **Implemented today:** Stage 1 shortlist + Stage 2 pipeline in `classification-stage2-dev` (primary / 2A / 2B / judge; Sheets batch acceptance).
-- **Not implemented:** semantic-first hierarchy cascade clone; no hierarchy SQL/workflow under the approved plan yet.
-- **Locked v1 design choices:** clone-only; `categories_dict` text mapping; intermediate `pending_fallback`; terminal-only snapshot; Sheets human path / Telegram inactive; allowlist isolation design.
-- **§13 clearance:** complete (artifacts `redesign/21a`, `21b`, `21`, `22`). B1/B2 *unblocked*, not started.
+- **Current Stage 2:** `classification-stage2-dev` — production-like pipeline (primary / 2A / 2B / judge / Sheets / Telegram HR) — **unchanged**.
+- **Hierarchy clone:** `classification-stage2-hierarchy-dev` (`o8sugljHYuUs7IEC`) — **active but safe** (Load `WHERE false`; Limit без выхода в P1).
+- **Done:** §13 clearance; **B1** additive SQL (dev); **B2** skeleton clone; **B3 Norm** Code-only (`Norm — Normalize Product` live; `Norm — Normalize Dict` unwired).
+- **Next gate:** **B3 Sem** (`semantic_primary`) — only on explicit request.
+- **Locked v1 design:** clone-only; `categories_dict` text mapping; intermediate `pending_fallback`; terminal-only snapshot; Sheets human path / Telegram inactive for hierarchy; allowlist isolation (`hierarchy_experiment_enabled=false`).
 
 Note: sections above describing “primary-only / 19 nodes” may be outdated relative to the live `classification-stage2-dev` export; trust `stage2_workflow_contract.md` + workflow JSON for current Stage 2 detail.
