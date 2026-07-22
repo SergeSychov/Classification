@@ -1,0 +1,11 @@
+{
+  "execution_id": "9935",
+  "run_id": 302,
+  "validation_passed": false,
+  "reject_reason": "missing_explanation",
+  "injected": true,
+  "decision_status": "pending_fallback",
+  "next_action": "direction_select",
+  "selected_category_id": null,
+  "upsert_snapshot_ran": false
+}

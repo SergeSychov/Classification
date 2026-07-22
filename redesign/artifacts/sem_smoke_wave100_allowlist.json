@@ -1,0 +1,15 @@
+{
+  "wave_label": "wave100",
+  "seed": "sem_wave100_2026-07-22",
+  "n": 100,
+  "product_ids": [],
+  "generated_at": "2026-07-22T11:41:19.688304+00:00",
+  "isolation_filter": "exclude prod Stage 2 log/runs activity last 24h",
+  "sql": {
+    "select": "sql\\sem_smoke\\sem_smoke_wave100_select.sql",
+    "apply": "sql\\sem_smoke\\sem_smoke_wave100_apply.sql",
+    "revert": "sql\\sem_smoke\\sem_smoke_settings_revert.sql",
+    "verify": "sql\\sem_smoke\\sem_smoke_settings_verify.sql"
+  },
+  "note": "Run apply SQL in pgAdmin against pharmacy_ai, then copy product_ids from the SELECT result into this artifact (or re-run with --product-ids)."
+}

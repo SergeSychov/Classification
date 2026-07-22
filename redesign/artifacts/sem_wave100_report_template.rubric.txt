@@ -1,0 +1,4 @@
+Wave-100 rubric labels (fill label_* columns):
+correct, incorrect, unknown_acceptable, missing_should_exist
+Per attr: mnn, brand, rx_otc, nosology, administration_route, dosage_form, dosage, age_segment, package_hint, combination_hint
+Do not score final category_id.

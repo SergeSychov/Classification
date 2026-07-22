@@ -471,10 +471,11 @@
 * Hierarchy workflow status: **active but safe** (0 rows / no LLM path on empty Load) — Load stub intact; kill switch / allowlist defaults not relaxed.
 * **B3 Norm** (Code-only) — **закрыта** ✅ (см. п.25).
 * **B3 Sem** (`semantic_primary`, log-only) — **закрыта в git** ✅ (см. п.26); Dir не подключён; snapshot не пишется.
+* **Sem smoke S0/S1/S2** — **закрыта** ✅ (см. п.27); reversible allowlist; rollback to safe default verified.
 
 ### Not done
 
-* Gated Sem smoke 10 (allowlist) + Sem validation waves 100 / 500 / 1000.
+* Sem validation waves 100 / 500 / 1000 (Wave-100 gate **открыт**, запуск только по явному запросу).
 * Dir / Need / Cat / optional Mnn cascade + Judge rewiring for hierarchy.
 * Prod Stage 2 Load allowlist-exclude patch.
 * Telegram / HITL beyond Sheets for hierarchy — **not started**.
@@ -482,8 +483,8 @@
 
 ### Next short steps
 
-1. Optional gated Sem smoke (allowlist) on explicit request — then restore stub/kill switch.
-2. Sem human validation **100 → 500 → 1000** (gate before Dir+).
+1. Sem human validation **Wave-100** (allowlist N=100) — only on explicit request.
+2. Then **500 → 1000** (gate before Dir+).
 3. Then Dir → Need → Cat → optional Mnn → Judge per `20_MIGRATION_PLAN.md`.
 
 ---
@@ -639,4 +640,45 @@ Never `decision_status=classified` at Sem. Always `pending_fallback`.
 * **B3 Sem:** реализован **structurally** в git (9 нод + log-only wiring) ✅
 * **Safe defaults сохранены:** Load `WHERE false`; kill switch / allowlist untouched; snapshot path не подключён; Dict Norm unwired; empty Fin intact; prod Stage 2 unchanged.
 * **n8n sync:** **выполнен** 2026-07-22 — `PUT` `classification-stage2-hierarchy-dev` (`o8sugljHYuUs7IEC`), `updatedAt=2026-07-22T08:42:33.315Z`, `active=true`, Sem-нод на сервере: **9**, Load stub `WHERE false` сохранён.
-* **Следующий gate:** optional gated Sem smoke 10 / validation waves — только по явному запросу; затем Dir (B4).
+* **Следующий gate:** Sem smoke S0/S1/S2 — выполнен в п.27; Wave-100 — только по явному запросу; затем Dir (B4).
+
+---
+
+27. **Sem smoke S0/S1/S2 + reversible allowlist (2026-07-22)**
+
+* **Workflow:** `classification-stage2-hierarchy-dev` (`o8sugljHYuUs7IEC`). **Prod Stage 2:** не менялся.
+* **Паттерн:** временный allowlist Load + kill switch → smokes → **обязательный rollback** в safe default (`Load WHERE false`, `hierarchy_experiment_enabled=false`, `product_ids=[]`, inject-node отсутствует).
+* **Tooling:** `scripts/sem_smoke_patch_workflow.py`, `sem_smoke_allowlist.py`, `sem_smoke_settings_via_n8n.py`, `sem_smoke_export.py`, `run_hierarchy_workflow.py`, `sem_post_process_fixtures.test.mjs`.
+
+#### Results
+
+| Phase | Evidence | Pass |
+|-------|----------|------|
+| **S0** empty | exec **9880**, run **299**, `finished_empty`; load=0; Sem Agent не вызывался | ✅ |
+| **S1** gated Sem | exec **9929**, run **300**; load=15; Sem Post=15; all `pending_fallback` / `direction_select` / `selected_category_id=null`; **upsert snapshot=false** | ✅ |
+| **S2 offline** | `node --test scripts/sem_post_process_fixtures.test.mjs` — **8/8** (invalid_json, missing_explanation, nested/partial, category_id/direction/need forbidden, valid, invalid_shape) | ✅ |
+| **S2 live** | exec **9935**, run **302**; inject on first item; `validation_passed=false`, `reject_reason=missing_explanation`, soft-continue; snapshot=false | ✅ |
+| **Rollback** | backup restore + settings revert; remote Load `WHERE false`; inject absent; enabled=false; allowlist=`[]`; n8n `updatedAt=2026-07-22T12:22:42.532Z` | ✅ |
+
+#### Allowlist S1
+
+* **seed:** `sem_smoke_2026-07-22`
+* **n:** 15
+* **eligible note:** classic `pending` pool was **empty**; Sem smoke used `needs_human_review` (outside prod Stage 2 pending drain) + seeded `md5(product_id\|\|seed)` + exclude hot prod activity for pending-only.
+* **product_ids:** `66, 89, 4611, 5212, 6168, 6613, 10704, 15375, 16215, 16411, 17010, 18205, 21325, 23183, 25794`
+* **artifact:** `redesign/artifacts/sem_smoke_S1_allowlist.json`, CSV `redesign/artifacts/sem_smoke_s1_report.csv` (с пустыми `label_*` под Wave-100 rubric)
+
+#### Wave-100 prep (not started)
+
+* Allowlist generator: `python scripts/sem_smoke_allowlist.py --n 100 --seed … --wave-label wave100`
+* Template: `redesign/artifacts/sem_wave100_report_template.csv` + rubric note
+* **Gate:** B3 Sem smoke green → Wave-100 разрешён **только по явному запросу**
+
+#### Safety after task
+
+* Load `WHERE false` ✅
+* `hierarchy_experiment_enabled=false` ✅
+* `hierarchy_product_allowlist=[]` ✅
+* inject-node отсутствует ✅
+* hierarchy-dev pushed in safe default ✅
+* prod `classification-stage2-dev` untouched ✅

@@ -1,0 +1,40 @@
+{
+  "wave_label": "S1",
+  "seed": "sem_smoke_2026-07-22",
+  "n": 15,
+  "product_ids": [
+    66,
+    89,
+    4611,
+    5212,
+    6168,
+    6613,
+    10704,
+    15375,
+    16215,
+    16411,
+    17010,
+    18205,
+    21325,
+    23183,
+    25794
+  ],
+  "generated_at": "2026-07-22T12:24:30.716994+00:00",
+  "isolation_filter": "exclude prod Stage 2 log/runs activity last 24h",
+  "sql": {
+    "select": "sql\\sem_smoke\\sem_smoke_S1_select.sql",
+    "apply": "sql\\sem_smoke\\sem_smoke_S1_apply.sql",
+    "revert": "sql\\sem_smoke\\sem_smoke_settings_revert.sql",
+    "verify": "sql\\sem_smoke\\sem_smoke_settings_verify.sql"
+  },
+  "note": "Run apply SQL in pgAdmin against pharmacy_ai, then copy product_ids from the SELECT result into this artifact (or re-run with --product-ids).",
+  "run_id": 300,
+  "execution_id": "9929",
+  "s0_execution_id": "9880",
+  "s0_run_id": 299,
+  "s2_live_execution_id": "9935",
+  "s2_live_run_id": 302,
+  "s2_offline": "node --test scripts/sem_post_process_fixtures.test.mjs (8/8 pass)",
+  "eligible_note": "pending pool empty; used needs_human_review (outside prod drain) + seeded md5",
+  "applied_via": "n8n_temp_postgres_workflow"
+}

@@ -1,0 +1,47 @@
+{
+  "out": "redesign\\artifacts\\sem_smoke_s1_report.csv",
+  "row_count": 15,
+  "rubric_label_columns": [
+    "label_mnn",
+    "label_brand",
+    "label_rx_otc",
+    "label_nosology",
+    "label_administration_route",
+    "label_dosage_form",
+    "label_dosage",
+    "label_age_segment",
+    "label_package_hint",
+    "label_combination_hint"
+  ],
+  "rubric_values": [
+    "correct",
+    "incorrect",
+    "unknown_acceptable",
+    "missing_should_exist"
+  ],
+  "meta": {
+    "execution_id": "9929",
+    "status": "success",
+    "fin_close": [
+      {
+        "id": "300",
+        "status": "finished_empty",
+        "success_count": 0,
+        "metadata": {
+          "trigger": "webhook",
+          "skeleton": "b2",
+          "allowlist_n": 15,
+          "total_count": 0,
+          "sem_smoke_mode": true,
+          "sem_smoke_seed": "sem_smoke_2026-07-22",
+          "sem_smoke_wave": "S1",
+          "hierarchy_run_mode": "sem_smoke",
+          "needs_review_count": 0
+        }
+      }
+    ],
+    "sem_count": 15,
+    "upsert_snapshot_ran": false,
+    "sem_agent_ran": true
+  }
+}

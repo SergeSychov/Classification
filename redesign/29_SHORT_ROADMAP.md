@@ -1,6 +1,6 @@
 # Hierarchy redesign — short roadmap
 
-Updated: 2026-07-21  
+Updated: 2026-07-22  
 Status board: [`00_PROJECT_STATUS.md`](00_PROJECT_STATUS.md)  
 Migration design: [`20_MIGRATION_PLAN.md`](20_MIGRATION_PLAN.md)  
 Journal pointer: [`../Categories/stage2_workflow_plan.md`](../Categories/stage2_workflow_plan.md) (section *Hierarchy redesign progress*)
@@ -14,12 +14,13 @@ Journal pointer: [`../Categories/stage2_workflow_plan.md`](../Categories/stage2_
 | B2 | Skeleton + empty smokes (`26_B2_EXECUTION_REPORT.md`) |
 | B3 Norm | Code-only in hierarchy-dev (`28_B3_NORM_PLAN.md`); Product on live path; Dict unwired until B4/Dir |
 | B3 Sem | Log-only `semantic_primary` in hierarchy-dev (`stage2_workflow_plan.md` п.26); Limit→Sem→Insert Log; no snapshot; Dir not wired |
+| Sem smoke S0/S1/S2 | Done (`stage2_workflow_plan.md` п.27); reversible allowlist; rollback to safe default verified |
 | Hierarchy workflow | `classification-stage2-hierarchy-dev` (`o8sugljHYuUs7IEC`) |
 | Workflow status | **Active but safe (0 rows)** — Load = `WHERE false`; empty Fin intact; Sem wired but not executed without rows |
 | Prod Stage 2 | Unchanged |
 | Kill switch | `hierarchy_experiment_enabled=false`; allowlist empty |
 
-Naming: **B3 = Norm + Sem** (both done in git; Sem smoke/validation pending).
+Naming: **B3 = Norm + Sem** (done; Sem smoke green → Wave-100 gate open).
 
 ---
 
@@ -30,7 +31,8 @@ Naming: **B3 = Norm + Sem** (both done in git; Sem smoke/validation pending).
 | **0** | Status quo / ops safety | — | Prod Stage 2 untouched; hierarchy Load returns 0; workflow **active but safe** | `00_PROJECT_STATUS`, `26_B2_EXECUTION_REPORT` |
 | **1a** | **B3 Norm** (Code-only) | Explicit ask | Product + Dict Code nodes; no SQL/LLM; Load stub intact | `28_B3_NORM_PLAN` + hierarchy WF |
 | **1b** | **B3 Sem** `semantic_primary` | Explicit ask | no `category_id`; log `semantic_primary`; terminal-only; Load=0 → `finished_empty` | journal п.26 + Sem nodes |
-| **2** | Sem validation wave **100** | B3 smoke green | Allowlist filled; rubric on attrs | Sheets/export + allowlist |
+| **1c** | Sem smoke S0/S1/S2 | Explicit ask | allowlist reversible; offline+live soft-continue; rollback safe | journal п.27 + `redesign/artifacts/sem_smoke_*` |
+| **2** | Sem validation wave **100** | Sem smoke green | Allowlist filled; rubric on attrs | Sheets/export + allowlist |
 | **3** | Sem validation **500 / 1000** | Wave-100 gate pass | Metrics non-worse | Wave reports |
 | **4** | Dir + Need soft-to-hard | Sem V3 gate | Membership / `soft_override` | Cascade smoke notes |
 | **5** | Cat hard + optional Mnn | Dir/Need smoke | Hard category shortlist; Mnn skip-empty OK | Cascade smoke notes |
@@ -49,4 +51,4 @@ Naming: **B3 = Norm + Sem** (both done in git; Sem smoke/validation pending).
 
 ## Next action
 
-Optional **gated Sem smoke** / Sem validation waves — start only on explicit request. Keep Load stub / allowlist discipline until then. **Dir+** after V3 gate.
+**Wave-100** Sem validation — start only on explicit request. Keep Load stub / allowlist discipline until then. **Dir+** after V3 gate.
