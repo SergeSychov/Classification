@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "n8n-mcp": {
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "C:\\Users\\admin\\Desktop\\Classification\\Classification\\scripts\\run-n8n-mcp.ps1"
+      ]
+    }
+  }
+}
