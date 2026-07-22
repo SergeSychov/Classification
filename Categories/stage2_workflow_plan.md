@@ -638,5 +638,5 @@ Never `decision_status=classified` at Sem. Always `pending_fallback`.
 
 * **B3 Sem:** реализован **structurally** в git (9 нод + log-only wiring) ✅
 * **Safe defaults сохранены:** Load `WHERE false`; kill switch / allowlist untouched; snapshot path не подключён; Dict Norm unwired; empty Fin intact; prod Stage 2 unchanged.
-* **n8n sync:** **не выполнен** на 2026-07-22 — в локальном `.env` пустой `N8N_API_KEY`; `push_workflow.py classification-stage2-hierarchy-dev` отложен до заполнения ключа. Локальный JSON уже содержит 9 Sem-нод.
+* **n8n sync:** **выполнен** 2026-07-22 — `PUT` `classification-stage2-hierarchy-dev` (`o8sugljHYuUs7IEC`), `updatedAt=2026-07-22T08:42:33.315Z`, `active=true`, Sem-нод на сервере: **9**, Load stub `WHERE false` сохранён.
 * **Следующий gate:** optional gated Sem smoke 10 / validation waves — только по явному запросу; затем Dir (B4).
