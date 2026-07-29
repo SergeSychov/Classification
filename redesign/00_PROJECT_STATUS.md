@@ -1,6 +1,6 @@
 # Project status — classification redesign
 
-Updated: 2026-07-22  
+Updated: 2026-07-29  
 Canonical migration design: [`20_MIGRATION_PLAN.md`](20_MIGRATION_PLAN.md)
 
 ## Architecture decision status
@@ -13,11 +13,13 @@ Canonical migration design: [`20_MIGRATION_PLAN.md`](20_MIGRATION_PLAN.md)
 **B3 Sem (log-only) done** in hierarchy-dev: Limit → Sem zone → `Sem — Prepare Log` → Insert Log (no snapshot); `Sem — Route` seam for B4.  
 **Sem smoke S0/S1/S2 done** (2026-07-22): reversible allowlist; rollback to `WHERE false` / kill switch off / empty allowlist verified. Dir/Need/Cat/Mnn not implemented; `hierarchy_experiment_enabled` remains `false`.
 
+**Next planned step:** Wave-100 Sem validation — first **LLM-on** wave in hierarchy-dev (N=100 allowlist); remains **snapshot-off** / **prod untouched**; hierarchy workflow stays in safe default until explicit launch. Gate definition: [`../Categories/stage2_workflow_plan.md`](../Categories/stage2_workflow_plan.md) п.28 (planned; not executed).
+
 | Track | Status |
 |-------|--------|
 | Current Stage 2 (`classification-stage2-dev`) | Implemented (production-like working pipeline) — **unchanged** |
 | Hierarchy cascade redesign | **§13 cleared**; **B1–B2 done**; **B3 Norm+Sem done**; **Sem smoke green**; Dir+ pending Wave-100+ |
-| Sem validation 100/500/1000 | Wave-100 **gate open** (not started) |
+| Sem validation 100/500/1000 | Wave-100 **gate defined** (п.28); **not started** |
 | Short roadmap | [`29_SHORT_ROADMAP.md`](29_SHORT_ROADMAP.md) |
 
 ---
@@ -78,7 +80,7 @@ Norm → semantic_primary → direction → need → category → optional mnn �
 ### Explicitly not claimed
 
 - Hierarchy cascade **Dir / Need / Cat / Mnn / Judge** LLM stages not implemented
-- Sem validation 100/500/1000 not started (Wave-100 gate open after Sem smoke)
+- Sem validation 100/500/1000 not started (Wave-100 gate **defined** in journal п.28; first LLM-on / snapshot-off wave still pending explicit launch)
 - Prod Stage 2 Load SQL not patched; experiment kill switch remains off; hierarchy Load stubbed (`WHERE false`)
 - Telegram/HITL beyond Sheets for hierarchy — not started
 - Dedicated hierarchy error-handling track — not planned in detail yet
@@ -111,7 +113,7 @@ Norm → semantic_primary → direction → need → category → optional mnn �
 - Reversible allowlist Load + kill switch; offline fixtures + live inject; full rollback to safe default
 - S0 exec 9880 / run 299; S1 exec 9929 / run 300 (N=15); S2 live exec 9935 / run 302
 - Artifacts: `redesign/artifacts/sem_smoke_*`; journal п.27
-- Wave-100 gate **open** (not started)
+- Wave-100 gate definition recorded 2026-07-29 (journal п.28); wave itself **not started**
 
 ---
 
@@ -119,6 +121,7 @@ Norm → semantic_primary → direction → need → category → optional mnn �
 
 Short roadmap: [`29_SHORT_ROADMAP.md`](29_SHORT_ROADMAP.md).
 
-**Next:** Sem validation **Wave-100** — only on **explicit request**.  
+**Next:** Sem validation **Wave-100** — first LLM-on / snapshot-off wave in hierarchy-dev; **prod untouched**; only on **explicit request**.  
+Gate: journal п.28 (`critical_error_rate < 15%` on `mnn` / `dosage_form` / `administration_route`; Sem contract; rollback).  
 Keep Load stub / allowlist discipline until then.  
 **Dir+** remains gated by Sem user validation 100→500→1000.

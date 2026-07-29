@@ -1,9 +1,9 @@
 # Hierarchy redesign — short roadmap
 
-Updated: 2026-07-22  
+Updated: 2026-07-29  
 Status board: [`00_PROJECT_STATUS.md`](00_PROJECT_STATUS.md)  
 Migration design: [`20_MIGRATION_PLAN.md`](20_MIGRATION_PLAN.md)  
-Journal pointer: [`../Categories/stage2_workflow_plan.md`](../Categories/stage2_workflow_plan.md) (section *Hierarchy redesign progress*)
+Journal pointer: [`../Categories/stage2_workflow_plan.md`](../Categories/stage2_workflow_plan.md) (section *Hierarchy redesign progress*; Wave-100 gate = п.28)
 
 ## Current baseline (done)
 
@@ -32,7 +32,7 @@ Naming: **B3 = Norm + Sem** (done; Sem smoke green → Wave-100 gate open).
 | **1a** | **B3 Norm** (Code-only) | Explicit ask | Product + Dict Code nodes; no SQL/LLM; Load stub intact | `28_B3_NORM_PLAN` + hierarchy WF |
 | **1b** | **B3 Sem** `semantic_primary` | Explicit ask | no `category_id`; log `semantic_primary`; terminal-only; Load=0 → `finished_empty` | journal п.26 + Sem nodes |
 | **1c** | Sem smoke S0/S1/S2 | Explicit ask | allowlist reversible; offline+live soft-continue; rollback safe | journal п.27 + `redesign/artifacts/sem_smoke_*` |
-| **2** | Sem validation wave **100** | Sem smoke green | Allowlist filled; rubric on attrs | Sheets/export + allowlist |
+| **2** | Sem validation wave **100** (first **LLM-on**, **snapshot-off**; gate on semantic attrs, not category) | Sem smoke green; gate def journal п.28 | Allowlist N=100; rubric on attrs; `critical_error_rate < 15%` on `mnn` / `dosage_form` / `administration_route` | `sem_wave100_*` export + allowlist |
 | **3** | Sem validation **500 / 1000** | Wave-100 gate pass | Metrics non-worse | Wave reports |
 | **4** | Dir + Need soft-to-hard | Sem V3 gate | Membership / `soft_override` | Cascade smoke notes |
 | **5** | Cat hard + optional Mnn | Dir/Need smoke | Hard category shortlist; Mnn skip-empty OK | Cascade smoke notes |
@@ -51,4 +51,4 @@ Naming: **B3 = Norm + Sem** (done; Sem smoke green → Wave-100 gate open).
 
 ## Next action
 
-**Wave-100** Sem validation — start only on explicit request. Keep Load stub / allowlist discipline until then. **Dir+** after V3 gate.
+**Wave-100** Sem validation (LLM-on / snapshot-off / prod untouched) — start only on explicit request. Gate definition: journal п.28. Keep Load stub / allowlist discipline until then. **Dir+** after V3 gate.

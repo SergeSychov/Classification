@@ -458,7 +458,7 @@
 
 ---
 
-## Hierarchy redesign progress (updated 2026-07-22)
+## Hierarchy redesign progress (updated 2026-07-29)
 
 Отдельный трек от current Stage 2. Канон: `redesign/20_MIGRATION_PLAN.md`, статус: `redesign/00_PROJECT_STATUS.md`, короткий roadmap: `redesign/29_SHORT_ROADMAP.md`.  
 **Prod Stage 2** (`classification-stage2-dev`, `BaBjEPi78taRj2G5`) — **не менялся**.
@@ -472,10 +472,11 @@
 * **B3 Norm** (Code-only) — **закрыта** ✅ (см. п.25).
 * **B3 Sem** (`semantic_primary`, log-only) — **закрыта в git** ✅ (см. п.26); Dir не подключён; snapshot не пишется.
 * **Sem smoke S0/S1/S2** — **закрыта** ✅ (см. п.27); reversible allowlist; rollback to safe default verified.
+* **Wave-100 gate definition** — **planned** (см. п.28); метрики / rubric / pass-fail зафиксированы; прогон ещё не стартовал.
 
 ### Not done
 
-* Sem validation waves 100 / 500 / 1000 (Wave-100 gate **открыт**, запуск только по явному запросу).
+* Sem validation waves 100 / 500 / 1000 (Wave-100 **не выполнен**; gate definition в п.28; запуск только по явному запросу).
 * Dir / Need / Cat / optional Mnn cascade + Judge rewiring for hierarchy.
 * Prod Stage 2 Load allowlist-exclude patch.
 * Telegram / HITL beyond Sheets for hierarchy — **not started**.
@@ -483,7 +484,7 @@
 
 ### Next short steps
 
-1. Sem human validation **Wave-100** (allowlist N=100) — only on explicit request.
+1. Sem human validation **Wave-100** (allowlist N=100; LLM-on / snapshot-off) — only on explicit request; gate = п.28.
 2. Then **500 → 1000** (gate before Dir+).
 3. Then Dir → Need → Cat → optional Mnn → Judge per `20_MIGRATION_PLAN.md`.
 
@@ -672,7 +673,7 @@ Never `decision_status=classified` at Sem. Always `pending_fallback`.
 
 * Allowlist generator: `python scripts/sem_smoke_allowlist.py --n 100 --seed … --wave-label wave100`
 * Template: `redesign/artifacts/sem_wave100_report_template.csv` + rubric note
-* **Gate:** B3 Sem smoke green → Wave-100 разрешён **только по явному запросу**
+* **Gate definition:** см. п.28 (planned). B3 Sem smoke green → Wave-100 разрешён **только по явному запросу**.
 
 #### Safety after task
 
@@ -682,3 +683,88 @@ Never `decision_status=classified` at Sem. Always `pending_fallback`.
 * inject-node отсутствует ✅
 * hierarchy-dev pushed in safe default ✅
 * prod `classification-stage2-dev` untouched ✅
+
+---
+
+28. **Wave-100 Sem validation — gate definition (planned)** (2026-07-29)
+
+* **Статус:** **planned / gate definition** — не выполнен; run_ids / counts / метрики ещё нет.
+* **Связь:** после зелёных Sem smoke (п.27). Канон метрик: `redesign/20_MIGRATION_PLAN.md` §3.2 / §9.3; short roadmap Step 2.
+
+#### A. Что такое Wave-100
+
+* Следующий этап hierarchy redesign после Sem smoke.
+* **Первый полноценный LLM-on прогон** в `classification-stage2-hierarchy-dev` (`o8sugljHYuUs7IEC`) на выборке **N=100**.
+* На этапе реально вызывается Sem chain:
+
+```text
+Norm — Normalize Product
+  → Sem — Build Prompt → Sem — LLM Prepare
+      → Sem — AI Agent / DeepSeek → Sem — Merge LLM
+      → Sem — Post-process → Sem — Prepare Log
+      → DB — Insert Log
+```
+
+* Выполняется **только** в hierarchy-dev; **только** через allowlist isolation; **без** Dir / Need / Cat / Mnn / Judge / Sheets / Telegram; **без** правок prod `classification-stage2-dev`.
+
+#### B. LLM-on / snapshot-off / prod untouched
+
+* **LLM-on:** Sem model реально вызывается и возвращает первые production-like `semantic_attrs`.
+* **snapshot-off:** после Sem по-прежнему нет upsert в `product_classification`; сохраняются log events / export artifacts.
+* **prod untouched:** prod Stage 2 workflow, его Load и snapshot-путь не меняются.
+
+#### C. Что оцениваем
+
+* Качество предобработки: `normalized_text` (Norm) + `semantic_attrs` (Sem).
+* **Не** оцениваем final category, direction, need, leaf category.
+
+#### D. Rubric / labels
+
+| Label | Meaning |
+|-------|---------|
+| `correct` | атрибут согласуется с текстом |
+| `incorrect` | атрибут неверен / hallucination |
+| `unknown_acceptable` | null допустим — текст не даёт сигнала |
+| `missing_should_exist` | null, хотя текст явно содержит сигнал |
+
+#### E. Critical attrs (gate v1)
+
+* Hard gate: `mnn`, `dosage_form`, `administration_route`.
+* Secondary / report-only (не основной hard gate v1): `dosage`.
+
+#### F. Основная метрика
+
+```text
+critical_error_rate = critical_errors / evidenced_key_attr_cases
+```
+
+* `critical_errors` = `incorrect` + `missing_should_exist` по critical attrs.
+* `evidenced_key_attr_cases` = случаи, где по тексту соответствующий critical attr должен быть определён.
+
+#### G. Gate rule
+
+* **Pass → можно планировать Wave-500:**
+  * `critical_error_rate < 15%`
+  * 0 нарушений Sem contract (`category_id`, `direction`, `need` не появляются в Sem output)
+  * snapshot after Sem remains disabled
+  * rollback to safe default verified
+* **Stop / revise prompt-postprocess:**
+  * `critical_error_rate >= 15%`
+  * заметные hallucinations по critical attrs
+  * высокий `missing_should_exist`
+  * нарушение Sem contract
+  * unstable run / failed rollback
+
+#### H. Review model
+
+* Один reviewer на все 100.
+* Seeded spot-check **20–25%** вторым reviewer.
+* Disagreement resolution только для spot-check.
+
+#### I. Artifacts expectation (после будущего прогона)
+
+* `redesign/artifacts/sem_wave100_allowlist.json`
+* `redesign/artifacts/sem_wave100_report.csv`
+* `redesign/artifacts/sem_wave100_summary.json` и/или короткий report md
+
+*До прогона:* не фиксировать run_ids, pool counts или measured rates в этом пункте.
