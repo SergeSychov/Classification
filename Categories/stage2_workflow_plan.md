@@ -472,11 +472,11 @@
 * **B3 Norm** (Code-only) — **закрыта** ✅ (см. п.25).
 * **B3 Sem** (`semantic_primary`, log-only) — **закрыта в git** ✅ (см. п.26); Dir не подключён; snapshot не пишется.
 * **Sem smoke S0/S1/S2** — **закрыта** ✅ (см. п.27); reversible allowlist; rollback to safe default verified.
-* **Wave-100 gate definition** — **planned** (см. п.28); метрики / rubric / pass-fail зафиксированы; прогон ещё не стартовал.
+* **Wave-100 Sem validation** — **done** (exec **19932**, N=100): LLM-on / snapshot-off / prod untouched; export готов к rubric labeling; gate awaiting `critical_error_rate` (human labels).
 
 ### Not done
 
-* Sem validation waves 100 / 500 / 1000 (Wave-100 **не выполнен**; gate definition в п.28; запуск только по явному запросу).
+* Sem validation waves 100 / 500 / 1000: Wave-100 **выполнен**; Wave-500/1000 **не стартовали**, так как расчёт gate требует human rubric labels (`critical_error_rate`).
 * Dir / Need / Cat / optional Mnn cascade + Judge rewiring for hierarchy.
 * Prod Stage 2 Load allowlist-exclude patch.
 * Telegram / HITL beyond Sheets for hierarchy — **not started**.
@@ -484,7 +484,7 @@
 
 ### Next short steps
 
-1. Sem human validation **Wave-100** (allowlist N=100; LLM-on / snapshot-off) — only on explicit request; gate = п.28.
+1. Sem human rubric labeling для Wave-100 (расчёт `critical_error_rate` и проверка gate для Wave-500).
 2. Then **500 → 1000** (gate before Dir+).
 3. Then Dir → Need → Cat → optional Mnn → Judge per `20_MIGRATION_PLAN.md`.
 
@@ -686,10 +686,17 @@ Never `decision_status=classified` at Sem. Always `pending_fallback`.
 
 ---
 
-28. **Wave-100 Sem validation — gate definition (planned)** (2026-07-29)
+28. **Wave-100 Sem validation — gate definition + execution (done)** (2026-07-29)
 
-* **Статус:** **planned / gate definition** — не выполнен; run_ids / counts / метрики ещё нет.
+* **Статус:** **done (execution complete)**. Wave-100: LLM-on, snapshot-off, prod untouched; `semantic_validation_passed=true` для 100/100; Sem contract violations (category_id/direction/need) = 0. Gate pass по `critical_error_rate` ожидает human rubric labels.
 * **Связь:** после зелёных Sem smoke (п.27). Канон метрик: `redesign/20_MIGRATION_PLAN.md` §3.2 / §9.3; short roadmap Step 2.
+
+#### Execution evidence (Wave-100)
+
+* Allowlist seed: `sem_wave100_2026-07-29`, N=100 (см. `redesign/artifacts/sem_wave100_allowlist.json`).
+* n8n execution: **19932** (`load_count=100`, `sem_post_count=100`, `sem_agent_ran=true`, `upsert_snapshot_ran=false`).
+* Routing после Sem (hierarchy-dev, log-only): `decision_status=pending_fallback`, `next_action=direction_select`, `selected_category_id=null`.
+* Contract enforcement: `semantic_reject_reason` не содержит `category_id_forbidden` / `direction_forbidden` / `need_forbidden`.
 
 #### A. Что такое Wave-100
 
@@ -761,10 +768,10 @@ critical_error_rate = critical_errors / evidenced_key_attr_cases
 * Seeded spot-check **20–25%** вторым reviewer.
 * Disagreement resolution только для spot-check.
 
-#### I. Artifacts expectation (после будущего прогона)
+#### I. Artifacts (после прогона)
 
 * `redesign/artifacts/sem_wave100_allowlist.json`
 * `redesign/artifacts/sem_wave100_report.csv`
-* `redesign/artifacts/sem_wave100_summary.json` и/или короткий report md
+* `redesign/artifacts/sem_wave100_report.summary.json`
 
-*До прогона:* не фиксировать run_ids, pool counts или measured rates в этом пункте.
+После прогона: labels (`label_*` в CSV) остаются пустыми — требуется human rubric labeling для расчёта `critical_error_rate`.

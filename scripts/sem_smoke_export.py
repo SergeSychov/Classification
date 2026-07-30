@@ -197,8 +197,13 @@ def main() -> int:
     write_csv(out_path, rows)
 
     summary_path = out_path.with_suffix(".summary.json")
+    try:
+        out_rel = out_path.relative_to(ROOT)
+        out_repr = str(out_rel)
+    except ValueError:
+        out_repr = str(out_path)
     summary = {
-        "out": str(out_path.relative_to(ROOT)) if out_path.is_relative_to(ROOT) else str(out_path),
+        "out": out_repr,
         "row_count": len(rows),
         "rubric_label_columns": [f"label_{k}" for k in ATTR_KEYS],
         "rubric_values": list(RUBRIC_VALUES),
