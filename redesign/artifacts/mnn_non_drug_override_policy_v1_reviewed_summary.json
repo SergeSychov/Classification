@@ -1,0 +1,166 @@
+{
+  "review_version": "mnn_non_drug_override_policy_v1_reviewed",
+  "policy_version": "mnn_non_drug_override_policy_v1",
+  "status": "reviewed_offline_freeze",
+  "immutable_artifact": "redesign/artifacts/mnn_non_drug_override_policy_v1_reviewed.csv",
+  "immutable_sha256": "403b93b6b984a964e78eb90edcfdf03e73ad473e3b1ba92016abf5c549270f46",
+  "labeled_input": "redesign/artifacts/mnn_non_drug_override_policy_v1_human_review - mnn_non_drug_override_policy_v1_human_review.csv",
+  "labeled_input_sha256": "01452fa36d7b80de1cd5ae853400db924c6a96f2d55001edb2f82456aac70bc9",
+  "preflight": {
+    "labeled_rows": 18,
+    "distinct_product_id": 18,
+    "approved_labels_count": 13,
+    "label_vocab_raw": {
+      "approve_bas": 3,
+      "BAS": 13,
+      "approve_drug": 1,
+      "": 1
+    }
+  },
+  "summary": {
+    "applied_bas": 12,
+    "applied_other": 1,
+    "without_applied_proposal": 5,
+    "excluded_from_future_mnn_queue": 13,
+    "product_kind_attr_snapshot_changed": false
+  },
+  "applied_rows": [
+    {
+      "product_id": "21387",
+      "final_proposed_product_kind": "bas",
+      "label_kind_override": "BAS",
+      "final_queue_action": "remove_from_future_mnn_human_queue",
+      "text": "ГЕПАВИЗИМ ФОСФОЛИПИДЫ+L-ОРИНИТИН+КУРКУМИН КАПС. ПО 495МГ №30 | ВТФ ООО | ВТФ ООО"
+    },
+    {
+      "product_id": "18830",
+      "final_proposed_product_kind": "bas",
+      "label_kind_override": "BAS",
+      "final_queue_action": "remove_from_future_mnn_human_queue",
+      "text": "ИЗЖОГАНЕТ АНТАЦИДНЫЙ КОМПЛЕКС СО ВКУСОМ МЯТЫ ТАБЛ. 600МГ №40 | ГРИН САЙД ООО | ГРИН САЙД ООО"
+    },
+    {
+      "product_id": "5322",
+      "final_proposed_product_kind": "bas",
+      "label_kind_override": "BAS",
+      "final_queue_action": "remove_from_future_mnn_human_queue",
+      "text": "ТАВОЛГА ВЯЗОЛИСТНАЯ (ЛАБАЗНИК) ТРАВА Ф/П 1,5Г №20 ХЕРБЕС | ХЕРБЕС ООО | ХЕРБЕС ООО"
+    },
+    {
+      "product_id": "9197",
+      "final_proposed_product_kind": "other",
+      "label_kind_override": "BAS",
+      "final_queue_action": "remove_from_future_mnn_human_queue",
+      "text": "ПОМОГУША СИРОП ДЕТСКИЙ ДЛЯ ДЕТЕЙ С 3-Х ЛЕТ ПРОТИВОПРОСТУДНЫЙ 100МЛ | ЮГ ООО | ЮГ ООО"
+    },
+    {
+      "product_id": "18179",
+      "final_proposed_product_kind": "bas",
+      "label_kind_override": "BAS",
+      "final_queue_action": "remove_from_future_mnn_human_queue",
+      "text": "КАЛЬЦИЯ ГЛЮКОНАТ ЭКО ТАБЛ. ПО 500МГ №10 | ЭКОТЕКС ООО | ЭКОТЕКС ООО"
+    },
+    {
+      "product_id": "75",
+      "final_proposed_product_kind": "bas",
+      "label_kind_override": "BAS",
+      "final_queue_action": "remove_from_future_mnn_human_queue",
+      "text": "САМБУКУС БУЗИНА ИММУНИТЕТ таб. массой 700мг N30 Грин сайд ООО | Грин Сайд ООО | Грин Сайд ООО | N30"
+    },
+    {
+      "product_id": "249",
+      "final_proposed_product_kind": "bas",
+      "label_kind_override": "BAS",
+      "final_queue_action": "remove_from_future_mnn_human_queue",
+      "text": "ОСТЕОМЕД таб. N60 Парафарм | Парафарм ООО | Парафарм ООО | N60"
+    },
+    {
+      "product_id": "56",
+      "final_proposed_product_kind": "bas",
+      "label_kind_override": "BAS",
+      "final_queue_action": "remove_from_future_mnn_human_queue",
+      "text": "РИТОФЛЕКС МСМ таб. N60 Фармацевтическая Фабрика ООО | Фармацевтическая фабрика ООО | Фармацевтическая фабрика ООО | N60"
+    },
+    {
+      "product_id": "3763",
+      "final_proposed_product_kind": "bas",
+      "label_kind_override": "BAS",
+      "final_queue_action": "remove_from_future_mnn_human_queue",
+      "text": "ФАРМГРУПП НАСТОЙКА 5 ТРАВ УСПОКОИТЕЛЬНАЯ ФЛ. 250МЛ | ФАРМГРУПП ООО | ФАРМГРУПП ООО"
+    },
+    {
+      "product_id": "8201",
+      "final_proposed_product_kind": "bas",
+      "label_kind_override": "BAS",
+      "final_queue_action": "remove_from_future_mnn_human_queue",
+      "text": "РЕПЕШОК ОБЫКНОВЕННЫЙ ТРАВА 50Г ЭВАЛАР | ЭВАЛАР ЗАО | ЭВАЛАР ЗАО"
+    },
+    {
+      "product_id": "22548",
+      "final_proposed_product_kind": "bas",
+      "label_kind_override": "BAS",
+      "final_queue_action": "remove_from_future_mnn_human_queue",
+      "text": "ВЕЧЕРНЕЕ ВАЛЕРИАНА+МЯТА+МЕЛИССА ДРАЖЕ №50 ПАРАФАРМ | ПАРАФАРМ ООО | ПАРАФАРМ ООО"
+    },
+    {
+      "product_id": "23695",
+      "final_proposed_product_kind": "bas",
+      "label_kind_override": "BAS",
+      "final_queue_action": "remove_from_future_mnn_human_queue",
+      "text": "БИОРИТМ АНТИСТРЕСС 24 ДЕНЬ/НОЧЬ ТАБЛ. П/О №32 | ЭВАЛАР ЗАО | ЭВАЛАР ЗАО"
+    },
+    {
+      "product_id": "26319",
+      "final_proposed_product_kind": "bas",
+      "label_kind_override": "BAS",
+      "final_queue_action": "remove_from_future_mnn_human_queue",
+      "text": "АЛТАЙ ФИТОЧАЙ КИПРЕЯ ТРАВА Ф/П 1,5Г №20 | АЛТАЙСКИЙ КЕДР ООО | АЛТАЙСКИЙ КЕДР ООО"
+    }
+  ],
+  "not_applied_rows": [
+    {
+      "product_id": "72",
+      "final_override_status": "not_applied_no_policy_proposal",
+      "label_kind_override": "approve_bas",
+      "proposed_product_kind": "",
+      "text": "ФАРИНГАЛ таб. 650мг N10 Салута-М | Салута-М ООО | Салута-М ООО | N10"
+    },
+    {
+      "product_id": "11272",
+      "final_override_status": "not_applied_no_policy_proposal",
+      "label_kind_override": "approve_bas",
+      "proposed_product_kind": "",
+      "text": "НООТРОП КАПС. №48 | ВИС ООО | ВИС ООО"
+    },
+    {
+      "product_id": "19198",
+      "final_override_status": "not_applied_keep_drug",
+      "label_kind_override": "approve_drug",
+      "proposed_product_kind": "",
+      "text": "ЗВЕРОБОЯ ТРАВА 50Г ФИТОФАРМ | ФИТОФАРМ ООО | ФИТОФАРМ ООО"
+    },
+    {
+      "product_id": "45",
+      "final_override_status": "not_applied_no_policy_proposal",
+      "label_kind_override": "approve_bas",
+      "proposed_product_kind": "",
+      "text": "АКВИОН КОЖА ВОЛОСЫ НОГТИ таб. N60 ВТФ ООО | ВТФ ООО | ВТФ ООО | N60"
+    },
+    {
+      "product_id": "9941",
+      "final_override_status": "not_applied_unlabeled_or_insufficient",
+      "label_kind_override": "",
+      "proposed_product_kind": "",
+      "text": "ПАРОДОНТОЦИД ОПОЛАСКИВАТЕЛЬ ДЛЯ ПОЛОСТИ РТА 250МЛ | МОСКОВСКАЯ ФФ | МОСКОВСКАЯ ФФ"
+    }
+  ],
+  "confirmation": {
+    "no_db_writes": true,
+    "no_product_kind_change": true,
+    "no_attr_star_change": true,
+    "no_snapshot_change": true,
+    "no_workflow_change": true,
+    "no_git_commit_push": true,
+    "implementation_contract_not_applied": true
+  }
+}

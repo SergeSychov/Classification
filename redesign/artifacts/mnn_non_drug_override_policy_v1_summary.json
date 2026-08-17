@@ -1,0 +1,221 @@
+{
+  "policy_version": "mnn_non_drug_override_policy_v1",
+  "status": "proposed_offline_only",
+  "preflight": {
+    "inputs": [
+      "redesign/artifacts/mnn_identity_enrichment_pass_review_non_drug_null_mnn_v1.csv",
+      "redesign/artifacts/mnn_identity_enrichment_pass_review_metrics_v1.md",
+      "redesign/artifacts/mnn_identity_enrichment_pass_results.csv",
+      "redesign/artifacts/mnn_identity_enrichment_pass_human_review_v2 - mnn_identity_enrichment_pass_human_review_v2.csv",
+      "redesign/artifacts/mnn_identity_enrichment_pass_research_context.csv"
+    ],
+    "non_drug_rows": 18,
+    "non_drug_distinct_product_id": 18,
+    "human_review_rows": 100,
+    "results_rows": 184,
+    "research_context_rows": 104,
+    "no_new_evidence_collected": true
+  },
+  "distributions": {
+    "proposed_product_kind": {
+      "null": 5,
+      "bas": 12,
+      "other": 1
+    },
+    "proposed_kind_decision": {
+      "conflict_requires_review": 1,
+      "propose_bas_override": 12,
+      "propose_other_override": 1,
+      "insufficient_evidence": 3,
+      "keep_current_no_override": 1
+    },
+    "evidence_grade": {
+      "D": 3,
+      "A": 7,
+      "B": 6,
+      "C": 2
+    },
+    "identity_grade": {
+      "C": 4,
+      "A": 4,
+      "B": 9,
+      "unknown": 1
+    },
+    "auto_eligible": {
+      "false": 11,
+      "true": 7
+    },
+    "review_required": {
+      "true": 11,
+      "false": 7
+    },
+    "queue_action": {
+      "retain_in_human_queue": 5,
+      "remove_from_future_mnn_human_queue": 7,
+      "send_to_kind_review_queue": 6
+    },
+    "mnn_action": {
+      "keep_null_unresolved": 4,
+      "keep_null_not_applicable": 13,
+      "manual_mnn_review": 1
+    },
+    "observed_category": {
+      "Drug": 2,
+      "BAS": 13,
+      "Other": 2,
+      "none": 1
+    }
+  },
+  "queue_reduction_estimate": {
+    "current_candidate_count": 18,
+    "auto_removable_count": 7,
+    "review_only_kind_queue_count": 6,
+    "retained_in_mnn_human_queue_count": 5,
+    "excluded_special_case_19198": true,
+    "note": "Estimates apply only to this reviewed 18-row subset; not a population projection."
+  },
+  "auto_eligible": [
+    {
+      "product_id": "21387",
+      "proposed_product_kind": "bas",
+      "evidence_grade": "A",
+      "identity_grade": "A",
+      "reason": "AUTO: Category=BAS, evidence=A/ok + BAS/Other + urls + strong identity + should_be_empty; identity=A/name+secondary match tokens=['ГЕПАВИЗИМ', 'ФОСФОЛИПИДЫ+L-ОРИНИТИН+КУРКУМИН', '495МГ']; label_mnn=should_be_empty; non-drug classification; ingredient mention is not accepted as drug MNN",
+      "normalized_text": "ГЕПАВИЗИМ ФОСФОЛИПИДЫ+L-ОРИНИТИН+КУРКУМИН КАПС. ПО 495МГ №30 | ВТФ ООО | ВТФ ООО"
+    },
+    {
+      "product_id": "18830",
+      "proposed_product_kind": "bas",
+      "evidence_grade": "A",
+      "identity_grade": "B",
+      "reason": "AUTO: Category=BAS, evidence=A/ok + BAS/Other + urls + strong identity + should_be_empty; identity=B/name+one secondary tokens=['ИЗЖОГАНЕТ', 'АНТАЦИДНЫЙ', 'КОМПЛЕКС', 'ВКУСОМ']; label_mnn=should_be_empty; non-drug classification; ingredient mention is not accepted as drug MNN",
+      "normalized_text": "ИЗЖОГАНЕТ АНТАЦИДНЫЙ КОМПЛЕКС СО ВКУСОМ МЯТЫ ТАБЛ. 600МГ №40 | ГРИН САЙД ООО | ГРИН САЙД ООО"
+    },
+    {
+      "product_id": "9197",
+      "proposed_product_kind": "other",
+      "evidence_grade": "A",
+      "identity_grade": "B",
+      "reason": "AUTO: Category=Other, evidence=A/ok + BAS/Other + urls + strong identity + should_be_empty; identity=B/name+one secondary tokens=['ПОМОГУША', 'ДЕТСКИЙ', 'ДЕТЕЙ', 'ПРОТИВОПРОСТУДНЫЙ']; label_mnn=should_be_empty; non-drug classification; ingredient mention is not accepted as drug MNN",
+      "normalized_text": "ПОМОГУША СИРОП ДЕТСКИЙ ДЛЯ ДЕТЕЙ С 3-Х ЛЕТ ПРОТИВОПРОСТУДНЫЙ 100МЛ | ЮГ ООО | ЮГ ООО"
+    },
+    {
+      "product_id": "18179",
+      "proposed_product_kind": "bas",
+      "evidence_grade": "A",
+      "identity_grade": "B",
+      "reason": "AUTO: Category=BAS, evidence=A/ok + BAS/Other + urls + strong identity + should_be_empty; identity=B/name+one secondary tokens=['КАЛЬЦИЯ', 'ГЛЮКОНАТ', 'ЭКО']; label_mnn=should_be_empty; non-drug classification; ingredient mention is not accepted as drug MNN",
+      "normalized_text": "КАЛЬЦИЯ ГЛЮКОНАТ ЭКО ТАБЛ. ПО 500МГ №10 | ЭКОТЕКС ООО | ЭКОТЕКС ООО"
+    },
+    {
+      "product_id": "249",
+      "proposed_product_kind": "bas",
+      "evidence_grade": "A",
+      "identity_grade": "B",
+      "reason": "AUTO: Category=BAS, evidence=A/ok + BAS/Other + urls + strong identity + should_be_empty; identity=B/name+one secondary tokens=['ОСТЕОМЕД']; label_mnn=should_be_empty; non-drug classification; ingredient mention is not accepted as drug MNN",
+      "normalized_text": "ОСТЕОМЕД таб. N60 Парафарм | Парафарм ООО | Парафарм ООО | N60"
+    },
+    {
+      "product_id": "56",
+      "proposed_product_kind": "bas",
+      "evidence_grade": "A",
+      "identity_grade": "A",
+      "reason": "AUTO: Category=BAS, evidence=A/ok + BAS/Other + urls + strong identity + should_be_empty; identity=A/name+secondary match tokens=['РИТОФЛЕКС', 'МСМ', 'ФАРМАЦЕВТИЧЕСКАЯ']; label_mnn=should_be_empty; non-drug classification; ingredient mention is not accepted as drug MNN",
+      "normalized_text": "РИТОФЛЕКС МСМ таб. N60 Фармацевтическая Фабрика ООО | Фармацевтическая фабрика ООО | Фармацевтическая фабрика ООО | N60"
+    },
+    {
+      "product_id": "23695",
+      "proposed_product_kind": "bas",
+      "evidence_grade": "A",
+      "identity_grade": "B",
+      "reason": "AUTO: Category=BAS, evidence=A/ok + BAS/Other + urls + strong identity + should_be_empty; identity=B/name+one secondary tokens=['БИОРИТМ', 'АНТИСТРЕСС', 'ДЕНЬ', 'НОЧЬ']; label_mnn=should_be_empty; non-drug classification; ingredient mention is not accepted as drug MNN",
+      "normalized_text": "БИОРИТМ АНТИСТРЕСС 24 ДЕНЬ/НОЧЬ ТАБЛ. П/О №32 | ЭВАЛАР ЗАО | ЭВАЛАР ЗАО"
+    }
+  ],
+  "review_required_kind_queue": [
+    {
+      "product_id": "5322",
+      "proposed_product_kind": "bas",
+      "reason": "REVIEW-STRONG: Category=BAS; herbal/phytoproduct ambiguity; evidence_grade=B; identity=B/strong name tokens only=['ТАВОЛГА', 'ВЯЗОЛИСТНАЯ', 'ЛАБАЗНИК']; evidence=ok + BAS/Other + urls + adequate identity; non-drug classification; ingredient mention is not accepted as drug MNN"
+    },
+    {
+      "product_id": "75",
+      "proposed_product_kind": "bas",
+      "reason": "REVIEW-STRONG: Category=BAS; herbal/phytoproduct ambiguity; evidence_grade=B; identity=A/name+secondary match tokens=['САМБУКУС', 'БУЗИНА', 'ИММУНИТЕТ', 'ГРИН']; evidence=ok + BAS/Other + urls + adequate identity; non-drug classification; ingredient mention is not accepted as drug MNN"
+    },
+    {
+      "product_id": "3763",
+      "proposed_product_kind": "bas",
+      "reason": "REVIEW-STRONG: Category=BAS; herbal/phytoproduct ambiguity; evidence_grade=B; identity=A/name+secondary match tokens=['ФАРМГРУПП', 'ТРАВ', 'УСПОКОИТЕЛЬНАЯ', '250МЛ']; evidence=ok + BAS/Other + urls + adequate identity; non-drug classification; ingredient mention is not accepted as drug MNN"
+    },
+    {
+      "product_id": "8201",
+      "proposed_product_kind": "bas",
+      "reason": "REVIEW-STRONG: Category=BAS; herbal/phytoproduct ambiguity; evidence_grade=B; identity=B/strong name tokens only=['РЕПЕШОК', 'ОБЫКНОВЕННЫЙ']; evidence=ok + BAS/Other + urls + adequate identity; non-drug classification; ingredient mention is not accepted as drug MNN"
+    },
+    {
+      "product_id": "22548",
+      "proposed_product_kind": "bas",
+      "reason": "REVIEW-STRONG: Category=BAS; herbal/phytoproduct ambiguity; evidence_grade=B; identity=B/strong name tokens only=['ВЕЧЕРНЕЕ', 'ВАЛЕРИАНА+МЯТА+МЕЛИССА']; evidence=ok + BAS/Other + urls + adequate identity; non-drug classification; ingredient mention is not accepted as drug MNN"
+    },
+    {
+      "product_id": "26319",
+      "proposed_product_kind": "bas",
+      "reason": "REVIEW-STRONG: Category=BAS; herbal/phytoproduct ambiguity; evidence_grade=B; identity=B/strong name tokens only=['АЛТАЙ']; evidence=ok + BAS/Other + urls + adequate identity; non-drug classification; ingredient mention is not accepted as drug MNN"
+    }
+  ],
+  "retained": [
+    {
+      "product_id": "72",
+      "decision": "conflict_requires_review",
+      "reason": "RETAIN: decision=conflict_requires_review; category=Drug; status=ok_partial; evidence=D/ok_partial; identity=C/partial name tokens=['ФАРИНГАЛ']; conflict=True; herbal=False; label_mnn=should_be_empty"
+    },
+    {
+      "product_id": "11272",
+      "decision": "insufficient_evidence",
+      "reason": "RETAIN: decision=insufficient_evidence; category=BAS; status=ok; evidence=C/weak identity/other (C); identity=C/near-brand conflict around НООТРОП; conflict=False; herbal=False; label_mnn=should_be_empty"
+    },
+    {
+      "product_id": "19198",
+      "decision": "keep_current_no_override",
+      "reason": "SPECIAL: Drug + ok_partial + empty MNN; human label_mnn=incorrect (Drug/OTC/взрослый). Not BAS/Other. identity=partial name tokens=['ЗВЕРОБОЯ']"
+    },
+    {
+      "product_id": "45",
+      "decision": "insufficient_evidence",
+      "reason": "RETAIN: decision=insufficient_evidence; category=Other; status=ok; evidence=C/weak identity/other (C); identity=C/name only in research_summary (АКВИОН); conflict=False; herbal=False; label_mnn=should_be_empty"
+    },
+    {
+      "product_id": "9941",
+      "decision": "insufficient_evidence",
+      "reason": "RETAIN: decision=insufficient_evidence; category=none; status=error; evidence=D/transport/error or empty status; identity=unknown/no evidence blob; conflict=False; herbal=False; label_mnn=should_be_empty"
+    }
+  ],
+  "special_case_19198": {
+    "product_id": "19198",
+    "normalized_text": "ЗВЕРОБОЯ ТРАВА 50Г ФИТОФАРМ | ФИТОФАРМ ООО | ФИТОФАРМ ООО",
+    "observed_research_category": "Drug",
+    "proposed_kind_decision": "keep_current_no_override",
+    "proposed_queue_action": "retain_in_human_queue",
+    "proposed_mnn_action": "manual_mnn_review",
+    "excluded_from_queue_reduction": true
+  },
+  "artifacts": [
+    "redesign/artifacts/mnn_non_drug_override_policy_v1.csv",
+    "redesign/artifacts/mnn_non_drug_override_policy_v1_summary.md",
+    "redesign/artifacts/mnn_non_drug_override_policy_v1_summary.json",
+    "redesign/artifacts/mnn_non_drug_override_policy_v1_human_review.csv",
+    "redesign/artifacts/mnn_non_drug_override_policy_v1_data_dictionary.md"
+  ],
+  "confirmation": {
+    "no_db_writes": true,
+    "no_classification_run": true,
+    "no_llm": true,
+    "no_searxng": true,
+    "no_webhook": true,
+    "no_prod_sem_snapshot_attr_changes": true,
+    "no_git_commit_push": true,
+    "inputs_unmodified": true,
+    "proposed_offline_only": true
+  }
+}
