@@ -475,12 +475,13 @@
 * **Wave-100 Sem validation (v1)** — **done** (exec **19932**, N=100, pre-Sem0): LLM-on / snapshot-off; gate awaiting human labels.
 * **Sem0 + Sem1 attr_profile policy v2** — **finalized** (см. п.29–30): `prompt_sem0_v2` / `prompt_semantic_v3`; Wave-100 rerun chunked 10×10; progress tooling; rollback verified.
 * **Offline MNN identity gate Wave‑500 v3 + enrichment run 461 + human-review quality baseline** — **done** ✅ (см. **п.38**). MNN/RX/Age **не** влиты в live Sem / `attr_*`.
+* **Offline BAS/Other override policy v1 + human validation (M2 / M2.1)** — **done** ✅ (см. **п.39**). Audit-only; implementation contract draft **not applied**.
 
 ### Not done
 
 * Sem human rubric labeling для Wave-100 / Wave-500 (`critical_error_rate`).
-* Offline **BAS/Other override policy** (следующий MNN-шаг после п.38).
-* RX/OTC calibration · Age contract · Norm v4 experiment (после BAS/Other).
+* Apply M2 implementation contract (queue filter) — **blocked** until explicit approval.
+* RX/OTC calibration · Age contract · Norm v4 experiment (M3–M5).
 * Optional: SplitInBatches перед Sem0 (Wave-100/500 = chunked runner из‑за Merge/LLM parallel hang).
 * Dir / Need / Cat / optional Mnn cascade + Judge rewiring for hierarchy.
 * Prod Stage 2 Load allowlist-exclude patch.
@@ -489,10 +490,11 @@
 
 ### Next short steps
 
-1. **Offline BAS/Other override policy** (без DB/prod writes) — journal **п.38** → Task 2; inputs `*_non_drug_null_mnn_v1.csv` + metrics.
-2. Затем RX/OTC calibration → Age contract → Norm v4 experiment (п.38 Next).
-3. Human rubric labeling Wave-100/500 (`critical_error_rate`) — parallel Sem track.
-4. Dir → Need → Cat → optional Mnn → Judge only after Sem gate + explicit MNN merge approval.
+1. **RX/OTC calibration** (M3) — inventory `*_rx_otc_errors_v1.csv`; not a hard gate yet.
+2. Затем Age contract (M4) → Norm v4 experiment (M5).
+3. Optional later: apply M2 queue-exclusion contract for 13 IDs (explicit approval only).
+4. Human rubric labeling Wave-100/500 (`critical_error_rate`) — parallel Sem track.
+5. Dir → Need → Cat → optional Mnn → Judge only after Sem gate + explicit MNN merge approval.
 
 ---
 
@@ -1387,10 +1389,10 @@ PROGRESS processed 500/500 (100.0%) …
 
 #### Next (roadmap)
 
-1. **Offline BAS/Other override policy** (без DB/prod writes) — inputs: `mnn_identity_enrichment_pass_review_non_drug_null_mnn_v1.csv` + metrics report § non-drug.
-2. Затем **RX/OTC calibration** (error inventory `*_rx_otc_errors_v1.csv`).
-3. Затем **Age contract** + evidence policy (inventory `*_age_errors_v1.csv`).
-4. Затем **Norm v4 experiment** (dedupe manufacturer/pack в `normalized_text`; offline only).
+1. ~~Offline BAS/Other override policy~~ → **done**, см. **п.39**.
+2. **RX/OTC calibration** (error inventory `*_rx_otc_errors_v1.csv`).
+3. **Age contract** + evidence policy (inventory `*_age_errors_v1.csv`).
+4. **Norm v4 experiment** (dedupe manufacturer/pack в `normalized_text`; offline only).
 
 #### Key artifacts
 
@@ -1398,3 +1400,41 @@ PROGRESS processed 500/500 (100.0%) …
 * Enrichment pass 461: `mnn_identity_enrichment_pass_{results,summary,candidates,human_review*}`
 * Review baseline: `mnn_identity_enrichment_pass_review_metrics_v1.{md,json}` + error/non-drug/text-quality CSVs
 * Analyzer: `scripts/mnn_identity_enrichment_pass_review_metrics_v1.py`
+
+---
+
+39. **Offline BAS/Other override policy v1 + human validation (M2 / M2.1) (2026-08-17)**
+
+* **Статус:** **done** (offline / audit-only; human-validated). Prod Stage 2 / live Sem / snapshot / `product_kind` / `product_type` / `attr_*` — **не менялись**.
+* **Вход:** 18 reviewed null-MNN / non-drug candidates из Wave‑500 identity enrichment **run_id=461** (`mnn_identity_enrichment_pass_review_non_drug_null_mnn_v1.csv` + metrics / results / research_context / human-review v2).
+* **Policy v1:** детерминированные proposals по existing evidence only — **no new SearXNG / LLM / enrichment**.
+* **Human validation (M2.1):** labeled `mnn_non_drug_override_policy_v1_human_review - mnn_non_drug_override_policy_v1_human_review.csv` → immutable freeze `mnn_non_drug_override_policy_v1_reviewed.csv`.
+
+#### Applied offline proposals (reviewed freeze)
+
+| Outcome | Count | Notes |
+|---------|------:|-------|
+| **BAS** | **12** | `final_proposed_product_kind=bas` |
+| **Other** | **1** | `product_id=9197` |
+| **no applied proposal** | **5** | `72`, `11272`, `45`, `19198`, `9941` |
+| **exclude from future drug-MNN enrichment / human queue** | **13** | `final_queue_action=remove_from_future_mnn_human_queue` |
+| MNN action for applied | — | null / not_applicable (`keep_null_not_applicable` semantics) |
+
+#### Policy posture
+
+* Remains **offline / audit-only**.
+* **No** PostgreSQL writes; **no** `classification_runs`; **no** `product_kind` / `product_type` / snapshot / Sem / `attr_*` updates.
+* Implementation contract `mnn_non_drug_override_policy_v1_implementation_contract.md` is **draft only — not applied**.
+
+#### Key artifacts
+
+* Policy: `mnn_non_drug_override_policy_v1.{csv,summary.md,summary.json,human_review.csv,data_dictionary.md}`
+* Reviewed freeze: `mnn_non_drug_override_policy_v1_reviewed.{csv,summary.md,summary.json}`
+* Contract (draft): `mnn_non_drug_override_policy_v1_implementation_contract.md`
+* Analyzer: `scripts/mnn_non_drug_override_policy_v1.py`
+
+#### Next
+
+* M3 **RX/OTC calibration** (не hard gate).
+* M4 Age contract → M5 Norm v4 experiment.
+* Apply M2 queue-exclusion contract only after explicit approval.

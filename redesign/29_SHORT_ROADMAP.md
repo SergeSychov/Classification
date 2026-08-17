@@ -3,7 +3,7 @@
 Updated: 2026-08-17
 Status board: [`00_PROJECT_STATUS.md`](00_PROJECT_STATUS.md)  
 Migration design: [`20_MIGRATION_PLAN.md`](20_MIGRATION_PLAN.md)  
-Journal pointer: [`../Categories/stage2_workflow_plan.md`](../Categories/stage2_workflow_plan.md) (section *Hierarchy redesign progress*; Wave-100 gate = п.28; offline MNN baseline = **п.38**)
+Journal pointer: [`../Categories/stage2_workflow_plan.md`](../Categories/stage2_workflow_plan.md) (section *Hierarchy redesign progress*; Wave-100 gate = п.28; offline MNN baseline = **п.38**; BAS/Other override = **п.39**)
 
 ## Current baseline (done)
 
@@ -46,7 +46,7 @@ Naming: **B3 = Norm + Sem** (done; Sem smoke green → Wave-100 gate open).
 | Step | Description | Gate | Checks | Artifacts |
 |------|-------------|------|--------|-----------|
 | **M1** | Catalog identity gate Wave‑500 v3 + enrichment run **461** + human-review v2 quality baseline | **done** (2026-08-17) | MNN drugish **82/83**; null-MNN non-drug **17**; RX **72/83**; Age **59/83**; no `attr_*` / snapshot writes; product-kind from enrichment = **proposed/offline only** | journal **п.38**; `mnn_identity_enrichment_pass_review_metrics_v1.*` |
-| **M2** | Offline BAS/Other override policy | After M1 | No DB/prod writes; no `product_type`/`product_kind` snapshot change | `*_non_drug_null_mnn_v1.csv` + metrics § non-drug |
+| **M2** | Offline BAS/Other override policy v1 + human validation (M2.1) | **done** (2026-08-17) | Input 18 null-MNN/non-drug candidates (run 461); applied offline: BAS **12**, Other **1** (`9197`), no proposal **5**; **13** approved for future drug-MNN queue exclusion; MNN null/N/A; no DB/`product_kind`/`attr_*`/snapshot/Sem writes; contract draft **not applied** | journal **п.39**; `mnn_non_drug_override_policy_v1_reviewed.*` |
 | **M3** | RX/OTC calibration | After M2 | Not hard gate for RX clusters until calibrated | `*_rx_otc_errors_v1.csv` |
 | **M4** | Age contract + evidence policy | After M3 | Not used in routing until formalized | `*_age_errors_v1.csv` |
 | **M5** | Norm v4 experiment (mfr/pack dedupe) | After M4 | Offline only; no production Norm rewrite | `*_text_quality_v1.csv` |
@@ -64,5 +64,6 @@ Naming: **B3 = Norm + Sem** (done; Sem smoke green → Wave-100 gate open).
 
 ## Next action
 
-1. **Offline BAS/Other override policy** (M2 / journal п.38) — no DB/prod writes; kind signals stay proposed/offline.
+1. **RX/OTC calibration** (M3 / journal п.39 Next) — offline; not a hard gate.
 2. Parallel Sem track: human rubric labeling for Wave-100/500 → `critical_error_rate`. Keep hierarchy in safe default. **Dir+** after Sem V3 gate + explicit MNN merge approval.
+3. Optional later: apply M2 queue-exclusion contract for 13 IDs — only with explicit approval.

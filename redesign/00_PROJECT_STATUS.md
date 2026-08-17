@@ -17,9 +17,11 @@ Canonical migration design: [`20_MIGRATION_PLAN.md`](20_MIGRATION_PLAN.md)
 
 **Norm Sem attrs done** (2026-08-04): `Norm — Normalize Sem attrs` after Sem1 Post-process; fixed dictionaries for route/form/age; smoke exec **29035** (N=15); journal п.31.
 
-**Offline MNN identity gate + enrichment quality baseline done** (2026-08-17): Wave‑500 v3 identity gate; enrichment **run_id=461** (104 calls / 86 accepted / 18 unresolved); human-review v2 N=100; MNN drugish **82/83**, null-MNN non-drug **17**, RX **72/83**, Age **59/83**. **Not** merged to `attr_*` / live Sem. Product-kind from enrichment = **proposed/offline only** (no snapshot `product_type`/`product_kind` change). Journal **п.38**; short roadmap M1–M5.
+**Offline MNN identity gate + enrichment quality baseline done** (2026-08-17): Wave‑500 v3 identity gate; enrichment **run_id=461** (104 calls / 86 accepted / 18 unresolved); human-review v2 N=100; MNN drugish **82/83**, null-MNN non-drug **17**, RX **72/83**, Age **59/83**. **Not** merged to `attr_*` / live Sem. Product-kind from enrichment = **proposed/offline only** (no snapshot `product_type`/`product_kind` change). Journal **п.38**.
 
-**Next planned step (MNN offline):** BAS/Other override policy without DB/prod writes (п.38 → M2).
+**Offline BAS/Other override policy v1 + human validation done** (2026-08-17, M2/M2.1): 18 null-MNN/non-drug candidates from run 461; applied offline proposals BAS **12**, Other **1** (`9197`), no proposal **5** (`72`, `11272`, `45`, `19198`, `9941`); **13** approved for exclusion from future drug-MNN enrichment/human queue (MNN null/not_applicable). Remains **offline/audit-only** — no PostgreSQL writes, no classification run, no `product_kind`/`product_type`/snapshot/Sem/`attr_*` updates. Implementation contract draft **not applied**. Journal **п.39**; freeze `mnn_non_drug_override_policy_v1_reviewed.*`.
+
+**Next planned step (MNN offline):** RX/OTC calibration (M3).
 **Parallel Sem:** Wave-100/500 rubric → `critical_error_rate` (п.28). Hierarchy remains snapshot-off / prod untouched.
 
 | Track | Status |
