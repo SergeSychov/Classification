@@ -1,0 +1,11 @@
+product_id,normalized_text,detected_duplicate_segments,pack_tokens,char_count,pass_action,has_manufacturer_dup,has_pack_dup,suggested_cleanup_pattern
+68,ЭПЛЕРЕНОН-ТЕВА 25мг N30 таб. покрытые пленочной оболочкой Тева фармасьютикал воркс прайвэт Лимитед Компани | Тева фармасьютикал воркс прайвэт Лимитед Компани | Тева фармасьютикал воркс прайвэт Лимитед Компани | N30,Тева фармасьютикал воркс прайвэт Лимитед Компани,N30 | N30,214,skip_catalog,true,true,dedupe identical | segments (manufacturer); keep single pack token (N##)
+28,МЕРИФАТИН МВ 750мг N60 таб. с пролонгированным высвобождением Фармасинтез-Тюмень ООО | Фармасинтез-Тюмень ООО | Фармасинтез-Тюмень ООО | N60,Фармасинтез-Тюмень ООО,N60 | N60,140,skip_catalog,true,true,dedupe identical | segments (manufacturer); keep single pack token (N##)
+3065,ФЛУКОНАЗОЛ-OBL КАПС. 150МГ №4 | ОБОЛЕНСКОЕ ФП АО | ОБОЛЕНСКОЕ ФП АО,ОБОЛЕНСКОЕ ФП АО,№4,67,skip_catalog,true,false,dedupe identical | segments (manufacturer)
+8,ХАЙЛЕФЛОКС 500мг N5 таб. покрытые пленочной оболочкой Хайгланс Лабораториз Пвт.Лтд. | Хайгланс лабораториз пвт. Лтд | Хайгланс лабораториз пвт. Лтд | N5,Хайгланс лабораториз пвт. Лтд,N5 | N5,152,skip_catalog,true,true,dedupe identical | segments (manufacturer); keep single pack token (N##)
+26038,АМЛОДИПИН-АЛСИ ТАБЛ. 10МГ №90 | АЛСИ ФАРМА АО | АЛСИ ФАРМА АО,АЛСИ ФАРМА АО,№90,61,skip_strong_input_mnn,true,false,dedupe identical | segments (manufacturer)
+26001,АМЛОДИПИН-ПРАНА ТАБЛ. 10МГ №60 | ПРАНАФАРМ ООО | ПРАНАФАРМ ООО,ПРАНАФАРМ ООО,№60,62,skip_strong_input_mnn,true,false,dedupe identical | segments (manufacturer)
+7803,РОЗУВАСТАТИН-ТАД ТАБЛ. П/ПЛЕН/ОБ. 20МГ №30 | Крка-Рус ООО | Крка-Рус ООО,Крка-Рус ООО,№30,72,skip_strong_input_mnn,true,false,dedupe identical | segments (manufacturer)
+20614,"ДЕКСАМЕТАЗОН-КРКА ТАБЛ. 4МГ №20 | КРКА Д.Д., НОВО МЕСТО АО/КРКА-РУС ООО | КРКА Д.Д., НОВО МЕСТО АО/КРКА-РУС ООО","КРКА Д.Д., НОВО МЕСТО АО/КРКА-РУС ООО",№20,111,skip_strong_input_mnn,true,false,dedupe identical | segments (manufacturer)
+10536,ОМЕПРАЗОЛ-ОBL КАПС. КИШ/РАСТ. 20МГ №28 | ОБОЛЕНСКОЕ ФП АО | ОБОЛЕНСКОЕ ФП АО,ОБОЛЕНСКОЕ ФП АО,№28,76,skip_strong_input_mnn,true,false,dedupe identical | segments (manufacturer)
+26115,АМБРОКСОЛ ТАБЛ. 30МГ №20 ВЕРТЕКС | ВЕРТЕКС АО | ВЕРТЕКС АО,ВЕРТЕКС АО,№20,58,skip_strong_input_mnn,true,false,dedupe identical | segments (manufacturer)

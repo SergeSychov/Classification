@@ -1,0 +1,34 @@
+{
+  "rows": 184,
+  "baseline_catalog_consensus": 103,
+  "after_catalog_consensus": 4,
+  "catalog_accepts_flipped": 99,
+  "final_mnn_method": {
+    "catalog_consensus": 4,
+    "input_plus_enrichment": 24,
+    "unresolved": 104,
+    "enrichment": 36,
+    "input_explicit_mnn": 16
+  },
+  "mnn_resolution_status": {
+    "resolved_catalog": 4,
+    "resolved_enrichment": 60,
+    "unresolved_catalog": 104,
+    "resolved_input_explicit": 16
+  },
+  "identity_gate_effect": {
+    "unchanged": 9,
+    "method_changed": 45,
+    "sources_rejected_same_final": 31,
+    "catalog_accept_removed": 99
+  },
+  "input_explicit_mnn_count": 16,
+  "enrichment_reused": 60,
+  "needs_human_review": 104,
+  "artifacts": {
+    "csv": "redesign/artifacts/mnn_catalog_resolution_wave500_v3_identity_gate.csv",
+    "json": "redesign/artifacts/mnn_catalog_resolution_wave500_v3_identity_gate.json",
+    "diff": "redesign/artifacts/mnn_catalog_resolution_wave500_v3_identity_gate_diff.csv",
+    "human_review": "redesign/artifacts/mnn_catalog_resolution_wave500_v3_identity_gate_human_review.csv"
+  }
+}

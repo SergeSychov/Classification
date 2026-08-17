@@ -1,0 +1,1246 @@
+{
+  "preflight": {
+    "input_file": "redesign/artifacts/mnn_identity_enrichment_pass_human_review_v2 - mnn_identity_enrichment_pass_human_review_v2.csv",
+    "sha256_before": "2b8a1314d48180b0fe21703053ce2aa1564c05da275cc90478a7140d608816e1",
+    "sha256_after": "2b8a1314d48180b0fe21703053ce2aa1564c05da275cc90478a7140d608816e1",
+    "input_unchanged": true,
+    "rows": 100,
+    "distinct_product_id": 100,
+    "duplicate_product_id": 0,
+    "required_columns_ok": true,
+    "blank_labels": {
+      "label_mnn": 0,
+      "label_rx_otc": 17,
+      "label_age": 17,
+      "label_notes": 52
+    },
+    "observed_label_vocabulary": {
+      "label_mnn": {
+        "correct": 82,
+        "should_be_empty": 17,
+        "incorrect": 1
+      },
+      "label_rx_otc": {
+        "correct": 72,
+        "incorrect": 11,
+        "not_labeled": 17
+      },
+      "label_age": {
+        "correct": 59,
+        "incorrect": 24,
+        "not_labeled": 17
+      }
+    },
+    "unmapped_label_values": {},
+    "note": "Selected labeled file with filled label_mnn; ignored unlabeled twin CSV."
+  },
+  "headline": {
+    "mnn": {
+      "all_reviewed_relevant": {
+        "numerator": 99,
+        "denominator": 100,
+        "percent": 99.0
+      },
+      "correct_breakdown": {
+        "correct": 82,
+        "should_be_empty": 17,
+        "incorrect": 1,
+        "partial": 0,
+        "missing_but_should_exist": 0
+      },
+      "excluded_from_denominator": {
+        "count": 0,
+        "by_label": {}
+      },
+      "drugish_slice_not_authoritative": {
+        "definition": "rows where label_mnn_norm != should_be_empty (from reviewer labels, not computed drug classifier)",
+        "rows": 83,
+        "accuracy": {
+          "numerator": 82,
+          "denominator": 83,
+          "percent": 98.8
+        }
+      },
+      "correct_null_mnn_for_non_drug": 17
+    },
+    "rx_otc": {
+      "accuracy": {
+        "numerator": 72,
+        "denominator": 83,
+        "percent": 86.7
+      },
+      "label_counts": {
+        "correct": 72,
+        "incorrect": 11,
+        "not_labeled": 17
+      },
+      "not_labeled": 17,
+      "final_rx_otc_unknown": 0,
+      "final_rx_otc_conflict": 0,
+      "wrong_rx_vs_wrong_otc": "manual expected value not structured; see manual_expected_rx_otc_hint heuristic in rx error CSV"
+    },
+    "age": {
+      "accuracy": {
+        "numerator": 59,
+        "denominator": 83,
+        "percent": 71.1
+      },
+      "label_counts": {
+        "correct": 59,
+        "incorrect": 24,
+        "not_labeled": 17
+      },
+      "not_labeled": 17,
+      "final_age_unknown": 6,
+      "final_age_conflict": 0,
+      "error_note_keyword_groups_heuristic": {
+        "notes_mentions_universal": 8,
+        "notes_mentions_adult": 16
+      }
+    }
+  },
+  "by_pass_action": {
+    "mnn": [
+      {
+        "group": "new_enrichment",
+        "total_rows": 55,
+        "labelled_relevant": 55,
+        "correct": 54,
+        "error": 1,
+        "accuracy_percent": 98.2,
+        "mnn_null_count": 18,
+        "needs_human_review_any": 18,
+        "review_priority": {
+          "low": 37,
+          "high": 18
+        }
+      },
+      {
+        "group": "reuse_existing_enrichment",
+        "total_rows": 25,
+        "labelled_relevant": 25,
+        "correct": 25,
+        "error": 0,
+        "accuracy_percent": 100.0,
+        "mnn_null_count": 0,
+        "needs_human_review_any": 0,
+        "review_priority": {
+          "low": 25
+        }
+      },
+      {
+        "group": "skip_strong_input_mnn",
+        "total_rows": 16,
+        "labelled_relevant": 16,
+        "correct": 16,
+        "error": 0,
+        "accuracy_percent": 100.0,
+        "mnn_null_count": 0,
+        "needs_human_review_any": 3,
+        "review_priority": {
+          "low": 13,
+          "high": 3
+        }
+      },
+      {
+        "group": "skip_catalog",
+        "total_rows": 4,
+        "labelled_relevant": 4,
+        "correct": 4,
+        "error": 0,
+        "accuracy_percent": 100.0,
+        "mnn_null_count": 0,
+        "needs_human_review_any": 1,
+        "review_priority": {
+          "low": 3,
+          "high": 1
+        }
+      }
+    ],
+    "rx_otc": [
+      {
+        "group": "new_enrichment",
+        "total_rows": 55,
+        "labelled_relevant": 38,
+        "correct": 31,
+        "error": 7,
+        "accuracy_percent": 81.6,
+        "mnn_null_count": 18,
+        "needs_human_review_any": 18,
+        "review_priority": {
+          "low": 37,
+          "high": 18
+        }
+      },
+      {
+        "group": "reuse_existing_enrichment",
+        "total_rows": 25,
+        "labelled_relevant": 25,
+        "correct": 23,
+        "error": 2,
+        "accuracy_percent": 92.0,
+        "mnn_null_count": 0,
+        "needs_human_review_any": 0,
+        "review_priority": {
+          "low": 25
+        }
+      },
+      {
+        "group": "skip_strong_input_mnn",
+        "total_rows": 16,
+        "labelled_relevant": 16,
+        "correct": 15,
+        "error": 1,
+        "accuracy_percent": 93.8,
+        "mnn_null_count": 0,
+        "needs_human_review_any": 3,
+        "review_priority": {
+          "low": 13,
+          "high": 3
+        }
+      },
+      {
+        "group": "skip_catalog",
+        "total_rows": 4,
+        "labelled_relevant": 4,
+        "correct": 3,
+        "error": 1,
+        "accuracy_percent": 75.0,
+        "mnn_null_count": 0,
+        "needs_human_review_any": 1,
+        "review_priority": {
+          "low": 3,
+          "high": 1
+        }
+      }
+    ],
+    "age": [
+      {
+        "group": "new_enrichment",
+        "total_rows": 55,
+        "labelled_relevant": 38,
+        "correct": 28,
+        "error": 10,
+        "accuracy_percent": 73.7,
+        "mnn_null_count": 18,
+        "needs_human_review_any": 18,
+        "review_priority": {
+          "low": 37,
+          "high": 18
+        }
+      },
+      {
+        "group": "reuse_existing_enrichment",
+        "total_rows": 25,
+        "labelled_relevant": 25,
+        "correct": 18,
+        "error": 7,
+        "accuracy_percent": 72.0,
+        "mnn_null_count": 0,
+        "needs_human_review_any": 0,
+        "review_priority": {
+          "low": 25
+        }
+      },
+      {
+        "group": "skip_strong_input_mnn",
+        "total_rows": 16,
+        "labelled_relevant": 16,
+        "correct": 10,
+        "error": 6,
+        "accuracy_percent": 62.5,
+        "mnn_null_count": 0,
+        "needs_human_review_any": 3,
+        "review_priority": {
+          "low": 13,
+          "high": 3
+        }
+      },
+      {
+        "group": "skip_catalog",
+        "total_rows": 4,
+        "labelled_relevant": 4,
+        "correct": 3,
+        "error": 1,
+        "accuracy_percent": 75.0,
+        "mnn_null_count": 0,
+        "needs_human_review_any": 1,
+        "review_priority": {
+          "low": 3,
+          "high": 1
+        }
+      }
+    ]
+  },
+  "by_identity_gate_status_mnn": [
+    {
+      "group": "unresolved_catalog",
+      "total_rows": 55,
+      "labelled_relevant": 55,
+      "correct": 54,
+      "error": 1,
+      "accuracy_percent": 98.2,
+      "mnn_null_count": 18,
+      "needs_human_review_any": 18,
+      "review_priority": {
+        "low": 37,
+        "high": 18
+      }
+    },
+    {
+      "group": "resolved_enrichment",
+      "total_rows": 25,
+      "labelled_relevant": 25,
+      "correct": 25,
+      "error": 0,
+      "accuracy_percent": 100.0,
+      "mnn_null_count": 0,
+      "needs_human_review_any": 0,
+      "review_priority": {
+        "low": 25
+      }
+    },
+    {
+      "group": "resolved_input_explicit",
+      "total_rows": 16,
+      "labelled_relevant": 16,
+      "correct": 16,
+      "error": 0,
+      "accuracy_percent": 100.0,
+      "mnn_null_count": 0,
+      "needs_human_review_any": 3,
+      "review_priority": {
+        "low": 13,
+        "high": 3
+      }
+    },
+    {
+      "group": "resolved_catalog",
+      "total_rows": 4,
+      "labelled_relevant": 4,
+      "correct": 4,
+      "error": 0,
+      "accuracy_percent": 100.0,
+      "mnn_null_count": 0,
+      "needs_human_review_any": 1,
+      "review_priority": {
+        "low": 3,
+        "high": 1
+      }
+    }
+  ],
+  "by_final_mnn_method_mnn": [
+    {
+      "group": "enrichment",
+      "total_rows": 55,
+      "labelled_relevant": 55,
+      "correct": 55,
+      "error": 0,
+      "accuracy_percent": 100.0,
+      "mnn_null_count": 0,
+      "needs_human_review_any": 0,
+      "review_priority": {
+        "low": 55
+      }
+    },
+    {
+      "group": "unresolved_final",
+      "total_rows": 18,
+      "labelled_relevant": 18,
+      "correct": 17,
+      "error": 1,
+      "accuracy_percent": 94.4,
+      "mnn_null_count": 18,
+      "needs_human_review_any": 18,
+      "review_priority": {
+        "high": 18
+      }
+    },
+    {
+      "group": "input_explicit_mnn",
+      "total_rows": 16,
+      "labelled_relevant": 16,
+      "correct": 16,
+      "error": 0,
+      "accuracy_percent": 100.0,
+      "mnn_null_count": 0,
+      "needs_human_review_any": 3,
+      "review_priority": {
+        "low": 13,
+        "high": 3
+      }
+    },
+    {
+      "group": "input_plus_enrichment",
+      "total_rows": 7,
+      "labelled_relevant": 7,
+      "correct": 7,
+      "error": 0,
+      "accuracy_percent": 100.0,
+      "mnn_null_count": 0,
+      "needs_human_review_any": 0,
+      "review_priority": {
+        "low": 7
+      }
+    },
+    {
+      "group": "catalog_consensus",
+      "total_rows": 4,
+      "labelled_relevant": 4,
+      "correct": 4,
+      "error": 0,
+      "accuracy_percent": 100.0,
+      "mnn_null_count": 0,
+      "needs_human_review_any": 1,
+      "review_priority": {
+        "low": 3,
+        "high": 1
+      }
+    }
+  ],
+  "rx_otc_provenance": {
+    "by_method": [
+      {
+        "group": "identity_enrichment",
+        "total_rows": 37,
+        "labelled_relevant": 37,
+        "correct": 31,
+        "error": 6,
+        "accuracy_percent": 83.8,
+        "mnn_null_count": 0,
+        "needs_human_review_any": 0,
+        "review_priority": {
+          "low": 37
+        }
+      },
+      {
+        "group": "previous_enrichment",
+        "total_rows": 25,
+        "labelled_relevant": 25,
+        "correct": 23,
+        "error": 2,
+        "accuracy_percent": 92.0,
+        "mnn_null_count": 0,
+        "needs_human_review_any": 0,
+        "review_priority": {
+          "low": 25
+        }
+      },
+      {
+        "group": "sem_baseline",
+        "total_rows": 23,
+        "labelled_relevant": 21,
+        "correct": 18,
+        "error": 3,
+        "accuracy_percent": 85.7,
+        "mnn_null_count": 3,
+        "needs_human_review_any": 7,
+        "review_priority": {
+          "low": 16,
+          "high": 7
+        }
+      },
+      {
+        "group": "not_applicable",
+        "total_rows": 15,
+        "labelled_relevant": 0,
+        "correct": 0,
+        "error": 0,
+        "accuracy_percent": null,
+        "mnn_null_count": 15,
+        "needs_human_review_any": 15,
+        "review_priority": {
+          "high": 15
+        }
+      }
+    ],
+    "by_stage": [
+      {
+        "group": "mnn_identity_enrichment",
+        "total_rows": 52,
+        "labelled_relevant": 37,
+        "correct": 31,
+        "error": 6,
+        "accuracy_percent": 83.8,
+        "mnn_null_count": 15,
+        "needs_human_review_any": 15,
+        "review_priority": {
+          "low": 37,
+          "high": 15
+        }
+      },
+      {
+        "group": "previous_mnn_enrichment",
+        "total_rows": 25,
+        "labelled_relevant": 25,
+        "correct": 23,
+        "error": 2,
+        "accuracy_percent": 92.0,
+        "mnn_null_count": 0,
+        "needs_human_review_any": 0,
+        "review_priority": {
+          "low": 25
+        }
+      },
+      {
+        "group": "sem1",
+        "total_rows": 23,
+        "labelled_relevant": 21,
+        "correct": 18,
+        "error": 3,
+        "accuracy_percent": 85.7,
+        "mnn_null_count": 3,
+        "needs_human_review_any": 7,
+        "review_priority": {
+          "low": 16,
+          "high": 7
+        }
+      }
+    ],
+    "by_source": [
+      {
+        "group": "mnn_identity_enrichment_pass_results",
+        "total_rows": 37,
+        "labelled_relevant": 37,
+        "correct": 31,
+        "error": 6,
+        "accuracy_percent": 83.8,
+        "mnn_null_count": 0,
+        "needs_human_review_any": 0,
+        "review_priority": {
+          "low": 37
+        }
+      },
+      {
+        "group": "mnn_catalog_resolution_wave500_v3",
+        "total_rows": 25,
+        "labelled_relevant": 25,
+        "correct": 23,
+        "error": 2,
+        "accuracy_percent": 92.0,
+        "mnn_null_count": 0,
+        "needs_human_review_any": 0,
+        "review_priority": {
+          "low": 25
+        }
+      },
+      {
+        "group": "sem_wave500_mnn_v3_report",
+        "total_rows": 23,
+        "labelled_relevant": 21,
+        "correct": 18,
+        "error": 3,
+        "accuracy_percent": 85.7,
+        "mnn_null_count": 3,
+        "needs_human_review_any": 7,
+        "review_priority": {
+          "low": 16,
+          "high": 7
+        }
+      },
+      {
+        "group": "mnn_identity_enrichment_pass_searxng_raw",
+        "total_rows": 15,
+        "labelled_relevant": 0,
+        "correct": 0,
+        "error": 0,
+        "accuracy_percent": null,
+        "mnn_null_count": 15,
+        "needs_human_review_any": 15,
+        "review_priority": {
+          "high": 15
+        }
+      }
+    ],
+    "by_value": [
+      {
+        "group": "rx",
+        "total_rows": 60,
+        "labelled_relevant": 60,
+        "correct": 50,
+        "error": 10,
+        "accuracy_percent": 83.3,
+        "mnn_null_count": 0,
+        "needs_human_review_any": 3,
+        "review_priority": {
+          "low": 57,
+          "high": 3
+        }
+      },
+      {
+        "group": "otc",
+        "total_rows": 25,
+        "labelled_relevant": 23,
+        "correct": 22,
+        "error": 1,
+        "accuracy_percent": 95.7,
+        "mnn_null_count": 3,
+        "needs_human_review_any": 4,
+        "review_priority": {
+          "low": 21,
+          "high": 4
+        }
+      },
+      {
+        "group": "not_applicable",
+        "total_rows": 15,
+        "labelled_relevant": 0,
+        "correct": 0,
+        "error": 0,
+        "accuracy_percent": null,
+        "mnn_null_count": 15,
+        "needs_human_review_any": 15,
+        "review_priority": {
+          "high": 15
+        }
+      }
+    ],
+    "by_confidence": [
+      {
+        "group": "high",
+        "total_rows": 77,
+        "labelled_relevant": 62,
+        "correct": 54,
+        "error": 8,
+        "accuracy_percent": 87.1,
+        "mnn_null_count": 15,
+        "needs_human_review_any": 15,
+        "review_priority": {
+          "low": 62,
+          "high": 15
+        }
+      },
+      {
+        "group": "medium",
+        "total_rows": 23,
+        "labelled_relevant": 21,
+        "correct": 18,
+        "error": 3,
+        "accuracy_percent": 85.7,
+        "mnn_null_count": 3,
+        "needs_human_review_any": 7,
+        "review_priority": {
+          "low": 16,
+          "high": 7
+        }
+      }
+    ]
+  },
+  "age_provenance": {
+    "by_method": [
+      {
+        "group": "identity_enrichment",
+        "total_rows": 37,
+        "labelled_relevant": 37,
+        "correct": 28,
+        "error": 9,
+        "accuracy_percent": 75.7,
+        "mnn_null_count": 0,
+        "needs_human_review_any": 0,
+        "review_priority": {
+          "low": 37
+        }
+      },
+      {
+        "group": "previous_enrichment",
+        "total_rows": 26,
+        "labelled_relevant": 25,
+        "correct": 18,
+        "error": 7,
+        "accuracy_percent": 72.0,
+        "mnn_null_count": 1,
+        "needs_human_review_any": 1,
+        "review_priority": {
+          "low": 25,
+          "high": 1
+        }
+      },
+      {
+        "group": "sem_baseline",
+        "total_rows": 16,
+        "labelled_relevant": 16,
+        "correct": 13,
+        "error": 3,
+        "accuracy_percent": 81.2,
+        "mnn_null_count": 0,
+        "needs_human_review_any": 0,
+        "review_priority": {
+          "low": 16
+        }
+      },
+      {
+        "group": "not_applicable",
+        "total_rows": 15,
+        "labelled_relevant": 0,
+        "correct": 0,
+        "error": 0,
+        "accuracy_percent": null,
+        "mnn_null_count": 15,
+        "needs_human_review_any": 15,
+        "review_priority": {
+          "high": 15
+        }
+      },
+      {
+        "group": "not_resolved",
+        "total_rows": 6,
+        "labelled_relevant": 5,
+        "correct": 0,
+        "error": 5,
+        "accuracy_percent": 0.0,
+        "mnn_null_count": 2,
+        "needs_human_review_any": 6,
+        "review_priority": {
+          "high": 6
+        }
+      }
+    ],
+    "by_stage": [
+      {
+        "group": "mnn_identity_enrichment",
+        "total_rows": 52,
+        "labelled_relevant": 37,
+        "correct": 28,
+        "error": 9,
+        "accuracy_percent": 75.7,
+        "mnn_null_count": 15,
+        "needs_human_review_any": 15,
+        "review_priority": {
+          "low": 37,
+          "high": 15
+        }
+      },
+      {
+        "group": "previous_mnn_enrichment",
+        "total_rows": 26,
+        "labelled_relevant": 25,
+        "correct": 18,
+        "error": 7,
+        "accuracy_percent": 72.0,
+        "mnn_null_count": 1,
+        "needs_human_review_any": 1,
+        "review_priority": {
+          "low": 25,
+          "high": 1
+        }
+      },
+      {
+        "group": "sem1",
+        "total_rows": 16,
+        "labelled_relevant": 16,
+        "correct": 13,
+        "error": 3,
+        "accuracy_percent": 81.2,
+        "mnn_null_count": 0,
+        "needs_human_review_any": 0,
+        "review_priority": {
+          "low": 16
+        }
+      },
+      {
+        "group": "none",
+        "total_rows": 6,
+        "labelled_relevant": 5,
+        "correct": 0,
+        "error": 5,
+        "accuracy_percent": 0.0,
+        "mnn_null_count": 2,
+        "needs_human_review_any": 6,
+        "review_priority": {
+          "high": 6
+        }
+      }
+    ],
+    "by_source": [
+      {
+        "group": "mnn_identity_enrichment_pass_results",
+        "total_rows": 37,
+        "labelled_relevant": 37,
+        "correct": 28,
+        "error": 9,
+        "accuracy_percent": 75.7,
+        "mnn_null_count": 0,
+        "needs_human_review_any": 0,
+        "review_priority": {
+          "low": 37
+        }
+      },
+      {
+        "group": "mnn_catalog_resolution_wave500_v3",
+        "total_rows": 26,
+        "labelled_relevant": 25,
+        "correct": 18,
+        "error": 7,
+        "accuracy_percent": 72.0,
+        "mnn_null_count": 1,
+        "needs_human_review_any": 1,
+        "review_priority": {
+          "low": 25,
+          "high": 1
+        }
+      },
+      {
+        "group": "sem_wave500_mnn_v3_report",
+        "total_rows": 16,
+        "labelled_relevant": 16,
+        "correct": 13,
+        "error": 3,
+        "accuracy_percent": 81.2,
+        "mnn_null_count": 0,
+        "needs_human_review_any": 0,
+        "review_priority": {
+          "low": 16
+        }
+      },
+      {
+        "group": "mnn_identity_enrichment_pass_searxng_raw",
+        "total_rows": 15,
+        "labelled_relevant": 0,
+        "correct": 0,
+        "error": 0,
+        "accuracy_percent": null,
+        "mnn_null_count": 15,
+        "needs_human_review_any": 15,
+        "review_priority": {
+          "high": 15
+        }
+      },
+      {
+        "group": "none",
+        "total_rows": 6,
+        "labelled_relevant": 5,
+        "correct": 0,
+        "error": 5,
+        "accuracy_percent": 0.0,
+        "mnn_null_count": 2,
+        "needs_human_review_any": 6,
+        "review_priority": {
+          "high": 6
+        }
+      }
+    ],
+    "by_value": [
+      {
+        "group": "взрослые",
+        "total_rows": 43,
+        "labelled_relevant": 43,
+        "correct": 38,
+        "error": 5,
+        "accuracy_percent": 88.4,
+        "mnn_null_count": 0,
+        "needs_human_review_any": 0,
+        "review_priority": {
+          "low": 43
+        }
+      },
+      {
+        "group": "универсальный",
+        "total_rows": 36,
+        "labelled_relevant": 35,
+        "correct": 21,
+        "error": 14,
+        "accuracy_percent": 60.0,
+        "mnn_null_count": 1,
+        "needs_human_review_any": 1,
+        "review_priority": {
+          "low": 35,
+          "high": 1
+        }
+      },
+      {
+        "group": "not_applicable",
+        "total_rows": 15,
+        "labelled_relevant": 0,
+        "correct": 0,
+        "error": 0,
+        "accuracy_percent": null,
+        "mnn_null_count": 15,
+        "needs_human_review_any": 15,
+        "review_priority": {
+          "high": 15
+        }
+      },
+      {
+        "group": "unknown",
+        "total_rows": 6,
+        "labelled_relevant": 5,
+        "correct": 0,
+        "error": 5,
+        "accuracy_percent": 0.0,
+        "mnn_null_count": 2,
+        "needs_human_review_any": 6,
+        "review_priority": {
+          "high": 6
+        }
+      }
+    ],
+    "by_confidence": [
+      {
+        "group": "high",
+        "total_rows": 78,
+        "labelled_relevant": 62,
+        "correct": 46,
+        "error": 16,
+        "accuracy_percent": 74.2,
+        "mnn_null_count": 16,
+        "needs_human_review_any": 16,
+        "review_priority": {
+          "low": 62,
+          "high": 16
+        }
+      },
+      {
+        "group": "medium",
+        "total_rows": 16,
+        "labelled_relevant": 16,
+        "correct": 13,
+        "error": 3,
+        "accuracy_percent": 81.2,
+        "mnn_null_count": 0,
+        "needs_human_review_any": 0,
+        "review_priority": {
+          "low": 16
+        }
+      },
+      {
+        "group": "unknown",
+        "total_rows": 6,
+        "labelled_relevant": 5,
+        "correct": 0,
+        "error": 5,
+        "accuracy_percent": 0.0,
+        "mnn_null_count": 2,
+        "needs_human_review_any": 6,
+        "review_priority": {
+          "high": 6
+        }
+      }
+    ]
+  },
+  "top_problem_rx_otc": {
+    "by_method": [
+      {
+        "group": "identity_enrichment",
+        "error": 6,
+        "labelled_relevant": 37,
+        "accuracy_percent": 83.8,
+        "error_rate_percent": 16.2
+      },
+      {
+        "group": "sem_baseline",
+        "error": 3,
+        "labelled_relevant": 21,
+        "accuracy_percent": 85.7,
+        "error_rate_percent": 14.3
+      },
+      {
+        "group": "previous_enrichment",
+        "error": 2,
+        "labelled_relevant": 25,
+        "accuracy_percent": 92.0,
+        "error_rate_percent": 8.0
+      }
+    ],
+    "by_stage": [
+      {
+        "group": "mnn_identity_enrichment",
+        "error": 6,
+        "labelled_relevant": 37,
+        "accuracy_percent": 83.8,
+        "error_rate_percent": 16.2
+      },
+      {
+        "group": "sem1",
+        "error": 3,
+        "labelled_relevant": 21,
+        "accuracy_percent": 85.7,
+        "error_rate_percent": 14.3
+      },
+      {
+        "group": "previous_mnn_enrichment",
+        "error": 2,
+        "labelled_relevant": 25,
+        "accuracy_percent": 92.0,
+        "error_rate_percent": 8.0
+      }
+    ],
+    "by_source": [
+      {
+        "group": "mnn_identity_enrichment_pass_results",
+        "error": 6,
+        "labelled_relevant": 37,
+        "accuracy_percent": 83.8,
+        "error_rate_percent": 16.2
+      },
+      {
+        "group": "sem_wave500_mnn_v3_report",
+        "error": 3,
+        "labelled_relevant": 21,
+        "accuracy_percent": 85.7,
+        "error_rate_percent": 14.3
+      },
+      {
+        "group": "mnn_catalog_resolution_wave500_v3",
+        "error": 2,
+        "labelled_relevant": 25,
+        "accuracy_percent": 92.0,
+        "error_rate_percent": 8.0
+      }
+    ]
+  },
+  "top_problem_age": {
+    "by_method": [
+      {
+        "group": "identity_enrichment",
+        "error": 9,
+        "labelled_relevant": 37,
+        "accuracy_percent": 75.7,
+        "error_rate_percent": 24.3
+      },
+      {
+        "group": "previous_enrichment",
+        "error": 7,
+        "labelled_relevant": 25,
+        "accuracy_percent": 72.0,
+        "error_rate_percent": 28.0
+      },
+      {
+        "group": "not_resolved",
+        "error": 5,
+        "labelled_relevant": 5,
+        "accuracy_percent": 0.0,
+        "error_rate_percent": 100.0
+      }
+    ],
+    "by_stage": [
+      {
+        "group": "mnn_identity_enrichment",
+        "error": 9,
+        "labelled_relevant": 37,
+        "accuracy_percent": 75.7,
+        "error_rate_percent": 24.3
+      },
+      {
+        "group": "previous_mnn_enrichment",
+        "error": 7,
+        "labelled_relevant": 25,
+        "accuracy_percent": 72.0,
+        "error_rate_percent": 28.0
+      },
+      {
+        "group": "none",
+        "error": 5,
+        "labelled_relevant": 5,
+        "accuracy_percent": 0.0,
+        "error_rate_percent": 100.0
+      }
+    ],
+    "by_source": [
+      {
+        "group": "mnn_identity_enrichment_pass_results",
+        "error": 9,
+        "labelled_relevant": 37,
+        "accuracy_percent": 75.7,
+        "error_rate_percent": 24.3
+      },
+      {
+        "group": "mnn_catalog_resolution_wave500_v3",
+        "error": 7,
+        "labelled_relevant": 25,
+        "accuracy_percent": 72.0,
+        "error_rate_percent": 28.0
+      },
+      {
+        "group": "none",
+        "error": 5,
+        "labelled_relevant": 5,
+        "accuracy_percent": 0.0,
+        "error_rate_percent": 100.0
+      }
+    ]
+  },
+  "inventories": {
+    "mnn_errors": 1,
+    "mnn_error_buckets": {
+      "missing_mnn": 1
+    },
+    "rx_otc_errors": 11,
+    "rx_otc_error_buckets": {
+      "wrong_rx_otc_value": 11
+    },
+    "age_errors": 24,
+    "age_error_buckets": {
+      "unknown_should_be_resolved": 5,
+      "wrong_age_segment": 19
+    },
+    "non_drug_null_mnn": 18,
+    "non_drug_signals": {
+      "label_should_be_empty_only": 2,
+      "bas_from_research_summary": 13,
+      "other_from_research_summary": 2,
+      "unresolved_no_mnn": 1
+    }
+  },
+  "zveroboy_card": {
+    "product_id": "19198",
+    "normalized_text": "ЗВЕРОБОЯ ТРАВА 50Г ФИТОФАРМ | ФИТОФАРМ ООО | ФИТОФАРМ ООО",
+    "final_candidate_mnn": "",
+    "final_mnn_method": "unresolved_final",
+    "pass_action": "new_enrichment",
+    "identity_gate_status": "unresolved_catalog",
+    "new_enrichment_status": "ok_partial",
+    "retry_count": "2",
+    "research_summary": "status=ok_partial | Category=Drug | RX_OTC=OTC | Age=Универсальный | Зверобоя трава является лекарственным средством (ЛС) согласно данным Государственного реестра лекарственных средств (ГРЛС) и других источников. МНН (международное непатентованное название) в предоставленных результатах поиска не указано, поэтому оно не определено. Препарат…",
+    "label_mnn": "incorrect",
+    "label_notes": "Drug (Трава зверобоя), ОТС, Взрослый",
+    "why_it_appears_in_error_inventory": "included because label_mnn is in error set",
+    "in_mnn_error_inventory": true
+  },
+  "text_quality": {
+    "length": {
+      "min": 37,
+      "median": 82.0,
+      "p90": 124.1,
+      "max": 214,
+      "by_pass_action": {
+        "skip_catalog": {
+          "n": 4,
+          "min": 67,
+          "median": 146.0,
+          "p90": 195.4,
+          "max": 214
+        },
+        "skip_strong_input_mnn": {
+          "n": 16,
+          "min": 51,
+          "median": 73.0,
+          "p90": 104.0,
+          "max": 129
+        },
+        "reuse_existing_enrichment": {
+          "n": 25,
+          "min": 52,
+          "median": 75,
+          "p90": 119.4,
+          "max": 177
+        },
+        "new_enrichment": {
+          "n": 55,
+          "min": 37,
+          "median": 84,
+          "p90": 112.19999999999999,
+          "max": 180
+        }
+      }
+    },
+    "rows_with_duplicate_pipe_segments": 100,
+    "rows_with_duplicate_manufacturer_tail_segments": 100,
+    "rows_with_last_two_pipe_segments_equal": 86,
+    "rows_with_duplicate_pack_tokens": 14,
+    "top_repeated_segments": [
+      {
+        "segment": "ОЗОН ООО",
+        "row_occurrences_approx": 20
+      },
+      {
+        "segment": "ОБНОВЛЕНИЕ ПФК АО",
+        "row_occurrences_approx": 8
+      },
+      {
+        "segment": "ИРБИТСКИЙ ХИМЗАВОД ОАО",
+        "row_occurrences_approx": 6
+      },
+      {
+        "segment": "N60",
+        "row_occurrences_approx": 4
+      },
+      {
+        "segment": "ОБОЛЕНСКОЕ ФП АО",
+        "row_occurrences_approx": 4
+      },
+      {
+        "segment": "ОЗОН ФАРМ ООО",
+        "row_occurrences_approx": 4
+      },
+      {
+        "segment": "ТАТХИМФАРМПРЕПАРАТЫ АО",
+        "row_occurrences_approx": 4
+      },
+      {
+        "segment": "ЗДОРОВЬЕ ФИРМА ООО",
+        "row_occurrences_approx": 4
+      },
+      {
+        "segment": "ФИТОФАРМ ООО",
+        "row_occurrences_approx": 4
+      },
+      {
+        "segment": "МОСКОВСКИЙ ЭНДОКРИННЫЙ ЗАВОД ФГУП",
+        "row_occurrences_approx": 4
+      },
+      {
+        "segment": "ВЕРОФАРМ АО",
+        "row_occurrences_approx": 4
+      },
+      {
+        "segment": "ВТФ ООО",
+        "row_occurrences_approx": 4
+      },
+      {
+        "segment": "ЭВАЛАР ЗАО",
+        "row_occurrences_approx": 4
+      },
+      {
+        "segment": "КРКА, Д.Д., НОВО МЕСТО АО",
+        "row_occurrences_approx": 4
+      },
+      {
+        "segment": "КАНОНФАРМА ПРОДАКШН ЗАО",
+        "row_occurrences_approx": 4
+      },
+      {
+        "segment": "N30",
+        "row_occurrences_approx": 3
+      },
+      {
+        "segment": "Тева фармасьютикал воркс прайвэт Лимитед Компани",
+        "row_occurrences_approx": 2
+      },
+      {
+        "segment": "Фармасинтез-Тюмень ООО",
+        "row_occurrences_approx": 2
+      },
+      {
+        "segment": "Хайгланс лабораториз пвт. Лтд",
+        "row_occurrences_approx": 2
+      },
+      {
+        "segment": "N5",
+        "row_occurrences_approx": 2
+      }
+    ],
+    "hypothesis": "Duplicate manufacturer/pack segments are widespread in this sample (100/100 manufacturer-like tail dups; 14/100 pack dups) and can inflate enrichment queries / review load."
+  },
+  "artifacts": [
+    "redesign/artifacts/mnn_identity_enrichment_pass_review_metrics_v1.md",
+    "redesign/artifacts/mnn_identity_enrichment_pass_review_metrics_v1.json",
+    "redesign/artifacts/mnn_identity_enrichment_pass_review_mnn_errors_v1.csv",
+    "redesign/artifacts/mnn_identity_enrichment_pass_review_rx_otc_errors_v1.csv",
+    "redesign/artifacts/mnn_identity_enrichment_pass_review_age_errors_v1.csv",
+    "redesign/artifacts/mnn_identity_enrichment_pass_review_non_drug_null_mnn_v1.csv",
+    "redesign/artifacts/mnn_identity_enrichment_pass_review_text_quality_v1.csv"
+  ],
+  "task2_inputs": [
+    "redesign/artifacts/mnn_identity_enrichment_pass_review_non_drug_null_mnn_v1.csv",
+    "redesign/artifacts/mnn_identity_enrichment_pass_review_metrics_v1.md"
+  ],
+  "confirmation": {
+    "no_llm": true,
+    "no_searxng": true,
+    "no_webhook": true,
+    "no_db_writes": true,
+    "input_review_csv_untouched": true,
+    "prod_sem_snapshot_attr_untouched": true,
+    "review_sample_may_not_be_random": true
+  }
+}

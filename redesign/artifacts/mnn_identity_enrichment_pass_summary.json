@@ -1,0 +1,54 @@
+{
+  "identity_enrichment_run_id": 461,
+  "db_preflight": {
+    "ok": true,
+    "postgres": true,
+    "run_type_supported": "stage2_mnn_identity_gate_enrichment_v1",
+    "stage_supported": "mnn_identity_enrichment",
+    "run_id_required": true,
+    "idempotency": "(run_id, product_id, stage) checked before INSERT"
+  },
+  "pass_action_counts": {
+    "skip_catalog": 4,
+    "reuse_existing_enrichment": 60,
+    "new_enrichment": 104,
+    "skip_strong_input_mnn": 16
+  },
+  "new_enrichment_calls": 104,
+  "new_enrichment_accepted": 86,
+  "retry_attempts": 9,
+  "db_log_inserts": 104,
+  "final_mnn_method": {
+    "catalog_consensus": 4,
+    "input_plus_enrichment": 24,
+    "enrichment": 122,
+    "input_explicit_mnn": 16,
+    "unresolved_final": 18
+  },
+  "needs_human_review": 18,
+  "human_review_strata": {
+    "catalog_consensus": 4,
+    "strong_input": 16,
+    "reuse_enrichment": 25,
+    "new_enrichment_accepted": 37,
+    "unresolved_conflict": 18
+  },
+  "close_status": "finished_with_review",
+  "artifacts": [
+    "redesign/artifacts/mnn_identity_enrichment_pass_candidates.csv",
+    "redesign/artifacts/mnn_identity_enrichment_pass_results.csv",
+    "redesign/artifacts/mnn_identity_enrichment_pass_summary.md",
+    "redesign/artifacts/mnn_identity_enrichment_pass_progress.json",
+    "redesign/artifacts/mnn_identity_enrichment_pass_searxng_raw.jsonl",
+    "redesign/artifacts/mnn_identity_enrichment_pass_research_context.csv",
+    "redesign/artifacts/mnn_identity_enrichment_pass_human_review.csv"
+  ],
+  "confirmation": {
+    "baseline_v3_untouched": true,
+    "identity_gate_artifacts_untouched": true,
+    "prod_stage2_untouched": true,
+    "attr_mnn_untouched": true,
+    "snapshot_untouched": true,
+    "no_new_sem_wave": true
+  }
+}
