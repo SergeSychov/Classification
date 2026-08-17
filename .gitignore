@@ -2,7 +2,19 @@
 *.local
 .DS_Store
 __pycache__/
+*.py[cod]
 *.pyc
 workflows/.classification-stage2-dev.smoke-backup.json
 
 logs/
+
+# Raw external-search evidence and transient run state
+redesign/artifacts/*searxng_raw.jsonl
+redesign/artifacts/*_raw.jsonl
+redesign/artifacts/*_progress.json
+redesign/artifacts/*_checkpoint*
+redesign/artifacts/*_cache*
+redesign/artifacts/_catalog_cache/
+redesign/artifacts/*.pid
+redesign/artifacts/*_console.log
+redesign/artifacts/*_run.log

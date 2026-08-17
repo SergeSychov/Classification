@@ -458,7 +458,7 @@
 
 ---
 
-## Hierarchy redesign progress (updated 2026-07-29)
+## Hierarchy redesign progress (updated 2026-08-17)
 
 Отдельный трек от current Stage 2. Канон: `redesign/20_MIGRATION_PLAN.md`, статус: `redesign/00_PROJECT_STATUS.md`, короткий roadmap: `redesign/29_SHORT_ROADMAP.md`.  
 **Prod Stage 2** (`classification-stage2-dev`, `BaBjEPi78taRj2G5`) — **не менялся**.
@@ -472,11 +472,16 @@
 * **B3 Norm** (Code-only) — **закрыта** ✅ (см. п.25).
 * **B3 Sem** (`semantic_primary`, log-only) — **закрыта в git** ✅ (см. п.26); Dir не подключён; snapshot не пишется.
 * **Sem smoke S0/S1/S2** — **закрыта** ✅ (см. п.27); reversible allowlist; rollback to safe default verified.
-* **Wave-100 Sem validation** — **done** (exec **19932**, N=100): LLM-on / snapshot-off / prod untouched; export готов к rubric labeling; gate awaiting `critical_error_rate` (human labels).
+* **Wave-100 Sem validation (v1)** — **done** (exec **19932**, N=100, pre-Sem0): LLM-on / snapshot-off; gate awaiting human labels.
+* **Sem0 + Sem1 attr_profile policy v2** — **finalized** (см. п.29–30): `prompt_sem0_v2` / `prompt_semantic_v3`; Wave-100 rerun chunked 10×10; progress tooling; rollback verified.
+* **Offline MNN identity gate Wave‑500 v3 + enrichment run 461 + human-review quality baseline** — **done** ✅ (см. **п.38**). MNN/RX/Age **не** влиты в live Sem / `attr_*`.
 
 ### Not done
 
-* Sem validation waves 100 / 500 / 1000: Wave-100 **выполнен**; Wave-500/1000 **не стартовали**, так как расчёт gate требует human rubric labels (`critical_error_rate`).
+* Sem human rubric labeling для Wave-100 / Wave-500 (`critical_error_rate`).
+* Offline **BAS/Other override policy** (следующий MNN-шаг после п.38).
+* RX/OTC calibration · Age contract · Norm v4 experiment (после BAS/Other).
+* Optional: SplitInBatches перед Sem0 (Wave-100/500 = chunked runner из‑за Merge/LLM parallel hang).
 * Dir / Need / Cat / optional Mnn cascade + Judge rewiring for hierarchy.
 * Prod Stage 2 Load allowlist-exclude patch.
 * Telegram / HITL beyond Sheets for hierarchy — **not started**.
@@ -484,9 +489,10 @@
 
 ### Next short steps
 
-1. Sem human rubric labeling для Wave-100 (расчёт `critical_error_rate` и проверка gate для Wave-500).
-2. Then **500 → 1000** (gate before Dir+).
-3. Then Dir → Need → Cat → optional Mnn → Judge per `20_MIGRATION_PLAN.md`.
+1. **Offline BAS/Other override policy** (без DB/prod writes) — journal **п.38** → Task 2; inputs `*_non_drug_null_mnn_v1.csv` + metrics.
+2. Затем RX/OTC calibration → Age contract → Norm v4 experiment (п.38 Next).
+3. Human rubric labeling Wave-100/500 (`critical_error_rate`) — parallel Sem track.
+4. Dir → Need → Cat → optional Mnn → Judge only after Sem gate + explicit MNN merge approval.
 
 ---
 
@@ -775,3 +781,620 @@ critical_error_rate = critical_errors / evidenced_key_attr_cases
 * `redesign/artifacts/sem_wave100_report.summary.json`
 
 После прогона: labels (`label_*` в CSV) остаются пустыми — требуется human rubric labeling для расчёта `critical_error_rate`.
+
+---
+
+29. **Sem0 product_kind + Sem1 attr_profile gate (2026-07-30)**
+
+* **Статус:** **done** (wired + smoke + rollback). Clone-only; snapshot-off; prod Stage 2 не менялся.
+* **Workflow:** `classification-stage2-hierarchy-dev` (`o8sugljHYuUs7IEC`).
+* **Sources:** `scripts/hierarchy_nodes/sem0_build_prompt.js`, `sem0_llm_prepare.js`, `sem0_post_process.js`; обновлены `sem_build_prompt.js`, `sem_llm_prepare.js`, `sem_post_process.js`, `sem_prepare_log.js`; патчер `scripts/_b3_patch_sem0.js`.
+* **Versions (initial smoke):** Sem0 `prompt_sem0_v1` / Sem1 `prompt_semantic_v2` (exec **21504**). **Superseded by policy v2** → п.30 (`prompt_sem0_v2` / `prompt_semantic_v3`).
+
+#### Live wiring (после Limit)
+
+```text
+… → Load — Limit Batch
+  → Sem0 — Build Prompt → Sem0 — LLM Prepare
+      ├─ Sem0 — AI Agent ← Sem0 — DeepSeek
+      └─ Sem0 — Merge LLM → Sem0 — Post-process
+  → Sem — Build Prompt → Sem — LLM Prepare
+      ├─ Sem — AI Agent ← Sem — DeepSeek
+      └─ Sem — Merge LLM → Sem — Post-process → Sem — Route
+           → Sem — Prepare Log → DB — Insert Log → …
+```
+
+P1 / Dir / Need / Cat / Mnn / Judge / Upsert Snapshot — **не** подключены (как в п.26–27).
+
+#### Sem0 zone (новые ноды)
+
+| Нода | Тип | Роль |
+|------|-----|------|
+| `Sem0 — Build Prompt` | Code | System/User: `product_kind`, `product_family`, `attr_profile`; forbid category/direction/need |
+| `Sem0 — LLM Prepare` | Code | `prompt_sem0_v1`, stage `product_kind_select` |
+| `Sem0 — AI Agent` | LangChain Agent | zone-local |
+| `Sem0 — DeepSeek` | Chat Model | credential copy с `Shared — DeepSeek` |
+| `Sem0 — Merge LLM` | Merge | combineByPosition |
+| `Sem0 — Post-process` | Code | parse/validate; soft-continue всегда в Sem1 |
+| `🔗 Sem0 — kind/family before Sem1` | Sticky | notes |
+
+**Sem0 soft-fail:** `product_kind=other`, все `attr_profile` = `applicable`, `sem0_validation_passed=false` — не регрессить ЛС при битом Sem0.
+
+**Item fields после Sem0:** `product_kind`, `product_family`, `attr_profile`, `sem0_confidence`, `sem0_explanation`, `sem0_validation_passed`, `sem0_reject_reason`, `sem0_raw_json`; `cascade_trace.stages` += `product_kind_select` / notes `sem0_v1`.
+
+#### Sem1 (`prompt_semantic_v2`)
+
+* **attrHints** (в user prompt): Norm hints + `product_kind` / `product_family` / `attr_profile` с item после Sem0.
+* **System:** если `attr_profile[key]=not_applicable` → вернуть `null`; если `product_kind != drug` → не заполнять pharma-поля (`mnn`, `rx_otc`, `nosology`, `administration_route`, `dosage_form`, `dosage`, `combination_hint`).
+* **Ключи JSON модели Sem1** — без новых обязательных полей (как в п.26).
+
+#### Sem1 Post-process enforce (после parse model JSON)
+
+1. Для каждого ATTR_KEY: если `attr_profile[key]==='not_applicable'` → force `null`.
+2. Если `product_kind !== 'drug'` → force null: `mnn`, `rx_otc`, `nosology`, `administration_route`, `dosage_form`, `dosage`, `combination_hint`.
+3. В `semantic_attrs` вложить `product_kind`, `product_family`, `attr_profile` (плоских `attr_*` колонок на item нет — export flatten из `semantic_attrs`).
+
+#### Smoke (exec **21504**)
+
+* **Seed / wave:** `sem0_smoke_2026-07-30`; N=9; allowlist IDs: `254, 1347, 1623, 5597, 6117, 6168, 9249, 9335, 11225`.
+* **Evidence:** `load_count=9`, `sem_post_count=9`, Sem0+Sem1 agents ran, `upsert_snapshot_ran=false`.
+* **Outcome (кратко):** non-drug → pharma attrs null; drug `9335` подорожник — `product_kind=drug`, family `Травы`, route/form/dosage заполнены; BAA `1623` / plaster `11225` — pharma null из‑за hard rule § выше.
+* **Rollback:** Load `WHERE false`; `hierarchy_experiment_enabled=false`; allowlist `[]`; prod Stage 2 untouched verified.
+
+#### Artifacts
+
+* `redesign/artifacts/sem0_smoke_report.csv`
+* `redesign/artifacts/sem0_smoke_report.md`
+* `redesign/artifacts/sem0_smoke_report.summary.json`
+* `redesign/artifacts/sem0_smoke_analysis.json`
+* `redesign/artifacts/sem_smoke_sem0_smoke_allowlist.json`
+* `redesign/artifacts/sem_chain_nodes_current.json` (Sem0+Sem1 snapshot)
+* Sources / WF: `scripts/hierarchy_nodes/sem0_*.js`, `workflows/classification-stage2-hierarchy-dev.json`
+
+#### Open questions → **closed in п.30**
+
+Initial hard rule `product_kind != drug ⇒ null all pharma` был слишком жёстким (БАД/пластырь теряли form/dosage). Финальная policy и Wave-100 rerun — см. **п.30**.
+
+---
+
+30. **Sem0/Sem1 policy v2 finalized + Wave-100 rerun + progress tooling (2026-07-30)**
+
+* **Статус:** **done**. Clone-only; snapshot-off; prod untouched; safe default restored.
+* **Versions:** Sem0 `prompt_sem0_v2` (notes `sem0_v2`); Sem1 `prompt_semantic_v3` (notes `semantic_primary_v3`).
+* **Sources:** updated `sem0_*.js`, `sem_build_prompt.js`, `sem_post_process.js`, `sem_llm_prepare.js`, `sem_prepare_log.js`; patcher `_b3_patch_sem0.js`.
+
+#### Final policy (attr_profile + hard-null)
+
+**vitamin_or_baa**
+
+* attr_profile: `mnn/brand/nosology/route/form/dosage/age/package/combination` = applicable; `rx_otc` = not_applicable.
+* Sem1 hard-null: **только** `rx_otc`.
+* Vitamins: `nosology` ∈ {отдельные нутриенты, комплексные профили}; `mnn` = витамин/нутриент или `Комплекс`.
+* BAA: `nosology` ∈ {нутрицевтики, парафармацевтики, эубиотики}; `mnn` может быть null.
+
+**medical_device**
+
+* Sem0 post выставляет `medical_device_profile` = `hygiene_like` | `clinical_like` (+ `product_kind_group_hint`).
+* hygiene_like: pharma route/form/dosage = not_applicable; brand/age/package applicable.
+* clinical_like: route/form/dosage applicable; mnn/rx/nosology/combination not_applicable.
+* Sem1 hard-null: `mnn`, `rx_otc`, `nosology`, `combination_hint` only; route/form/dosage живут по attr_profile.
+
+**cosmetic_hygiene:** hard-null pharma set (mnn/rx/nosology/route/form/dosage/combination).
+**drug:** без ослабления.
+**other:** приоритет attr_profile (soft).
+
+#### Progress tooling
+
+* `scripts/wave_progress.py` — poll n8n execution; `processed/N`, `%`, elapsed, ETA; artifact JSON; soft message on poll interrupt + final API check.
+* DB log fallback — **opt-in** (`--use-db-logs`); на больших волнах temp SQL может конкурировать с live run.
+* `scripts/wave100_chunked_run.py` — Wave-N чанками (default 10): progress `chunks_done`, ETA по last_chunk_sec.
+* `run_hierarchy_workflow.py --wait` печатает progress lines + пишет artifact.
+
+#### Wave-100 rerun evidence
+
+* Same allowlist as exec 19932 (`sem_wave100_allowlist.json`); seed `sem_wave100_2026-07-30_policy_v2`.
+* **Mode:** chunked 10×10 (single N=100 hang: Sem0/Sem1 Merge `combineByPosition` + parallel DeepSeek).
+* **Executions:** `21611, 21617, 21622, 21627, 21632, 21637, 21642, 21648, 21653, 21659` — all success, 10 posts each.
+* Kind mix: drug 44 / vitamin_or_baa 19 / medical_device 18 / cosmetic_hygiene 13 / other 6.
+* Spot-check: Черника nosology+form; шприц/пластырь route+form; ватные палочки pharma null; подорожник drug filled.
+* **Rollback:** Load `WHERE false`; enabled=false; allowlist `[]`; Sem0 v2 re-pushed after revert; prod untouched.
+
+#### Artifacts
+
+* `redesign/artifacts/sem_wave100_report.csv` (+ `product_kind`/`product_family`/`medical_device_profile`)
+* `redesign/artifacts/sem_wave100_report.md` / `.summary.json`
+* `redesign/artifacts/wave100_progress_summary.json`
+* `redesign/artifacts/wave100_v2_chunked_run.log`
+* `redesign/artifacts/sem_wave100_report_template.rubric.txt` (policy evidencing notes)
+* `redesign/artifacts/sem_wave100_report_exec19932_pre_sem0.csv` (archive)
+* `redesign/artifacts/sem_chain_nodes_current.json`
+
+#### Rubric / gate
+
+Critical attrs for gate остаются `mnn` / `dosage_form` / `administration_route`, но evidencing зависит от kind (см. rubric note). `rx_otc` null для vitamin_or_baa = корректно.
+
+
+---
+
+31. **Norm — Normalize Sem attrs (route / form / age) (2026-08-04)**
+
+* **Статус:** **done** (wired + offline fixtures + smoke + rollback). Clone-only; snapshot-off; prod Stage 2 не менялся.
+* **Workflow:** `classification-stage2-hierarchy-dev` (`o8sugljHYuUs7IEC`).
+* **Нода:** `Norm — Normalize Sem attrs` (Code) — **после** `Sem — Post-process`, **до** `Sem — Route` / Prepare Log.
+* **Sources:** `scripts/hierarchy_nodes/sem_normalize_attrs.js`, словари `sem_attr_dictionaries.md`; патчер `scripts/_b3_patch_sem_norm.js` (также встроен в `_b3_patch_sem.js`).
+* **Contract:** Sem0/Sem1 prompts и soft-continue не менялись; нормализация — упорядочивающий слой поверх `semantic_attrs` + плоские `attr_*`.
+* **Паттерн:** `...item.json` + `pairedItem`.
+
+#### Live wiring (фрагмент)
+
+```text
+… → Sem — Merge LLM → Sem — Post-process
+  → Norm — Normalize Sem attrs
+  → Sem — Route → Sem — Prepare Log → DB — Insert Log → …
+```
+
+#### Словари (canonical)
+
+* **route:** `перорально` | `наружно` | `ингаляционно` | `внутримышечно` | `внутривенно` | `подкожно` | `ректально` | `сублингвально` | `офтальмологический` | `назальный` | `отологический` | `инъекционное` | `не применимо`
+* **form:** `таблетки` | `таблетки жевательные` | `капсулы` | `порошок` | `гранулы` | `сироп` | `суспензия` | `раствор` | `лиофилизат` | `мазь` | `крем` | `гель` | `спрей` | `аэрозоль` | `фильтр-пакеты` | `батончик` | `смесь` | `пластырь` | `капли` | `не применимо`
+* **age:** `взрослые` | `дети` | `универсальный` | `не применимо`
+
+Policy v2 baseline: hygiene_like → route+form `не применимо`; BAA без age-сигнала → `универсальный`; drug без сигнала → `null`; clinical_like шприц → route `инъекционное`. **Policy v3 (п.32):** `cosmetic_hygiene` больше не force-NA для route/form (нормализатор не обнуляет при явном сигнале).
+
+#### Smoke (exec **29035**)
+
+* Seed `sem_norm_attrs_2026-08-04`; N=15; allowlist: `36, 91, 254, 1347, 1623, 2131, 4782, 6117, 6168, 6633, 9335, 10283, 11225, 16540, 25286`.
+* Evidence: `load_count=15`, `sem_post_count=15`, `sem_norm_count=15`, `upsert_snapshot_ran=false`, dict violations = 0.
+* Примеры до→после: `внутрь`→`перорально`; `интраназально`→`назальный`; `раствор для в/м`→`раствор`; hygiene/cosmetic → `не применимо`; BAA age null → `универсальный`.
+* Offline: `node --test scripts/sem_normalize_attrs_fixtures.test.mjs` — **10/10**.
+* **Rollback:** Load `WHERE false`; enabled=false; allowlist `[]`; Norm остаётся на canvas; prod untouched.
+
+#### Artifacts
+
+* `redesign/artifacts/sem_norm_attrs_report.csv` (+ `*_raw` columns)
+* `redesign/artifacts/sem_norm_attrs_report.summary.json`
+* `redesign/artifacts/sem_smoke_sem_norm_attrs_allowlist.json`
+* `redesign/artifacts/sem_norm_attrs_run.log`
+* Dictionaries: `scripts/hierarchy_nodes/sem_attr_dictionaries.md`
+
+---
+
+32. **Sem0/Sem1 policy+prompt patch v3/v4 (после Wave-100 markt) (2026-08-04)**
+
+* **Статус:** **done** (patch + focus smoke + rollback). Clone-only; snapshot-off; prod untouched.
+* **Workflow:** `classification-stage2-hierarchy-dev` only. Prod `classification-stage2-dev` не менялся (`updatedAt` 2026-07-19).
+* **Versions:** Sem0 `prompt_sem0_v3` (notes `sem0_v3`); Sem1 `prompt_semantic_v4` (notes `semantic_primary_v4`).
+* **Вход:** `sem_wave100_report_markt.csv` + `redesign/artifacts/sem_wave100_markt_analysis.md`.
+* **Sources:** `sem0_build_prompt.js`, `sem0_llm_prepare.js`, `sem0_post_process.js`, `sem_build_prompt.js`, `sem_llm_prepare.js`, `sem_post_process.js`, `sem_prepare_log.js`; точечно `sem_normalize_attrs.js` (`forceNaContext`: cosmetic больше не blanket-NA); rubric `sem_wave100_report_template.rubric.txt`.
+* **Паттерн:** `...item.json` + `pairedItem`. SQL/DDL не трогали. Словари route/form/age сохранены.
+
+#### Policy / prompt changes
+
+**Sem0 kind borderlines**
+
+* Шприц + явная доза (мг/мл) + бренд ЛС → `drug` (не `medical_device`).
+* Педикулицид / «от вшей» → `other` (не cosmetic).
+* Травы / ф/п / листья без явного МНН → `vitamin_or_baa`.
+* Капсулы/таблетки «БАД-like» с мг при `other` → `vitamin_or_baa` (Визлея и аналоги).
+
+**Sem0 attr_profile**
+
+* `vitamin_or_baa`: mnn/nosology/route/form/dosage/age/package/combination applicable; `rx_otc` not_applicable.
+* `cosmetic_hygiene`: route/form **applicable** при топическом сигнале в тексте.
+* `medical_device` hygiene_like vs clinical_like — без смены контракта v2.
+
+**Sem1 MNN / nosology / age**
+
+* drug: mnn только если вещество явно в тексте; иначе `null` (не угадывать по бренду). Post-process: grounding → null, если токен МНН не найден в `normalized_text`.
+* vitamin_or_baa: nosology ∈ {нутрицевтики, парафармацевтики, эубиотики, отдельные нутриенты, комплексные профили}; сырой «Витамин C» → в `mnn`, nosology → enum.
+* age_segment: явные правила взрослые/дети/универсальный/не применимо; при неясности — не выдумывать узкий возраст.
+
+**Gate / rubric**
+
+* `administration_route` + `dosage_form` для `cosmetic_hygiene` и `medical_device`+`hygiene_like` — **non-critical** (не поднимают `critical_error_rate` перед Wave-500).
+* age_segment — analytics-only для gate.
+
+#### Smoke evidence
+
+* Seed `sem_policy_v3_2026-08-04`; focus N=12 (chunked 6+6); allowlist `redesign/artifacts/sem_smoke_policy_v3_focus.json`.
+* **Executions:** `29078`, `29085` — success; `sem0_post=6`, `sem_post=6`, `sem_norm=6` each; `upsert_snapshot_ran=false`.
+* Offline fixtures: `node --test scripts/sem_normalize_attrs_fixtures.test.mjs` — **11/11**.
+* Spot-check before→after (Wave-100 v2 → smoke):
+  * Метортрит `medical_device`→**drug**; Гипосарт/Артогистан wrong INN→**mnn null**;
+  * Брусника `drug`→**vitamin_or_baa** (nosology enum); Визлея `other`→**vitamin_or_baa**;
+  * Лайснер `drug`→**other**; аскорбинки nosology `Витамин C`→**отдельные нутриенты** (mnn сохранён);
+  * детский крем: route/form **наружно/крем** (больше не hard-null).
+* **Rollback:** Load `WHERE false`; enabled=false; allowlist `[]`; Sem0/Sem1 v3/v4 остались на canvas; prod untouched.
+
+#### Artifacts
+
+* `redesign/artifacts/sem_policy_v3_smoke_report.csv`
+* `redesign/artifacts/sem_policy_v3_smoke_run.log`
+* `redesign/artifacts/sem_smoke_policy_v3_allowlist.json` / `sem_smoke_policy_v3_focus.json`
+* Rubric: `redesign/artifacts/sem_wave100_report_template.rubric.txt`
+
+#### Next
+
+* ~~Review → Wave-500~~ → **done**, см. п.33.
+
+---
+
+33. **Wave-500 Sem run (Sem0 v3 + Sem1 v4 + Norm) (2026-08-04 → 2026-08-05)**
+
+* **Статус:** **done** (chunked LLM-on; snapshot-off; prod untouched; safe default restored).
+* **Workflow:** `classification-stage2-hierarchy-dev` only.
+* **Versions:** Sem0 `prompt_sem0_v3`; Sem1 `prompt_semantic_v4`; Norm Sem attrs on.
+* **Seed / allowlist:** `sem_wave500_2026-08-04` → `redesign/artifacts/sem_wave500_allowlist.json` (N=500; isolation: exclude hot prod Stage 2 activity 24h).
+* **Orchestration:** chunked **50×10** via `scripts/wave100_chunked_run.py` (pattern A). Mid-chunk live progress + ETA; `--resume` after transient failure; retries (3) on chunk LLM errors.
+* **Progress tool:** `scripts/wave_progress.py` — single-exec poll **или** `--from-progress-artifact` для chunked волны; артефакт `wave500_progress_summary.json`.
+
+#### Progress example
+
+```text
+Wave progress: processed 250/500 (50.0%) | chunks 25/50 | elapsed=13787s eta~13787s | state=running | current_exec=29377
+PROGRESS processed 500/500 (100.0%) …
+```
+
+* **Итог:** processed **500/500**; wall ≈ **27619 s** (~7.7 h); `finished_at` 2026-08-05T03:23:49Z.
+* **Executions:** 50 success ids from `29107` … `29663` (полный список в progress/summary). Transient fail chunk 35 exec `29479` (`Sem — AI Agent` ECONNRESET) → resume; не в финальном success set.
+* **Snapshot:** `upsert_snapshot_ran=false` (log-only).
+* **Kind mix:** drug 224 / vitamin_or_baa 101 / cosmetic_hygiene 75 / medical_device 68 / other 32.
+* **Attr fill (non-empty):** mnn 97 · nosology 300 · route 481 · form 397 · age 499.
+
+#### Artifacts
+
+* `redesign/artifacts/sem_wave500_report.csv`
+* `redesign/artifacts/sem_wave500_summary.json` (+ `.md`)
+* `redesign/artifacts/wave500_progress_summary.json`
+* `redesign/artifacts/sem_wave500_allowlist.json`
+* `redesign/artifacts/sem_wave500_run.log`
+
+#### Rollback
+
+* Load `WHERE false`; `hierarchy_experiment_enabled=false`; allowlist `[]`; inject absent.
+* Prod `classification-stage2-dev` untouched.
+* **Note:** smoke `revert` restores workflow backup — после волны локально re-patched Sem0/Sem1 v3/v4 (`_b3_patch_sem0.js`); remote push после revert требует подтверждения, если backup был старше v3/v4.
+
+#### Next
+
+* Human labeling / gate scoring Wave-500 (отдельный шаг). Rubric: cosmetic route/form non-critical.
+* Rules patch (шприцы / rx_otc / vitamin MNN) — см. п.34.
+
+---
+
+34. **Sem0/Sem1/Norm rules patch (шприцы, rx_otc, vitamin MNN) (2026-08-05)**
+
+* **Статус:** **done** (patch + focused smoke + rollback). Clone-only; snapshot-off; prod untouched.
+* **Workflow:** `classification-stage2-hierarchy-dev` only.
+* **Versions:** Sem0 `prompt_sem0_v3` (notes `sem0_v3_rules1`); Sem1 `prompt_semantic_v5` (notes `semantic_primary_v5`); Norm attrs + `rx_otc`.
+* **Sources:** `sem0_build_prompt.js`, `sem0_post_process.js` (`correctProductKind` empty-syringe→`medical_device`); `sem_build_prompt.js`, `sem_llm_prepare.js`, `sem_post_process.js`, `sem_prepare_log.js`; `sem_normalize_attrs.js` (`normRxOtc`); `sem_attr_dictionaries.md`.
+* **Паттерн:** `...item.json` + `pairedItem`. SQL/DDL не менялись. Route/form/age словари сохранены.
+
+#### Rules
+
+1. **Шприцы / иглы:** пустой шприц, инсулиновый шприц (U-40/U-100), игла для пен-ручек → `medical_device` (`clinical_like`), **кроме** именованных filled pens (Туджео, Тресиба, НовоРапид, Велгия, Гонал-Ф, Теваграстим, …) → `drug`.
+2. **`attr_rx_otc`:** канон `rx` | `otc` | `не применимо` (non-drug → `не применимо`; «рецептурный»→`rx`, «без рецепта»→`otc`).
+3. **vitamin_or_baa MNN:** доминантный нутриент (Куркумин, Коллаген, Омега-3, …) в `mnn`; `Комплекс` только без доминанты / мультивитаминные бренды; `combination_hint` ∈ {монокомпонентный, комбинированный, многокомпонентный …}.
+
+#### Offline + smoke evidence
+
+* Offline: `node --test scripts/sem0_kind_rules_fixtures.test.mjs scripts/sem_normalize_attrs_fixtures.test.mjs` — **17/17**.
+* Focus smoke N=30, seed `sem_rules_patch_2026-08-05`, chunked 3×10.
+* **Executions:** `30065`, `30073`, `30083` — success; upsert=false.
+* Spot-check before→after:
+  * empty/insulin syringes + IME needle: `drug`→**`medical_device`**; Toujeo/NovoRapid/Метортрит remain **`drug`**;
+  * rx_otc: only `rx` / `не применимо` (no free-text «рецептурный»);
+  * Псиллиум/Лецитин: `Комплекс`→nutrient; Компливит stays `Комплекс`; combo labels normalized.
+* Kind mix smoke: medical_device 7 / drug 9 / vitamin_or_baa 14.
+
+#### Artifacts
+
+* `redesign/artifacts/sem_policy_rules_patch_smoke_report.csv`
+* `redesign/artifacts/sem_rules_patch_smoke_allowlist.json`
+* `redesign/artifacts/wave_rules_patch_progress.json`
+* `redesign/artifacts/sem_rules_patch_smoke_run.log`
+
+#### Rollback
+
+* Load `WHERE false`; enabled=false; allowlist `[]`; inject absent; Sem0/Sem1 v5 re-pushed after backup restore; prod untouched.
+
+#### Next
+
+* Human labeling / gate scoring Wave-500 (отдельный шаг).
+* Offline MNN/RX enrichment (п.35).
+
+---
+
+35. **Offline MNN/RX enrichment — drug + vitamin_or_baa via Polza/Qwen (2026-08-05)**
+
+* **Статус:** **done** (offline layer; cascade untouched). Clone-only hierarchy Sem export; snapshot-off; prod untouched; SQL/DDL не менялись.
+* **Цель:** после Sem+Norm дополнить snapshot/log-кандидаты полями `mnn_enriched` / `rx_otc_enriched` (и `combination_hint_enriched` для БАД), **не переписывая** baseline `attr_mnn` / `attr_rx_otc`.
+* **Workflow:** offline Python pipeline (логический аналог n8n enrichment-нод). Hierarchy-dev / Sem0→Sem1→Norm / Dir/Need **не трогались**.
+* **Version:** `prompt_enrichment_v1`.
+* **Model:** Polza OpenAI-compatible → `qwen/qwen3.5-flash-02-23@reasoning_effort=none` (`response_format=json_object`, temp 0.2).
+* **Sources:**
+  * `scripts/sem_enrich_mnn_rx.py` — load CSV → filter → Polza → post-process → artifacts;
+  * `scripts/hierarchy_nodes/enrichment_build_prompt.js` — system/user (drug | vitamin_or_baa);
+  * `scripts/hierarchy_nodes/enrichment_post_process.js` — parse/canon/eligibility helpers;
+  * `scripts/sem_enrich_mnn_rx_fixtures.test.mjs` — offline fixtures.
+
+#### Eligibility (Wave-500)
+
+* **drug:** enrich если `attr_mnn` пуст **или** `attr_rx_otc` не в каноне `rx|otc|не применимо` (free-text Wave-500).
+* **vitamin_or_baa:** enrich при nutrient-hit (`NUTRIENT_RULES`: Куркумин, Омега-3, Коэнзим Q10, …) **или** пустой mnn без мультивитаминного бренда; **skip** `mnn=Комплекс` + (мультивитамин / нет nutrient-hit).
+* Иные kind → out of scope.
+
+#### Output contract
+
+```json
+{
+  "mnn_enriched": "...|null",
+  "rx_otc_enriched": "rx|otc|unknown|не применимо",
+  "combination_hint_enriched": "monocomponent|multicomponent|unknown|null",
+  "mnn_source": "qwen_enrichment",
+  "rx_source": "qwen_enrichment",
+  "confidence_enriched": 0.0,
+  "explanation_enriched": "..."
+}
+```
+
+* drug: `rx_otc_enriched` ∈ {`rx`,`otc`,`unknown`}; vitamin: `не применимо` + combination_hint.
+* Errors/timeouts → `mnn_enriched=null`, `rx_otc_enriched=unknown` (drug) / `не применимо` (vitamin), `error_message` set. Max 1 retry.
+
+#### Evidence (Wave-500)
+
+* Input: `redesign/artifacts/sem_wave500_report.csv` (500).
+* Eligible **254** (drug 183 / vitamin_or_baa 71); skipped 246 (out_of_scope 175 / drug_ok 41 / vitamin_complex 23 / vitamin_no_signal 7).
+* Called **254**, errors **0**.
+* **MNN filled:** 93 (drug 73 / vitamin 20); null 161.
+* **RX (drug):** rx 47 / otc 50 / unknown 86.
+* **Vitamin combination_hint:** mono 19 / multi 6 / unknown 46.
+* Smoke N=10 beforehand: mnn_filled 6 / errors 0.
+* Offline fixtures: `node --test scripts/sem_enrich_mnn_rx_fixtures.test.mjs` — **15/15**.
+
+#### Artifacts
+
+* `redesign/artifacts/sem_wave500_mnn_rx_enriched.csv`
+* `redesign/artifacts/sem_wave500_mnn_rx_enriched.json`
+* `redesign/artifacts/sem_wave500_mnn_rx_enriched_summary.md`
+* `redesign/artifacts/sem_wave500_mnn_rx_enriched_summary.json`
+* `redesign/artifacts/sem_wave500_mnn_rx_enriched_run.log`
+* Smoke: `sem_wave500_mnn_rx_enriched_smoke10.*`
+
+#### Explicitly out of scope (this patch)
+
+* Merge `mnn_enriched` / `rx_otc_enriched` into Dir/Need/MNN cascade or Sem `attr_*`.
+* Changes to `classification-stage2-hierarchy-dev` / prod Stage 2.
+* Human labeling Wave-500.
+
+#### Next
+
+* Review Wave-500 enrichment quality (spot-check drug INN + vitamin nutrients).
+* Decide merge rule: when confident `mnn_enriched` may override / feed Dir–Need–Mnn (отдельный шаг).
+* Human labeling / gate scoring Wave-500.
+* Offline MNN/RX enrichment (п.35).
+
+---
+
+35. **Offline MNN/RX enrichment — drug + vitamin_or_baa via Polza/Qwen (2026-08-05)**
+
+* **Статус:** **done** (offline layer; cascade untouched). Clone-only hierarchy Sem export; snapshot-off; prod untouched; SQL/DDL не менялись.
+* **Цель:** после Sem+Norm дополнить snapshot/log-кандидаты полями `mnn_enriched` / `rx_otc_enriched` (и `combination_hint_enriched` для БАД), **не переписывая** baseline `attr_mnn` / `attr_rx_otc`.
+* **Workflow:** offline Python pipeline (логический аналог n8n enrichment-нод). Hierarchy-dev / Sem0→Sem1→Norm / Dir/Need **не трогались**.
+* **Version:** `prompt_enrichment_v1`.
+* **Model:** Polza OpenAI-compatible → `qwen/qwen3.5-flash-02-23@reasoning_effort=none` (`response_format=json_object`, temp 0.2).
+* **Sources:**
+  * `scripts/sem_enrich_mnn_rx.py` — load CSV → filter → Polza → post-process → artifacts;
+  * `scripts/hierarchy_nodes/enrichment_build_prompt.js` — system/user (drug | vitamin_or_baa);
+  * `scripts/hierarchy_nodes/enrichment_post_process.js` — parse/canon/eligibility helpers;
+  * `scripts/sem_enrich_mnn_rx_fixtures.test.mjs` — offline fixtures.
+
+#### Eligibility (Wave-500)
+
+* **drug:** enrich если `attr_mnn` пуст **или** `attr_rx_otc` не в каноне `rx|otc|не применимо` (free-text Wave-500).
+* **vitamin_or_baa:** enrich при nutrient-hit (`NUTRIENT_RULES`: Куркумин, Омега-3, Коэнзим Q10, …) **или** пустой mnn без мультивитаминного бренда; **skip** `mnn=Комплекс` + (мультивитамин / нет nutrient-hit).
+* Иные kind → out of scope.
+
+#### Output contract
+
+```json
+{
+  "mnn_enriched": "...|null",
+  "rx_otc_enriched": "rx|otc|unknown|не применимо",
+  "combination_hint_enriched": "monocomponent|multicomponent|unknown|null",
+  "mnn_source": "qwen_enrichment",
+  "rx_source": "qwen_enrichment",
+  "confidence_enriched": 0.0,
+  "explanation_enriched": "..."
+}
+```
+
+* drug: `rx_otc_enriched` ∈ {`rx`,`otc`,`unknown`}; vitamin: `не применимо` + combination_hint.
+* Errors/timeouts → `mnn_enriched=null`, `rx_otc_enriched=unknown` (drug) / `не применимо` (vitamin), `error_message` set. Max 1 retry.
+
+#### Evidence (Wave-500)
+
+* Input: `redesign/artifacts/sem_wave500_report.csv` (500).
+* Eligible **254** (drug 183 / vitamin_or_baa 71); skipped 246 (out_of_scope 175 / drug_ok 41 / vitamin_complex 23 / vitamin_no_signal 7).
+* Called **254**, errors **0**.
+* **MNN filled:** 93 (drug 73 / vitamin 20); null 161.
+* **RX (drug):** rx 47 / otc 50 / unknown 86.
+* **Vitamin combination_hint:** mono 19 / multi 6 / unknown 46.
+* Smoke N=10 beforehand: mnn_filled 6 / errors 0.
+* Offline fixtures: `node --test scripts/sem_enrich_mnn_rx_fixtures.test.mjs` — **15/15**.
+
+#### Artifacts
+
+* `redesign/artifacts/sem_wave500_mnn_rx_enriched.csv`
+* `redesign/artifacts/sem_wave500_mnn_rx_enriched.json`
+* `redesign/artifacts/sem_wave500_mnn_rx_enriched_summary.md`
+* `redesign/artifacts/sem_wave500_mnn_rx_enriched_summary.json`
+* `redesign/artifacts/sem_wave500_mnn_rx_enriched_run.log`
+* Smoke: `sem_wave500_mnn_rx_enriched_smoke10.*`
+
+#### Explicitly out of scope (this patch)
+
+* Merge `mnn_enriched` / `rx_otc_enriched` into Dir/Need/MNN cascade or Sem `attr_*`.
+* Changes to `classification-stage2-hierarchy-dev` / prod Stage 2.
+* Human labeling Wave-500.
+
+#### Next
+
+* Review Wave-500 enrichment quality (spot-check drug INN + vitamin nutrients).
+* Decide merge rule: when confident `mnn_enriched` may override / feed Dir–Need–Mnn (отдельный шаг).
+* Human labeling / gate scoring Wave-500.
+
+---
+
+36. **MNN Catalog Consensus + Enrichment Router v1 (offline, 2026-08-12)**
+
+* **Цель:** два последовательных слоя для hierarchy-dev / offline batch:
+  1. `MNN — Catalog Consensus Resolver` (без LLM) — нормализация, `anchor_component` safe-union, RX/Age независимо;
+  2. `MNN — Enrichment Router` — только `unresolved_catalog` drug → `POST /webhook/mnn-drug-enrichment` (`bEyKA1JJr0swuLql`).
+* **Eligibility:** только `product_kind=drug`; skip homeopathy / device / vitamin_or_baa / cosmetic / other.
+* **Safe union:** union только при наличии `anchor_component` (≥2 evidence-qualified sources: `explicit_mnn|active_ingredient`); иначе `unresolved_catalog` → enrichment.
+* **Canonical vs raw:** `resolved_mnn` = join канонических компонентов; raw только в `source_raw_mnn` / audit. Не использовать «самую длинную» карточную строку.
+* **Не перезаписывать:** `attr_mnn`, `attr_rx_otc`, `semantic_attrs.mnn`, snapshot `product_classification`.
+* **DB logging:** schema gate → `db_logging_mode=artifacts_only_schema_blocked` (Docker/Postgres unreachable). Mode 2 `new_enrichment_run` (`run_type=stage2_mnn_catalog_enrichment_v1`) предпочтителен при доступной БД. Новые log events с `run_id=null` запрещены. Stages (когда DB up): `mnn_catalog_resolve`, `mnn_enrichment`.
+* **Prod / live:** `classification-stage2-dev` и live-wire hierarchy-dev **не менялись**. JS mirrors подготовлены, не подключены.
+
+#### Code / nodes
+
+* `scripts/lib/mnn_normalization.py`
+* `scripts/lib/mnn_catalog_consensus.py`
+* `scripts/lib/mnn_enrichment_map.py`
+* `scripts/mnn_catalog_resolution_wave500.py`
+* `scripts/mnn_catalog_consensus_fixtures.test.mjs`
+* `scripts/hierarchy_nodes/mnn_normalization.js`
+* `scripts/hierarchy_nodes/mnn_catalog_resolve.js`
+* `scripts/hierarchy_nodes/mnn_enrichment_router.js`
+* `scripts/hierarchy_nodes/mnn_catalog_prepare_log.js`
+
+#### Offline tests
+
+* `node scripts/mnn_catalog_consensus_fixtures.test.mjs` — **23/23**.
+
+#### Wave-500 batch (eligible drugs)
+
+* total **217** · catalog resolved **165** · unresolved catalog **52**
+* enrichment called **52** · accepted **21** · unresolved final **31**
+* `db_logging_mode=artifacts_only_schema_blocked`
+
+#### Artifacts
+
+* `redesign/artifacts/mnn_catalog_resolution_wave500.csv`
+* `redesign/artifacts/mnn_catalog_resolution_wave500.json`
+* `redesign/artifacts/mnn_catalog_resolution_wave500_summary.md`
+* `redesign/artifacts/mnn_catalog_resolution_wave500_progress.json`
+* `redesign/artifacts/mnn_catalog_resolution_schema_gate.md`
+
+#### Explicitly out of scope
+
+* Live wire into hierarchy-dev Sem→Dir path.
+* Prod Stage2 changes / DDL / snapshot writes / auto-overwrite `attr_*`.
+* vitamin_or_baa nutrient MNN layer.
+
+#### Next
+
+* When Postgres available: Mode 2 `new_enrichment_run` + log stages `mnn_catalog_resolve` / `mnn_enrichment`.
+* Spot-check enrichment accepts; decide soft-signal merge of `resolved_mnn` into Dir/Need/Mnn (separate confirmation).
+* Do **not** connect resolver to live Stage2 until explicit approval.
+
+
+---
+
+37. **Wave-500 MNN v2 (Sem + Catalog + Enrichment → PostgreSQL + Search Evidence Bundle) (2026-08-12)**
+
+* **Цель:** новый изолированный Sem wave (без overlap с prior Wave-500) → **обязательный rollback** hierarchy-dev → offline Catalog Consensus + Enrichment Router с DB audit logs, auto-retry и Search Evidence Bundle.
+* **DeepSeek fix:** native `@n8n/n8n-nodes-langchain.lmChatDeepSeek` + `deepseek-v4-flash` / `deepseek-chat` → **401 Incorrect API key**. Sem0/Sem переключены на community node **`DeepSeek V4 Chat Model`** (`n8n-nodes-deepseek-v4-thinking-fix.deepSeekV4ChatModel`, model `deepseek-v4-flash`, `thinkingMode=disabled`, credential `DeepSeek account`). Smoke exec **40248** `sem_post=1` OK. Backup smoke JSON тоже с V4, чтобы rollback не откатывал на broken LM.
+* **Allowlist N:** requested 500; load-compatible pool after exclude prior Wave-500 + smoke allowlists → **N=57** (tier1 classified fill removed — Load only `pending|needs_human_review`). Overlap prior Wave-500 = **0**. Artifact: `sem_wave500_mnn_v2_allowlist.json`.
+* **Sem:** chunks 6×10 (last 7), execs **40252,40255,40258,40261,40265,40268**; hierarchy run_ids in report **398–403**; report rows **57** (drug **28**). Rollback: kill-switch off, allowlist `[]`, Load `WHERE false`, assert-safe OK **before** MNN.
+* **MNN enrichment run:** `classification_runs.id=405`, `run_type=stage2_mnn_catalog_enrichment_v1`, status `finished_with_review`, success_count=27, error_count=1, metadata.total_count=28, needs_review_count=1. (Orphan `id=404` left `running` from stdout-parse glitch on first create — superseded by 405; close manually if needed.)
+* **DB logs (run 405):** `mnn_catalog_resolve=28`, `mnn_enrichment=8`.
+* **Metrics (eligible drugs 28):** catalog resolved **20**; enrichment calls **8**; attempts **11**; raw SearXNG saved **11**; retries **3**; accepted **7**; avg search_count **16.0**; selected evidence rows **132**; unresolved final **1** (with evidence); human_review CSV **28** (cap = eligible).
+* **Search Evidence Bundle:** append-only JSONL + curated `research_context` in enrichment `output_payload` + normalized research_context CSV/JSON. Helper `load_latest_mnn_resolution(product_id)` prepared — **not** live-wired to Sem/Dir/Need.
+* **Prod / attr_* / snapshot:** not modified.
+
+#### Code
+
+* `scripts/lib/mnn_search_evidence.py`
+* `scripts/lib/mnn_resolution_query.py`
+* `scripts/mnn_catalog_resolution_wave500_v2.py`
+* `scripts/sem_wave500_mnn_v2_allowlist.py` (load-compatible only)
+* `scripts/sem_wave500_mnn_v2_orchestrator.py`
+* `scripts/mnn_wave500_v2_score_labels.py` (stub)
+
+#### Artifacts
+
+* `redesign/artifacts/sem_wave500_mnn_v2_allowlist.json`
+* `redesign/artifacts/sem_wave500_mnn_v2_report.csv` / `_progress.json`
+* `redesign/artifacts/sem_wave500_mnn_v2_from_catalogs.csv`
+* `redesign/artifacts/mnn_catalog_resolution_wave500_v2.{csv,json,_summary.md,_progress.json,_human_review.csv}`
+* `redesign/artifacts/mnn_wave500_v2_searxng_raw.jsonl`
+* `redesign/artifacts/mnn_wave500_v2_research_context.{csv,json}`
+* `redesign/artifacts/mnn_wave500_v2_schema_gate.md`
+
+#### Explicitly out of scope
+
+* Live-wire evidence → Dir/Need/Mnn / Sem shortlist.
+* Closing orphan run 404 (ops).
+* Expanding allowlist back to N=500 without load-compatible pool.
+
+#### Next
+
+* Human labels on `mnn_catalog_resolution_wave500_v2_human_review.csv` → score stub.
+* Soft-context use of `load_latest_mnn_resolution` in future Dir/Need (explicit approval).
+* Optionally close run 404; optionally rebuild larger allowlist if pending pool grows.
+
+---
+
+38. **Offline MNN identity gate Wave‑500 v3 + post-identity enrichment (run 461) + human-review quality baseline (2026-08-17)**
+
+* **Статус:** **done** (offline quality baseline). Prod Stage 2 / live Sem / snapshot / `attr_mnn` / `attr_rx_otc` / `attr_age_segment` — **не менялись**.
+* **Цель шага:** зафиксировать fact-backed quality baseline **до** изменения policy / prompt / normalization / workflow.
+* **Канон метрик:** `redesign/artifacts/mnn_identity_enrichment_pass_review_metrics_v1.md` (+ `.json`); inventories `*_review_*_errors_v1.csv`, `*_non_drug_null_mnn_v1.csv`, `*_text_quality_v1.csv`.
+* **Labeled input:** `redesign/artifacts/mnn_identity_enrichment_pass_human_review_v2 - mnn_identity_enrichment_pass_human_review_v2.csv` (не перезаписывался).
+
+#### Done (подтверждено артефактами)
+
+* Offline **MNN catalog identity gate** Wave‑500 **v3** — завершён (отдельные `*_identity_gate*` / `*_from_catalogs_identity*` artifacts; baseline v3 immutable).
+* **Post-identity enrichment pass:** `classification_runs.id=461`, `run_type=stage2_mnn_identity_gate_enrichment_v1`.
+* Enrichment: **104** calls · **86** accepted · **9** retries · **18** `unresolved_final`.
+* **Human-review v2:** **100** строк · **0** duplicate `product_id` · `label_mnn` 100/100; RX/Age labelled 83/100 (17 `not_labeled`, совпадают с non-drug/`should_be_empty` slice).
+
+#### Headline metrics (human labels)
+
+* **MNN (all relevant):** 99/100 = 99.0% (`correct` + `should_be_empty` vs error outcomes).
+* **MNN drugish slice** (rows where `label_mnn ≠ should_be_empty`; **не** computed Drug classifier): **82/83**.
+* **Correct null-MNN for non-drug** (`label_mnn=should_be_empty`): **17**.
+* **RX/OTC:** **72/83** = 86.7%.
+* **Age:** **59/83** = 71.1%.
+* **MNN gaps in sample:** **1** error row — `product_id=19198`, «Зверобоя трава Фитофарм», `new_enrichment_status=ok_partial`, `final_mnn_method=unresolved_final`, empty `final_candidate_mnn`, reviewer `label_mnn=incorrect` (notes: Drug / OTC / взрослый). Корректное МНН **не** выводилось автоматически.
+* **Norm text quality (confirmed):** manufacturer-like duplicate `|` segments **100/100**; pack-token dups **14/100**; median length 82 / p90 124.1.
+
+#### Policy decisions (зафиксировано; без prod merge)
+
+* **MNN** — пока **не** вливать в `attr_mnn` и **не** подключать в live Sem / Dir–Need–Mnn.
+* **RX/OTC** — **не** использовать как hard gate для RX clusters.
+* **Age** — **не** использовать в routing до формализации словаря и evidence policy.
+* Уточнение **product kind** из enrichment (`Category=BAS|Other|Drug` в research / proposed override buckets) — только **proposed / offline candidate**. Это **не** изменение `product_type` / `product_kind` в snapshot и **не** write в `product_classification`.
+
+#### Explicitly out of scope (этот пункт)
+
+* INSERT/UPDATE `product_classification` / `attr_*` / Sem live wiring / Norm rewrite.
+* New SearXNG / webhook / LLM passes beyond already-finished run 461.
+* Treating review sample as random population estimate.
+
+#### Next (roadmap)
+
+1. **Offline BAS/Other override policy** (без DB/prod writes) — inputs: `mnn_identity_enrichment_pass_review_non_drug_null_mnn_v1.csv` + metrics report § non-drug.
+2. Затем **RX/OTC calibration** (error inventory `*_rx_otc_errors_v1.csv`).
+3. Затем **Age contract** + evidence policy (inventory `*_age_errors_v1.csv`).
+4. Затем **Norm v4 experiment** (dedupe manufacturer/pack в `normalized_text`; offline only).
+
+#### Key artifacts
+
+* Identity gate: `mnn_catalog_resolution_wave500_v3_identity_gate.*`, `sem_wave500_mnn_v3_from_catalogs_identity.*`
+* Enrichment pass 461: `mnn_identity_enrichment_pass_{results,summary,candidates,human_review*}`
+* Review baseline: `mnn_identity_enrichment_pass_review_metrics_v1.{md,json}` + error/non-drug/text-quality CSVs
+* Analyzer: `scripts/mnn_identity_enrichment_pass_review_metrics_v1.py`
