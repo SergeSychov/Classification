@@ -1,6 +1,6 @@
 # Project status — classification redesign
 
-Updated: 2026-08-17
+Updated: 2026-08-18
 Canonical migration design: [`20_MIGRATION_PLAN.md`](20_MIGRATION_PLAN.md)
 
 ## Architecture decision status
@@ -21,7 +21,9 @@ Canonical migration design: [`20_MIGRATION_PLAN.md`](20_MIGRATION_PLAN.md)
 
 **Offline BAS/Other override policy v1 + human validation done** (2026-08-17, M2/M2.1): 18 null-MNN/non-drug candidates from run 461; applied offline proposals BAS **12**, Other **1** (`9197`), no proposal **5** (`72`, `11272`, `45`, `19198`, `9941`); **13** approved for exclusion from future drug-MNN enrichment/human queue (MNN null/not_applicable). Remains **offline/audit-only** — no PostgreSQL writes, no classification run, no `product_kind`/`product_type`/snapshot/Sem/`attr_*` updates. Implementation contract draft **not applied**. Journal **п.39**; freeze `mnn_non_drug_override_policy_v1_reviewed.*`.
 
-**Next planned step (MNN offline):** RX/OTC calibration (M3).
+**M3.0 RX/OTC source audit + M3.1 standalone retriever design done** (2026-08-18): M3.0 confirmed 11 RX/OTC error rows, **0/11** product-specific sufficient evidence, **0** GRLS product-card evidence. M3.1 locked RX/OTC as a **separate standalone workflow design** for future inactive workflow `rx-otc-product-retrieval-dev` (n8n workflow **not created**; not a sub-branch of `mnn-drug-enrichment`, not wired to Stage 2 / hierarchy). P1 GRLS/official vs P2 supporting-only (`final_rx_otc_value` stays null) vs P3 discovery; M2-13 excluded from retrieval; **19198** stays Drug / out of precision denom until `expected_rx_otc_manual`. Design only — **no** workflow create, **no** search/LLM/n8n/DB, **no** `attr_rx_otc` / snapshot merge. Canon: [`m3_1_rx_otc_retriever_design.md`](m3_1_rx_otc_retriever_design.md). Journal **п.40**.
+
+**Next planned step (MNN offline):** M3.2a inactive skeleton of `rx-otc-product-retrieval-dev` (explicit ask; stubs; no HTTP/DB). Not a hard routing gate.
 **Parallel Sem:** Wave-100/500 rubric → `critical_error_rate` (п.28). Hierarchy remains snapshot-off / prod untouched.
 
 | Track | Status |

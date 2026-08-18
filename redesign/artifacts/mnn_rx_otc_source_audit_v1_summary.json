@@ -1,0 +1,162 @@
+{
+  "all_urls_source_type_distribution": {
+    "generic_mnn_or_molecule_page": 1,
+    "official_instruction_or_manufacturer": 2,
+    "other": 56,
+    "pharmacy_product_card": 14,
+    "regulatory_context_not_product_specific": 4,
+    "rls_or_vidal_product_card": 17
+  },
+  "audit_version": "mnn_rx_otc_source_audit_v1",
+  "best_source_type_distribution": {
+    "official_instruction_or_manufacturer": 2,
+    "rls_or_vidal_product_card": 5,
+    "search_snippet_or_unknown": 4
+  },
+  "constraints_respected": {
+    "no_attr_snapshot_product_kind_workflow_changes": true,
+    "no_commit_push": true,
+    "no_db_writes": true,
+    "no_input_artifact_modification": true,
+    "no_new_rx_otc_values": true,
+    "no_web_searxng_llm_n8n": true
+  },
+  "error_total": 11,
+  "evidence_gap_distribution": {
+    "multiple": 11
+  },
+  "explicit_status_distribution": {
+    "no": 7,
+    "unclear": 4
+  },
+  "future_rx_otc_retriever_requirements": {
+    "acceptance": [
+      "explicit status “по рецепту” / “без рецепта”",
+      "identity A/B",
+      "product-specific or brand+form-specific",
+      "no comparable-source conflict"
+    ],
+    "fallback": "RLS/Vidal product card or pharmacy card = soft/supporting only",
+    "normative_context_note": "Приказ Минздрава №100н использовать как нормативный контекст, но не как evidence RX/OTC конкретного товара.",
+    "primary_source": "GRLS product-specific registration/card or official current instruction",
+    "reject": [
+      "generic MNN/molecule page",
+      "search snippet",
+      "regulatory order 100н as SKU source",
+      "absence of explicit status",
+      "identity C/D",
+      "conflict"
+    ]
+  },
+  "grls_landing_only_cases": 4,
+  "identity_grade_distribution": {
+    "B": 3,
+    "C": 4,
+    "unknown": 4
+  },
+  "input_sha256": {
+    "mnn_identity_enrichment_pass_human_review_v2 - mnn_identity_enrichment_pass_human_review_v2.csv": "ec167da556040e71e458c6bc74ba832b9f5cc60372d4e6e3de346f1373f93f5b",
+    "mnn_identity_enrichment_pass_research_context.csv": "7fe535fd4bf4dc9c22df995e61f3c542fd84be84275e5becd23a863d12a45146",
+    "mnn_identity_enrichment_pass_results.csv": "be3e8c74ec63c303261ae2aa3d7a79fbf545e2b7df60f4b9e5c485d276f94736",
+    "mnn_identity_enrichment_pass_review_rx_otc_errors_v1.csv": "98f3b44b58b1969e987025fa9f31c247c1284ea096a9798bdef34a898ff719c4",
+    "mnn_identity_enrichment_pass_searxng_raw.jsonl": "99491b88b534ba76c2a8f675c33926af461e7ac5d5ae5ff2281565195ebdee1a"
+  },
+  "no_authoritative_root_cause_cases": 8,
+  "no_official_or_grls_url_at_all_cases": 6,
+  "only_soft_generic_pharmacy_best_source_cases": 5,
+  "product_specificity_distribution": {
+    "brand_form_specific": 2,
+    "brand_only": 4,
+    "product_specific": 1,
+    "unknown": 4
+  },
+  "raw_evidence_missing": 4,
+  "representative_examples": [
+    {
+      "best_type": "search_snippet_or_unknown",
+      "best_url": "",
+      "explicit_status": "unclear",
+      "final_rx_otc": "rx",
+      "gap": "multiple",
+      "identity_grade": "unknown",
+      "manual_expected_rx_otc_hint": "otc",
+      "normalized_text": "ФЛУКОНАЗОЛ-OBL КАПС. 150МГ №4 | ОБОЛЕНСКОЕ ФП АО | ОБОЛЕНСКОЕ ФП АО",
+      "notes": "gap_flags=raw_evidence_missing+no_grls_or_official_source+source_not_product_specific+status_not_explicit+identity_weak; no_saved_evidence_urls; no_explicit_po_receptu_status_in_saved_titles_excerpts",
+      "product_id": "3065",
+      "root_cause": "manual_label_only_no_evidence",
+      "specificity": "unknown",
+      "sufficient": "no"
+    },
+    {
+      "best_type": "official_instruction_or_manufacturer",
+      "best_url": "https://termikon.ru/instrukcii/",
+      "explicit_status": "no",
+      "final_rx_otc": "rx",
+      "gap": "multiple",
+      "identity_grade": "C",
+      "manual_expected_rx_otc_hint": "otc",
+      "normalized_text": "ТЕРМИКОН КРЕМ Д/НАРУЖ. ПРИМ. 1% ТУБА 15Г | ЛЕККО ЗАО | ЛЕККО ЗАО",
+      "notes": "gap_flags=no_grls_or_official_source+source_not_product_specific+status_not_explicit+identity_weak+source_conflict; grls_landing_only_not_product_card; near_brand_or_wrong_form_evidence_present; no_explicit_po_receptu_status_in_saved_titles_excerpts",
+      "product_id": "4924",
+      "root_cause": "near_brand_or_wrong_product_risk",
+      "specificity": "brand_only",
+      "sufficient": "no"
+    },
+    {
+      "best_type": "official_instruction_or_manufacturer",
+      "best_url": "https://duspatalin.ru/instruktsiya/135/",
+      "explicit_status": "no",
+      "final_rx_otc": "rx",
+      "gap": "multiple",
+      "identity_grade": "B",
+      "manual_expected_rx_otc_hint": "otc",
+      "normalized_text": "ДЮСПАТАЛИН ТАБЛ. П/О 135МГ №15 ВЕРОФАРМ | ВЕРОФАРМ АО | ВЕРОФАРМ АО",
+      "notes": "gap_flags=status_not_explicit+source_conflict; near_brand_or_wrong_form_evidence_present; no_explicit_po_receptu_status_in_saved_titles_excerpts",
+      "product_id": "19370",
+      "root_cause": "source_conflict_not_escalated",
+      "specificity": "product_specific",
+      "sufficient": "no"
+    },
+    {
+      "best_type": "rls_or_vidal_product_card",
+      "best_url": "https://www.rlsnet.ru/drugs/ekzorolfinlak-79112",
+      "explicit_status": "no",
+      "final_rx_otc": "rx",
+      "gap": "multiple",
+      "identity_grade": "B",
+      "manual_expected_rx_otc_hint": "otc",
+      "normalized_text": "ЭКЗОРОЛФИНЛАК ЛАК Д/НОГТЕЙ 5% ФЛ. 2,5МЛ | ПАУЛЬ В. БЕЙФЕРС ГМБХ | ПАУЛЬ В. БЕЙФЕРС ГМБХ",
+      "notes": "gap_flags=no_grls_or_official_source+status_not_explicit; grls_landing_only_not_product_card; no_explicit_po_receptu_status_in_saved_titles_excerpts",
+      "product_id": "1053",
+      "root_cause": "authoritative_source_not_product_specific",
+      "specificity": "brand_form_specific",
+      "sufficient": "no"
+    },
+    {
+      "best_type": "rls_or_vidal_product_card",
+      "best_url": "https://www.rlsnet.ru/drugs/sanovask-75403",
+      "explicit_status": "no",
+      "final_rx_otc": "rx",
+      "gap": "multiple",
+      "identity_grade": "C",
+      "manual_expected_rx_otc_hint": "otc",
+      "normalized_text": "САНОВАСК ТАБЛ. П/КИШ/РАСТ/ПЛЕН/ОБ. 50МГ №30 | ИРБИТСКИЙ ХИМЗАВОД ОАО | ИРБИТСКИЙ ХИМЗАВОД…",
+      "notes": "gap_flags=no_grls_or_official_source+source_not_product_specific+status_not_explicit+identity_weak; grls_landing_only_not_product_card; no_explicit_po_receptu_status_in_saved_titles_excerpts",
+      "product_id": "7275",
+      "root_cause": "authoritative_source_not_product_specific",
+      "specificity": "brand_only",
+      "sufficient": "no"
+    }
+  ],
+  "research_context_missing": 4,
+  "root_cause_distribution": {
+    "authoritative_source_not_product_specific": 2,
+    "manual_label_only_no_evidence": 4,
+    "near_brand_or_wrong_product_risk": 2,
+    "no_authoritative_source_retrieved": 2,
+    "source_conflict_not_escalated": 1
+  },
+  "sufficient_product_specific_official_evidence": 0,
+  "unique_product_id": 11,
+  "usable_official_best_source_ab_specificity": 1
+}

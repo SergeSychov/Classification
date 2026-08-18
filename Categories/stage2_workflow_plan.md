@@ -458,7 +458,7 @@
 
 ---
 
-## Hierarchy redesign progress (updated 2026-08-17)
+## Hierarchy redesign progress (updated 2026-08-18)
 
 Отдельный трек от current Stage 2. Канон: `redesign/20_MIGRATION_PLAN.md`, статус: `redesign/00_PROJECT_STATUS.md`, короткий roadmap: `redesign/29_SHORT_ROADMAP.md`.  
 **Prod Stage 2** (`classification-stage2-dev`, `BaBjEPi78taRj2G5`) — **не менялся**.
@@ -476,12 +476,14 @@
 * **Sem0 + Sem1 attr_profile policy v2** — **finalized** (см. п.29–30): `prompt_sem0_v2` / `prompt_semantic_v3`; Wave-100 rerun chunked 10×10; progress tooling; rollback verified.
 * **Offline MNN identity gate Wave‑500 v3 + enrichment run 461 + human-review quality baseline** — **done** ✅ (см. **п.38**). MNN/RX/Age **не** влиты в live Sem / `attr_*`.
 * **Offline BAS/Other override policy v1 + human validation (M2 / M2.1)** — **done** ✅ (см. **п.39**). Audit-only; implementation contract draft **not applied**.
+* **M3.0 RX/OTC source audit + M3.1 standalone retriever design** — **done** ✅ (см. **п.40**). Design only; workflow **not created**; no `attr_rx_otc` / snapshot merge.
 
 ### Not done
 
 * Sem human rubric labeling для Wave-100 / Wave-500 (`critical_error_rate`).
 * Apply M2 implementation contract (queue filter) — **blocked** until explicit approval.
-* RX/OTC calibration · Age contract · Norm v4 experiment (M3–M5).
+* **M3.2** `rx-otc-product-retrieval-dev` workflow — **not created** (skeleton / HTTP / DB blocked until explicit ask).
+* Age contract · Norm v4 experiment (M4–M5).
 * Optional: SplitInBatches перед Sem0 (Wave-100/500 = chunked runner из‑за Merge/LLM parallel hang).
 * Dir / Need / Cat / optional Mnn cascade + Judge rewiring for hierarchy.
 * Prod Stage 2 Load allowlist-exclude patch.
@@ -490,8 +492,8 @@
 
 ### Next short steps
 
-1. **RX/OTC calibration** (M3) — inventory `*_rx_otc_errors_v1.csv`; not a hard gate yet.
-2. Затем Age contract (M4) → Norm v4 experiment (M5).
+1. **M3.2a** inactive skeleton of `rx-otc-product-retrieval-dev` (explicit ask; stubs; no HTTP/DB). Not a hard gate.
+2. Затем M3.2b/c controlled retrieval → M3.3 metrics → Age contract (M4) → Norm v4 (M5).
 3. Optional later: apply M2 queue-exclusion contract for 13 IDs (explicit approval only).
 4. Human rubric labeling Wave-100/500 (`critical_error_rate`) — parallel Sem track.
 5. Dir → Need → Cat → optional Mnn → Judge only after Sem gate + explicit MNN merge approval.
@@ -1390,9 +1392,10 @@ PROGRESS processed 500/500 (100.0%) …
 #### Next (roadmap)
 
 1. ~~Offline BAS/Other override policy~~ → **done**, см. **п.39**.
-2. **RX/OTC calibration** (error inventory `*_rx_otc_errors_v1.csv`).
-3. **Age contract** + evidence policy (inventory `*_age_errors_v1.csv`).
-4. **Norm v4 experiment** (dedupe manufacturer/pack в `normalized_text`; offline only).
+2. ~~M3.0 source audit + M3.1 retriever design~~ → **done**, см. **п.40**.
+3. **M3.2a** inactive skeleton `rx-otc-product-retrieval-dev` (explicit ask).
+4. **Age contract** + evidence policy (inventory `*_age_errors_v1.csv`).
+5. **Norm v4 experiment** (dedupe manufacturer/pack в `normalized_text`; offline only).
 
 #### Key artifacts
 
@@ -1435,6 +1438,33 @@ PROGRESS processed 500/500 (100.0%) …
 
 #### Next
 
-* M3 **RX/OTC calibration** (не hard gate).
+* ~~M3.0/M3.1~~ → **done**, см. **п.40**.
+* **M3.2a** inactive skeleton `rx-otc-product-retrieval-dev` (explicit ask; не hard gate).
 * M4 Age contract → M5 Norm v4 experiment.
 * Apply M2 queue-exclusion contract only after explicit approval.
+
+---
+
+40. **M3.0 RX/OTC source audit + M3.1 standalone Product Retrieval design (2026-08-18)**
+
+* **Статус:** **done** (design only). Prod Stage 2 / hierarchy-dev / `mnn-drug-enrichment` / live Sem / snapshot / `attr_*` — **не менялись**. Workflow `rx-otc-product-retrieval-dev` — **не создан**.
+* **M3.0:** 11 confirmed RX/OTC error rows (Phase A IDs `1053`, `2621`, `3065`, `4922`, `4924`, `7275`, `10046`, `18377`, `19198`, `19370`, `26115`); **0/11** product-specific sufficient evidence; **0** saved GRLS product-card; **0** explicit status in saved titles/excerpts. Приказ Минздрава №100н = regulatory context only, not SKU evidence.
+* **Architecture (locked):** standalone workflow **design** for future inactive workflow `rx-otc-product-retrieval-dev`, `workflow_version=rx_otc_retrieval_dev_v1`. n8n workflow **not created**. Not a sub-branch of MNN identity/enrichment. MNN acceptance ≠ RX/OTC acceptance. **Not** a hard routing gate. **No** automatic production merge.
+* **Evidence:** GRLS product record / official instruction = **P1**; pharmacy/aggregator = **P2 supporting only** (`candidate_rx_otc_value` set, `final_rx_otc_value=null`, outcome=`supported_only`); landing/generic MNN = **P3 discovery**. P2 **never** sets a final accepted RX/OTC value and cannot drive snapshot/`attr_*`/routing.
+* **Budget:** `logical_search_query_count <= 8` (Q1≤3, Q2≤3, Q3≤2); `transport_retry_attempt_count <= 2` per logical query; `fetched_page_count <= 4`. Search ≠ fetch; transport retries do not increment the logical query count.
+* **M2-13** approved BAS/Other IDs — excluded from RX retrieval (`not_applicable`). **19198** remains Drug / eligible for retrieval; `review_label_inconsistency=true`; out of RX/OTC precision denominator until `expected_rx_otc_manual` ∈ {rx, otc, unknown}. Historic labels **not** rewritten.
+* **Rollout:** M3.2a inactive skeleton (stubs, no HTTP/DB) → M3.2b one-item after explicit approval → M3.2c 11 errors + 30 blind (no snapshot/`attr_*`) → M3.3 human metrics → M3.4 proposed layer only if metrics pass.
+
+#### Key artifacts
+
+* Design: `redesign/m3_1_rx_otc_retriever_design.md`
+* Contract: `redesign/m3_1_rx_otc_retriever_contract.json`
+* Query examples (designed, not executed): `redesign/m3_1_rx_otc_retriever_query_examples.csv`
+* Data model (proposal, no migration): `redesign/m3_1_rx_otc_retriever_data_model.md`
+* M3.2 test plan: `redesign/m3_1_rx_otc_retriever_m3_2_test_plan.md`
+* M3.0 audit: `redesign/artifacts/mnn_rx_otc_source_audit_v1_summary.{md,json}`
+
+#### Next
+
+* **M3.2a** inactive skeleton (explicit ask; stubs; no HTTP/DB).
+* Not: n8n create/edit, SearXNG, LLM, PostgreSQL writes, `attr_rx_otc` merge.

@@ -1,0 +1,710 @@
+{
+  "contract_id": "rx_otc_product_retrieval_v1",
+  "status": "design_only_not_implemented",
+  "workflow": {
+    "name": "rx-otc-product-retrieval-dev",
+    "workflow_version": "rx_otc_retrieval_dev_v1",
+    "run_type": "stage2_rx_otc_retrieval_v1",
+    "workflow_name_log": "rx-otc-product-retrieval-v1",
+    "stage": "rx_otc_retrieval",
+    "status_after_creation": "inactive",
+    "entrypoints": ["manual_trigger", "dedicated_webhook"],
+    "proposed_webhook_path": "/webhook/rx-otc-product-retrieval-dev",
+    "independent_from": [
+      "mnn_catalog_identity_gate",
+      "mnn-drug-enrichment",
+      "classification-stage2-dev",
+      "classification-stage2-hierarchy-dev",
+      "sem0",
+      "sem1",
+      "dir_need_category_routing"
+    ]
+  },
+  "isolation_m3_2": {
+    "connect_prod_stage2": false,
+    "connect_hierarchy_dev": false,
+    "product_classification_snapshot_update": false,
+    "attr_rx_otc_update": false,
+    "semantic_attrs_update": false,
+    "product_kind_update": false,
+    "product_type_update": false,
+    "postgresql_write_skeleton_smoke": false,
+    "output": ["webhook_response", "artifacts"],
+    "db_logging": "design_only_until_explicit_approval_after_one_item_smoke"
+  },
+  "rollout": {
+    "M3.2a": "inactive skeleton, stubbed external nodes, no DB, no HTTP",
+    "M3.2b": "after explicit approval: connect retrieval; one manually selected product",
+    "M3.2c": "after one-item validation: 11 error cases + blind sample; still no snapshot/attr updates",
+    "M3.3": "human review and metrics",
+    "M3.4": "only if metrics pass: separately propose audit logging / proposed RX/OTC layer; no automatic production merge"
+  },
+  "verified_baseline": {
+    "run_id": 461,
+    "mnn_drugish_accuracy": "82/83",
+    "correct_null_mnn_non_drug": 17,
+    "rx_otc_accuracy": "72/83",
+    "age_accuracy": "59/83",
+    "rx_otc_error_rows": 11,
+    "sufficient_product_specific_existing_evidence": "0/11",
+    "grls_product_card_evidence": "0/11",
+    "explicit_status_in_saved_titles_excerpts": "0/11",
+    "skip_reuse_without_saved_evidence": 4,
+    "m2_approved_bas_other_excluded": 13,
+    "m2_excluded_product_ids": [56, 75, 249, 3763, 5322, 8201, 9197, 18179, 18830, 21387, 22548, 23695, 26319],
+    "m3_0_phase_a_error_product_ids": [1053, 2621, 3065, 4922, 4924, 7275, 10046, 18377, 19198, 19370, 26115],
+    "product_19198": {
+      "review_label_inconsistency": true,
+      "current_final_rx_otc": "otc",
+      "label_notes_say_otc": true,
+      "in_legacy_rx_otc_error_inventory": true,
+      "eligible_for_phase_a_source_identity_audit": true,
+      "excluded_from_rx_otc_correction_precision_denominator_until_structured_expected_rx_otc": true,
+      "do_not_rewrite_historic_labels": true
+    }
+  },
+  "architecture_decision": {
+    "statement": "RX/OTC retrieval is a standalone workflow rx-otc-product-retrieval-dev. It is not a sub-branch of mnn-drug-enrichment and is not embedded in current Stage 2 / hierarchy workflow.",
+    "mnn_acceptance_does_not_imply_rx_otc_acceptance": true
+  },
+  "locked_assertions": [
+    "GRLS product record / official instruction = P1 primary.",
+    "Приказ Минздрава №100н = regulatory context only, not SKU evidence.",
+    "generic MNN / snippets / GRLS landing = P3 discovery only.",
+    "no automatic acceptance without explicit captured status text.",
+    "no hard routing or attr merge in M3.2.",
+    "M2 approved BAS/Other 13 products excluded from M3.2.",
+    "workflow independent from MNN route.",
+    "one run_id across all future stages.",
+    "no full raw evidence in PostgreSQL.",
+    "no silent overwrite of Sem baseline by retriever.",
+    "workflow will be standalone and inactive after future creation.",
+    "M3.2a skeleton first; one-item test before controlled batch."
+  ],
+  "input_contract": {
+    "required": ["product_id", "normalized_text_full"],
+    "optional": [
+      "brand_or_product_name",
+      "dosage_form",
+      "strength",
+      "pack",
+      "manufacturer_normalized",
+      "mnn_if_known",
+      "country_or_market_if_known"
+    ],
+    "read_only_provenance": [
+      "sem_rx_otc",
+      "catalog_rx_otc",
+      "previous_enrichment_rx_otc",
+      "identity_enrichment_rx_otc"
+    ],
+    "aliases": {
+      "normalized_text_full": ["normalized_text"]
+    },
+    "must_not_mutate": ["normalized_text", "attr_rx_otc", "semantic_attrs", "product_kind", "product_type"]
+  },
+  "identity_output_fields": [
+    "rx_otc_identity_text",
+    "rx_otc_identity_query",
+    "rx_otc_identity_fingerprint",
+    "rx_otc_brand_norm",
+    "rx_otc_form_norm",
+    "rx_otc_strength_norm",
+    "rx_otc_pack_norm",
+    "rx_otc_manufacturer_norm"
+  ],
+  "identity_grades": ["A", "B", "C", "D", "unknown"],
+  "source_types": [
+    {
+      "source_type": "grls_official_product_record",
+      "source_tier": "P1",
+      "allowed_use": "establish_rx_otc_if_p1_gates_pass",
+      "may_set_rx_otc": true,
+      "acceptance_tier": "tier_1_product_specific",
+      "required_identity": ["A", "B"],
+      "required_explicit_status": true,
+      "rejection_conditions": ["landing_path", "identity_c_d", "no_status_text", "p1_conflict", "foreign_market_only"]
+    },
+    {
+      "source_type": "official_instruction_product_specific",
+      "source_tier": "P1",
+      "allowed_use": "establish_rx_otc_if_p1_gates_pass",
+      "may_set_rx_otc": true,
+      "acceptance_tier": "tier_1_product_specific",
+      "required_identity": ["A", "B"],
+      "required_explicit_status": true,
+      "rejection_conditions": ["brand_only_page", "wrong_form_or_strength", "generated_summary", "no_excerpt"]
+    },
+    {
+      "source_type": "official_manufacturer_or_marketing_authorization_holder",
+      "source_tier": "P1",
+      "allowed_use": "establish_rx_otc_if_p1_gates_pass",
+      "may_set_rx_otc": true,
+      "acceptance_tier": "tier_1_product_specific",
+      "required_identity": ["A", "B"],
+      "required_explicit_status": true,
+      "rejection_conditions": ["marketing_page_without_status", "near_brand_line_extension"]
+    },
+    {
+      "source_type": "rls_or_vidal_product_card",
+      "source_tier": "P2",
+      "allowed_use": "tier_2_supported_soft_signal",
+      "may_set_rx_otc": false,
+      "may_set_candidate_rx_otc_value": true,
+      "may_set_final_rx_otc_value": false,
+      "acceptance_tier": "tier_2_supported_soft_signal",
+      "required_identity": ["A", "B"],
+      "required_explicit_status": true,
+      "rejection_conditions": ["generic_mnn_path", "form_mismatch", "no_status"]
+    },
+    {
+      "source_type": "pharmacy_product_card",
+      "source_tier": "P2",
+      "allowed_use": "tier_2_supported_soft_signal",
+      "may_set_rx_otc": false,
+      "may_set_candidate_rx_otc_value": true,
+      "may_set_final_rx_otc_value": false,
+      "acceptance_tier": "tier_2_supported_soft_signal",
+      "required_identity": ["A", "B"],
+      "required_explicit_status": true,
+      "rejection_conditions": ["wrong_sku", "no_status"]
+    },
+    {
+      "source_type": "generic_mnn_or_molecule_page",
+      "source_tier": "P3",
+      "allowed_use": "discovery_or_query_expansion",
+      "may_set_rx_otc": false,
+      "acceptance_tier": null,
+      "required_identity": [],
+      "required_explicit_status": false,
+      "rejection_conditions": ["any_acceptance_attempt"]
+    },
+    {
+      "source_type": "search_snippet",
+      "source_tier": "P3",
+      "allowed_use": "discovery_only",
+      "may_set_rx_otc": false,
+      "acceptance_tier": null,
+      "required_identity": [],
+      "required_explicit_status": false,
+      "rejection_conditions": ["any_acceptance_attempt"]
+    },
+    {
+      "source_type": "grls_landing_or_search_page",
+      "source_tier": "P3",
+      "allowed_use": "discovery_only",
+      "may_set_rx_otc": false,
+      "acceptance_tier": null,
+      "required_identity": [],
+      "required_explicit_status": false,
+      "rejection_conditions": ["treating_landing_as_product_card"]
+    },
+    {
+      "source_type": "regulatory_context",
+      "source_tier": "P3",
+      "allowed_use": "normative_context_only",
+      "may_set_rx_otc": false,
+      "acceptance_tier": null,
+      "required_identity": [],
+      "required_explicit_status": false,
+      "rejection_conditions": ["prikaz_100n_or_general_rx_list_as_sku_proof"],
+      "notes": "Приказ Минздрава №100н is this class. Not SKU evidence."
+    },
+    {
+      "source_type": "unknown",
+      "source_tier": "P3",
+      "allowed_use": "drop_or_unresolved",
+      "may_set_rx_otc": false,
+      "acceptance_tier": null,
+      "required_identity": [],
+      "required_explicit_status": false,
+      "rejection_conditions": ["empty_url", "unclassifiable_host"]
+    }
+  ],
+  "query_ladder": {
+    "logical_search_query_count_max": 8,
+    "max_search_queries_per_eligible_sku": 8,
+    "Q1_GRLS_max_queries": 3,
+    "Q2_official_instruction_max_queries": 3,
+    "Q3_support_max_queries": 2,
+    "max_fetched_candidate_pages_per_eligible_sku": 4,
+    "search_query_and_fetch_page_are_separate_quotas": true,
+    "logical_query_count_excludes_transport_retries": true,
+    "fetch_only_urls_passing_source_domain_filter": true,
+    "p3_landing_or_search_pages": {
+      "may_fetch_as_sku_evidence": false,
+      "exception": "only_when_they_lead_to_a_concrete_p1_document_or_card"
+    },
+    "max_queries_per_source_layer": {
+      "Q1": 3,
+      "Q2": 3,
+      "Q3": 2
+    },
+    "layer_order": ["Q1", "Q2", "Q3"],
+    "query_kind_by_layer": {
+      "Q1": "grls_primary",
+      "Q2": "official_instruction",
+      "Q3": "support_card"
+    },
+    "hard_rules": [
+      "do_not_start_with_mnn_only_if_trade_name_exists",
+      "brand_form_strength_outrank_generic_name",
+      "manufacturer_and_pack_only_for_ambiguity",
+      "every_attempt_has_query_kind_and_reason",
+      "p3_cannot_be_accepted_proof",
+      "template_catalog_may_exceed_executed_cap_runtime_enforces_max"
+    ],
+    "templates": {
+      "Q1": [
+        "\"<brand>\" \"<form>\" \"<strength>\" site:grls.rosminzdrav.ru",
+        "\"<brand>\" \"<form>\" \"<strength>\" ГРЛС",
+        "\"<brand>\" \"<manufacturer>\" site:grls.rosminzdrav.ru",
+        "\"<brand>\" site:grls.rosminzdrav.ru"
+      ],
+      "Q2": [
+        "\"<brand>\" \"<form>\" \"<strength>\" инструкция условия отпуска",
+        "\"<brand>\" \"<form>\" \"<strength>\" \"по рецепту\"",
+        "\"<brand>\" \"<form>\" \"<strength>\" \"без рецепта\"",
+        "\"<brand>\" \"<form>\" \"<strength>\" официальный сайт инструкция"
+      ],
+      "Q3": [
+        "\"<brand>\" \"<form>\" \"<strength>\" site:rlsnet.ru",
+        "\"<brand>\" \"<form>\" \"<strength>\" site:vidal.ru"
+      ]
+    }
+  },
+  "raw_record_schema": {
+    "run_id": "integer",
+    "product_id": "integer",
+    "attempt_no": "integer",
+    "query_kind": ["grls_primary", "official_instruction", "support_card"],
+    "query": "string",
+    "source_url": "string",
+    "source_type": "string",
+    "retrieved_at": "iso8601",
+    "http_status": "integer",
+    "raw_artifact_path": "string",
+    "latency_ms": "integer"
+  },
+  "validated_evidence_schema": {
+    "product_id": "integer",
+    "candidate_rx_otc_value": ["rx", "otc", "null"],
+    "rx_otc_value": "deprecated_alias_of_candidate_rx_otc_value_not_product_final",
+    "explicit_status_text": "string_max_500",
+    "status_pattern": ["po_receptu", "bez_recepta", "other"],
+    "source_url": "string",
+    "source_type": "string",
+    "source_tier": ["P1", "P2", "P3"],
+    "identity_grade": ["A", "B", "C", "D", "unknown"],
+    "identity_match": {
+      "brand": "boolean",
+      "form": "boolean",
+      "strength": "boolean",
+      "pack": "boolean",
+      "manufacturer": "boolean"
+    },
+    "evidence_grade": ["A", "B", "C", "D", "none"],
+    "conflict_status": ["no_conflict", "conflict", "unknown"],
+    "validation_passed": "boolean",
+    "reject_reason": "string_or_null"
+  },
+  "result_value_contract": {
+    "fields": {
+      "candidate_rx_otc_value": ["rx", "otc", "null"],
+      "final_rx_otc_value": ["rx", "otc", "null"],
+      "outcome": [
+        "accepted",
+        "supported_only",
+        "unresolved",
+        "conflict",
+        "rejected",
+        "error",
+        "not_applicable"
+      ]
+    },
+    "policy": {
+      "p1_accepted": {
+        "candidate_rx_otc_value": "rx|otc",
+        "final_rx_otc_value": "same_as_candidate",
+        "outcome": "accepted"
+      },
+      "p2_supporting": {
+        "candidate_rx_otc_value": "rx|otc",
+        "final_rx_otc_value": null,
+        "outcome": "supported_only"
+      },
+      "p3_or_no_explicit_status_or_identity_c_d": {
+        "candidate_rx_otc_value": "may_be_null",
+        "final_rx_otc_value": null,
+        "outcome": "unresolved_or_rejected"
+      },
+      "m2_excluded_bas_other": {
+        "candidate_rx_otc_value": null,
+        "final_rx_otc_value": null,
+        "outcome": "not_applicable"
+      }
+    },
+    "p2_never_sets_final_accepted_rx_otc": true,
+    "p2_cannot_be_used_for": [
+      "hard_routing",
+      "snapshot_update",
+      "attr_merge"
+    ]
+  },
+  "validation_policy": [
+    "explicit_status_text must come from captured source content",
+    "a generated summary is not evidence",
+    "no explicit status → validation_passed=false",
+    "source P3 → validation_passed=false",
+    "identity C/D → validation_passed=false",
+    "conflicting comparable P1 evidence → validation_passed=false",
+    "every accepted result stores source URL + status excerpt + identity fields"
+  ],
+  "explicit_status_patterns": {
+    "po_receptu": [
+      "отпускается по рецепту",
+      "по рецепту",
+      "рецептурный",
+      "рецептурный отпуск"
+    ],
+    "bez_recepta": [
+      "отпускается без рецепта",
+      "без рецепта",
+      "безрецептурный",
+      "безрецептурный отпуск"
+    ],
+    "ignore_query_template_leakage": "рецептурн* + безрецептурн* + грлс without a dispensing sentence is not status"
+  },
+  "outcomes": [
+    "accepted",
+    "supported_only",
+    "unresolved",
+    "conflict",
+    "rejected",
+    "error",
+    "not_applicable"
+  ],
+  "error_codes": {
+    "E_TRANSPORT_TIMEOUT": {"retryable": true},
+    "E_HTTP_429": {"retryable": true},
+    "E_HTTP_5XX": {"retryable": true},
+    "E_PARSE_TRANSIENT": {"retryable": true},
+    "E_SOURCE_NOT_FOUND": {"retryable": false, "action": "advance_layer"},
+    "E_NO_EXPLICIT_STATUS": {"retryable": false},
+    "E_SOURCE_P3": {"retryable": false},
+    "E_IDENTITY_C": {"retryable": false},
+    "E_IDENTITY_D": {"retryable": false},
+    "E_FORM_MISMATCH": {"retryable": false},
+    "E_STRENGTH_MISMATCH": {"retryable": false},
+    "E_NEAR_BRAND": {"retryable": false},
+    "E_P1_CONFLICT": {"retryable": false},
+    "E_P2_CONFLICT": {"retryable": false},
+    "E_LADDER_EXHAUSTED": {"retryable": false},
+    "E_M2_NON_DRUG": {"retryable": false},
+    "E_INPUT_IDENTITY": {"retryable": false},
+    "E_MARKET_MISMATCH": {"retryable": false}
+  },
+  "reject_reasons": [
+    "no_explicit_status",
+    "source_p3",
+    "identity_c",
+    "identity_d",
+    "form_mismatch",
+    "strength_mismatch",
+    "near_brand",
+    "p1_conflict",
+    "p2_conflict",
+    "regulatory_context_only",
+    "grls_landing_only",
+    "generated_summary_not_evidence",
+    "m2_non_drug",
+    "malformed_input",
+    "transport_failure",
+    "parse_failure"
+  ],
+  "acceptance_matrix": {
+    "tier_1": {
+      "requires": ["P1", "explicit_status", "identity_A_or_B", "evidence_A", "no_p1_conflict"],
+      "result": "accepted",
+      "candidate_rx_otc_value": "rx|otc",
+      "final_rx_otc_value": "same_as_candidate",
+      "label": "tier_1_product_specific",
+      "m3_2_use": "audit_only_soft_signal"
+    },
+    "tier_2": {
+      "requires": ["P2", "explicit_status", "identity_A_or_B", "no_p1_conflict"],
+      "result": "supported_only",
+      "candidate_rx_otc_value": "rx|otc",
+      "final_rx_otc_value": null,
+      "label": "tier_2_supported_soft_signal",
+      "m3_2_use": "audit_only_not_hard_routing_not_snapshot_not_attr_merge",
+      "p2_never_sets_final_accepted_rx_otc": true
+    },
+    "tier_3": {
+      "triggers": [
+        "P3",
+        "no_explicit_status",
+        "identity_C_or_D",
+        "form_or_strength_mismatch",
+        "near_brand",
+        "conflict",
+        "transport_or_parse_failure"
+      ],
+      "result": ["unresolved", "rejected", "error", "conflict"],
+      "hard_routing": false
+    }
+  },
+  "conflict_policy": {
+    "p1_rx_vs_p1_otc": "manual_review_outcome_conflict",
+    "p1_wins_over_p2": "only_when_p1_identity_A_or_B_and_explicit_status",
+    "p2_vs_p2": "unresolved",
+    "sem_baseline_vs_future_p1": "retain_both_as_provenance_no_silent_overwrite"
+  },
+  "retry_policy": {
+    "logical_search_query_count_max": 8,
+    "transport_retry_attempt_count_max_per_logical_query": 2,
+    "fetched_page_count_max": 4,
+    "max_attempts_per_query_string": 3,
+    "accounting": {
+      "logical_search_query_count": "counts distinct executed ladder queries; transport retries do not increment this; alias search_query_count",
+      "transport_retry_attempt_count": "physical retries of the same logical query; max 2 per logical query (initial + 2 retries = 3 attempts)",
+      "fetched_page_count": "fetched candidate pages after source/domain filter; max 4",
+      "applies_from": "M3.2b+",
+      "m3_2a_skeleton": "HTTP forbidden; counters unused"
+    },
+    "backoff_seconds": [1, 2, 4],
+    "jitter_pct": 30,
+    "query_kind_progression": ["grls_primary", "official_instruction", "support_card"],
+    "retryable": [
+      "transport_timeout",
+      "HTTP_429",
+      "HTTP_5xx",
+      "transient_parser_failure",
+      "primary_source_not_found_advance_layer"
+    ],
+    "non_retryable": [
+      "clear_product_identity_mismatch",
+      "p1_p1_conflict",
+      "completed_source_ladder_without_explicit_status",
+      "m2_approved_bas_other",
+      "malformed_unusable_input_identity"
+    ]
+  },
+  "logging_limits": {
+    "full_raw_in_postgres": false,
+    "max_selected_evidence_records": 10,
+    "explicit_status_excerpt_max_chars": 500,
+    "raw_source_content": "append_only_artifact_only"
+  },
+  "idempotency": {
+    "key": ["run_id", "product_id", "stage", "attempt_no"],
+    "one_run_id_across_ladder": true,
+    "resume_incomplete_retryable": true,
+    "never_duplicate_identical_log_event": true,
+    "distinguish_query_attempts_from_final_decision": true
+  },
+  "future_proposed_fields_not_migration": [
+    "proposed_rx_otc",
+    "proposed_rx_otc_source",
+    "proposed_rx_otc_confidence",
+    "proposed_rx_otc_evidence_tier",
+    "proposed_rx_otc_status",
+    "proposed_rx_otc_run_id"
+  ],
+  "code_nodes": [
+    {
+      "node_name": "Run — Init Constants",
+      "purpose": "Attach versions, enums, M2 exclusion set, query budget, isolation flags. Do not INSERT classification_runs in M3.2a.",
+      "input_contract": ["trigger_item"],
+      "output_contract": ["constants", "workflow_version", "run_id", "stage", "isolation"],
+      "uses_item_json_spread": true,
+      "error_behavior": "fail item with E_INPUT_IDENTITY if constants missing"
+    },
+    {
+      "node_name": "Rx — Validate Input Contract",
+      "purpose": "Require product_id and usable identity text.",
+      "input_contract": ["product_id", "normalized_text_full"],
+      "output_contract": ["input_validation_passed", "input_reject_reason"],
+      "uses_item_json_spread": true,
+      "error_behavior": "fail closed → rejected / E_INPUT_IDENTITY; still emit audit row"
+    },
+    {
+      "node_name": "Rx — Build Product Identity",
+      "purpose": "Deterministic identity fields. Deduplicate noisy Norm locally. Do not mutate normalized_text.",
+      "input_contract": ["normalized_text_full", "optional structured dims"],
+      "output_contract": ["rx_otc_identity_*", "rx_otc_brand_norm", "rx_otc_form_norm", "rx_otc_strength_norm", "rx_otc_pack_norm", "rx_otc_manufacturer_norm"],
+      "uses_item_json_spread": true,
+      "error_behavior": "unusable identity → rejected / E_INPUT_IDENTITY"
+    },
+    {
+      "node_name": "Rx — M2 Non-drug Exclusion Gate",
+      "purpose": "Stop 13 applied M2 BAS/Other IDs with audit-only not_applicable.",
+      "input_contract": ["product_id", "constants.m2_excluded_product_ids"],
+      "output_contract": ["m2_gate", "outcome"],
+      "uses_item_json_spread": true,
+      "error_behavior": "exclude is a successful audit outcome, never throws"
+    },
+    {
+      "node_name": "Q1 — Build GRLS Query",
+      "purpose": "Emit Q1 templates with query_kind=grls_primary and reason. Never MNN-only if brand exists.",
+      "input_contract": ["identity fields"],
+      "output_contract": ["query_plan", "current_query", "query_kind", "reason"],
+      "uses_item_json_spread": true,
+      "error_behavior": "missing brand → unresolved, do not MNN-only"
+    },
+    {
+      "node_name": "Q1 — Fetch Stub",
+      "purpose": "M3.2a stub: no HTTP. Later Search/Fetch P1 GRLS. Fetch only URLs that passed source/domain filter; do not fetch P3 landings as SKU evidence unless they resolve to a P1 card. Counts toward max_fetched_candidate_pages_per_eligible_sku=4.",
+      "input_contract": ["current_query"],
+      "output_contract": ["http_status=0", "stubbed=true", "retrieved_candidates=[]"],
+      "uses_item_json_spread": true,
+      "error_behavior": "stub always succeeds with empty hits"
+    },
+    {
+      "node_name": "Q1 — Parse P1",
+      "purpose": "Classify source_type/tier; extract title/excerpt/URL. LLM summary is not excerpt.",
+      "input_contract": ["fetch payload"],
+      "output_contract": ["retrieved_candidates"],
+      "uses_item_json_spread": true,
+      "error_behavior": "transient parse → E_PARSE_TRANSIENT; empty → E_SOURCE_NOT_FOUND advance layer"
+    },
+    {
+      "node_name": "Rx — Validate P1 Evidence",
+      "purpose": "Identity grade, explicit status, validation_passed for P1.",
+      "input_contract": ["retrieved_candidates", "identity"],
+      "output_contract": ["validated_evidence", "tier1_accepted", "best_p1", "reject_reason"],
+      "uses_item_json_spread": true,
+      "error_behavior": "P3 or no status → validation_passed=false"
+    },
+    {
+      "node_name": "Q2 — Build Official Instruction Query",
+      "purpose": "Emit Q2 templates if Tier 1 not accepted after Q1.",
+      "input_contract": ["identity", "q1_outcome"],
+      "output_contract": ["query_plan", "current_query", "query_kind=official_instruction"],
+      "uses_item_json_spread": true,
+      "error_behavior": "same as Q1 builder"
+    },
+    {
+      "node_name": "Q2 — Fetch Stub",
+      "purpose": "M3.2a stub for official instruction fetch.",
+      "input_contract": ["current_query"],
+      "output_contract": ["stubbed empty hits"],
+      "uses_item_json_spread": true,
+      "error_behavior": "stub always succeeds"
+    },
+    {
+      "node_name": "Q2 — Parse Official",
+      "purpose": "Parse official instruction / MAH pages.",
+      "input_contract": ["fetch payload"],
+      "output_contract": ["retrieved_candidates"],
+      "uses_item_json_spread": true,
+      "error_behavior": "same as Q1 parse"
+    },
+    {
+      "node_name": "Rx — Validate P1 Official Evidence",
+      "purpose": "Validate Q2 P1 candidates.",
+      "input_contract": ["retrieved_candidates", "identity", "prior_validated_evidence"],
+      "output_contract": ["validated_evidence", "tier1_accepted"],
+      "uses_item_json_spread": true,
+      "error_behavior": "same as P1 validate"
+    },
+    {
+      "node_name": "Q3 — Build Support Query",
+      "purpose": "Emit Q3 RLS/Vidal templates. P2 only.",
+      "input_contract": ["identity", "q1_q2_outcome"],
+      "output_contract": ["query_plan", "current_query", "query_kind=support_card"],
+      "uses_item_json_spread": true,
+      "error_behavior": "same as Q1 builder"
+    },
+    {
+      "node_name": "Q3 — Fetch Stub",
+      "purpose": "M3.2a stub for P2 fetch.",
+      "input_contract": ["current_query"],
+      "output_contract": ["stubbed empty hits"],
+      "uses_item_json_spread": true,
+      "error_behavior": "stub always succeeds"
+    },
+    {
+      "node_name": "Q3 — Parse Support",
+      "purpose": "Parse RLS/Vidal/pharmacy cards. Generic MNN paths → P3.",
+      "input_contract": ["fetch payload"],
+      "output_contract": ["retrieved_candidates"],
+      "uses_item_json_spread": true,
+      "error_behavior": "same as Q1 parse"
+    },
+    {
+      "node_name": "Rx — Validate P2 Evidence",
+      "purpose": "P2 may only produce tier_2_supported_soft_signal. Sets candidate_rx_otc_value; never sets final_rx_otc_value. Not hard routing, snapshot, or attr merge.",
+      "input_contract": ["retrieved_candidates", "identity"],
+      "output_contract": ["validated_evidence", "tier2_supported", "candidate_rx_otc_value"],
+      "uses_item_json_spread": true,
+      "error_behavior": "P3 → validation_passed=false"
+    },
+    {
+      "node_name": "Rx — Conflict Resolver",
+      "purpose": "Apply acceptance/conflict matrix. Retain Sem baseline as provenance. No silent overwrite.",
+      "input_contract": ["all validated_evidence", "read_only_provenance"],
+      "output_contract": ["outcome", "conflict_status", "selected_evidence", "candidate_rx_otc_value", "final_rx_otc_value"],
+      "uses_item_json_spread": true,
+      "error_behavior": "P1/P1 → conflict non-retryable"
+    },
+    {
+      "node_name": "Art — Build Audit Result",
+      "purpose": "Stable result object for webhook + CSV. proposed_rx_otc unset in M3.2. P2-only keeps final_rx_otc_value=null.",
+      "input_contract": ["identity", "query_plan", "validated_evidence", "outcome"],
+      "output_contract": ["audit_result", "candidate_rx_otc_value", "final_rx_otc_value", "outcome", "logical_search_query_count", "transport_retry_attempt_count", "fetched_page_count", "budget_exhausted"],
+      "uses_item_json_spread": true,
+      "error_behavior": "always produce a result"
+    },
+    {
+      "node_name": "Art — Write Audit Artifacts",
+      "purpose": "Append M3.2 CSV/JSONL. No Postgres.",
+      "input_contract": ["audit_result", "raw pointers"],
+      "output_contract": ["artifact_paths"],
+      "uses_item_json_spread": true,
+      "error_behavior": "write fail → error; do not snapshot"
+    },
+    {
+      "node_name": "Log — Optional Future Log Payload",
+      "purpose": "Build product_classification_log shape only. M3.2 does not INSERT.",
+      "input_contract": ["audit_result", "run_id", "attempt_history"],
+      "output_contract": ["future_log_payload"],
+      "uses_item_json_spread": true,
+      "error_behavior": "omit payload rather than invent run_id=null"
+    },
+    {
+      "node_name": "Fin — Finish Run",
+      "purpose": "Webhook response + counts. No classification_runs update in M3.2a/b until approved.",
+      "input_contract": ["all items"],
+      "output_contract": ["run_id", "outcomes", "isolation_confirmation", "logical_search_query_count", "transport_retry_attempt_count", "fetched_page_count", "budget_exhausted_count"],
+      "uses_item_json_spread": true,
+      "error_behavior": "still return isolation flags"
+    }
+  ],
+  "n8n_rules": {
+    "item_spread": "...item.json",
+    "structured_output_parser_mandatory": false,
+    "one_run_id_all_attempts": true,
+    "parse_validate_decide_preserve_provenance_after_external_steps": true,
+    "m3_2_snapshot_update": false
+  },
+  "m3_2_review_schema": {
+    "expected_rx_otc_manual": ["rx", "otc", "unknown", ""],
+    "expected_rx_otc_source": "string_or_empty",
+    "review_label_inconsistency": ["true", "false", ""],
+    "leave_empty_for_future_human_review": true,
+    "do_not_rewrite_historic_labels": true,
+    "product_19198_seed": {
+      "review_label_inconsistency": true,
+      "expected_rx_otc_manual": "",
+      "expected_rx_otc_source": ""
+    }
+  },
+  "m3_2_controlled_batch_summary_required_counts": [
+    "logical_search_query_count",
+    "transport_retry_attempt_count",
+    "fetched_page_count",
+    "budget_exhausted_count"
+  ],
+  "search_query_count_alias_of": "logical_search_query_count"
+}
