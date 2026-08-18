@@ -1,0 +1,795 @@
+{
+  "name": "rx-otc-product-retrieval-dev",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "1. M3.2a isolated skeleton: no HTTP, no LLM, no DB writes.",
+        "height": 160,
+        "width": 360
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        -80
+      ],
+      "id": "f4776bb3-4888-5bdb-a012-970412392323",
+      "name": "Note — Isolation"
+    },
+    {
+      "parameters": {
+        "content": "2. P1 target in future: GRLS product record / official instruction,\nexplicit captured status only.",
+        "height": 160,
+        "width": 360
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        200,
+        -80
+      ],
+      "id": "e7bc2a8e-6170-53fd-995c-85f15f0962fe",
+      "name": "Note — P1"
+    },
+    {
+      "parameters": {
+        "content": "3. P2 future: RLS/Vidal/pharmacy are supporting only;\nnever set final_rx_otc_value.",
+        "height": 160,
+        "width": 360
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        600,
+        -80
+      ],
+      "id": "55f1ec24-65ff-52b2-89fa-3466a9f8c373",
+      "name": "Note — P2"
+    },
+    {
+      "parameters": {
+        "content": "4. M2 gate: 13 approved BAS/Other → not_applicable; no retrieval.",
+        "height": 160,
+        "width": 360
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        -80
+      ],
+      "id": "11c33d6c-9e7b-52c4-b3d3-5a3efa7aed39",
+      "name": "Note — M2"
+    },
+    {
+      "parameters": {
+        "content": "5. M3.2b requires explicit approval: one-item live retrieval only.",
+        "height": 160,
+        "width": 360
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1400,
+        -80
+      ],
+      "id": "ebe98317-970d-5ae8-bd78-cd5634c14c26",
+      "name": "Note — M3.2b"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        280
+      ],
+      "id": "9d0914e2-a986-5a2b-905e-013a4b8fb90a",
+      "name": "In — Manual Trigger"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "rx-otc-product-retrieval-dev",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        500
+      ],
+      "id": "60d44c61-d7b6-5402-b074-5ce8dad68c13",
+      "name": "In — Webhook",
+      "webhookId": "00fde96d-4d6a-5c7c-bb52-a1126980307f"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn items.map((item, i) => {\n  const j = item.json || {};\n\n  const DEFAULT_A = {\n    product_id: 3065,\n    normalized_text_full: \"ФЛУКОНАЗОЛ-OBL КАПС. 150МГ №4 | ОБОЛЕНСКОЕ ФП АО | ОБОЛЕНСКОЕ ФП АО\",\n    brand_or_product_name: null,\n    dosage_form: null,\n    strength: null,\n    pack: null,\n    manufacturer_normalized: null,\n    mnn_if_known: null,\n    country_or_market_if_known: \"RU\"\n  };\n  const looksWebhook = Boolean(j.headers || j.webhookUrl);\n  const body = (j.body && typeof j.body === \"object\" && !Array.isArray(j.body)) ? j.body : null;\n  const src = body && (body.product_id !== undefined || body.normalized_text_full !== undefined || body.normalized_text !== undefined)\n    ? body\n    : j;\n  const pid = src.product_id;\n  const text = src.normalized_text_full != null ? src.normalized_text_full : src.normalized_text;\n  const empty = (pid === undefined || pid === null || pid === \"\") && String(text || \"\").trim() === \"\";\n  const base = empty ? { ...DEFAULT_A } : { ...src };\n  if (!base.normalized_text_full && base.normalized_text) base.normalized_text_full = base.normalized_text;\n  return {\n    json: {\n      ...base,\n      trigger_source: looksWebhook ? \"webhook\" : (base.trigger_source || \"manual\")\n    },\n    pairedItem: { item: i }\n  };\n\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        280,
+        380
+      ],
+      "id": "2def8c50-b17f-5c79-be85-da3c05a703f1",
+      "name": "In — Normalize Input"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn items.map((item, i) => {\n  const j = item.json || {};\n\n  const constants = {\n    workflow_version: \"rx_otc_retrieval_dev_v1\",\n    stage: \"rx_otc_retrieval\",\n    mode: \"m3_2a_stub\",\n    run_id: null,\n    run_id_mode: \"none_no_db_in_m3_2a\",\n    max_search_queries_per_eligible_sku: 8,\n    q1_grls_max_queries: 3,\n    q2_official_max_queries: 3,\n    q3_support_max_queries: 2,\n    max_fetched_candidate_pages_per_eligible_sku: 4,\n    m2_excluded_product_ids: [56, 75, 249, 3763, 5322, 8201, 9197, 18179, 18830, 21387, 22548, 23695, 26319],\n    isolation: {\n      external_http: false,\n      llm: false,\n      postgres_write: false,\n      snapshot_update: false,\n      attr_update: false,\n      product_kind_update: false,\n      workflow_active: false\n    }\n  };\n  return {\n    json: {\n      ...j,\n      ...constants,\n      constants\n    },\n    pairedItem: { item: i }\n  };\n\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        380
+      ],
+      "id": "ec392b8b-85d4-5d96-83a6-19d2f7fcc190",
+      "name": "Run — Init Constants"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn items.map((item, i) => {\n  const j = item.json || {};\n\n  const pidRaw = j.product_id;\n  const pidNum = Number(pidRaw);\n  const pidOk = pidRaw !== null && pidRaw !== undefined && pidRaw !== \"\" && Number.isFinite(pidNum);\n  const text = String(j.normalized_text_full || j.normalized_text || \"\").trim();\n  const textOk = text.length >= 3;\n  const passed = pidOk && textOk;\n  return {\n    json: {\n      ...j,\n      product_id: pidOk ? pidNum : pidRaw,\n      input_validation_passed: passed,\n      input_reject_reason: passed ? null : (!pidOk ? \"missing_product_id\" : \"empty_or_short_text\"),\n      outcome: passed ? null : \"rejected\",\n      error_code: passed ? null : \"E_INPUT_IDENTITY\",\n      candidate_rx_otc_value: null,\n      final_rx_otc_value: null,\n      search_query_count: 0,\n      fetched_page_count: 0,\n      transport_retry_attempt_count: 0,\n      budget_exhausted: false\n    },\n    pairedItem: { item: i }\n  };\n\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        760,
+        380
+      ],
+      "id": "8ef7c7ac-8928-50e3-9e8c-62558e51ab8b",
+      "name": "Rx — Validate Input Contract"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "386727d5-3735-5d06-9fca-83e167bdae64",
+              "leftValue": "={{ $json.input_validation_passed }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1000,
+        380
+      ],
+      "id": "e09145f1-2706-5ddc-a423-90927bd3264d",
+      "name": "Rx — Input Valid?"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Rx — Build Product Identity (M3.2a). Deterministic; no HTTP/LLM.\n// n8n Code node pattern: ...item.json\n\nfunction safeText(v) {\n  if (v === undefined || v === null) return '';\n  return String(v).trim();\n}\n\nfunction collapseSpaces(s) {\n  return String(s || '').replace(/\\s+/g, ' ').trim();\n}\n\nconst FORM_RULES = [\n  { out: 'фильтр-пакеты', re: /фильтр[\\s-]*пакет|ф\\s*\\/\\s*п/i },\n  { out: 'таблетки жевательные', re: /жеват/i },\n  { out: 'лиофилизат', re: /лиофил/i },\n  { out: 'капсулы', re: /капсул|капс\\.?/i },\n  { out: 'таблетки', re: /таблет|табл\\.?|таб\\.(?![а-яёa-z])/i },\n  { out: 'гранулы', re: /гранул/i },\n  { out: 'суспензия', re: /суспенз|сусп\\.?/i },\n  { out: 'порошок', re: /порош/i },\n  { out: 'раствор', re: /раствор|\\bр-р\\b|\\bр\\/р\\b/i },\n  { out: 'сироп', re: /сироп/i },\n  { out: 'мазь', re: /мазь/i },\n  { out: 'крем', re: /крем/i },\n  { out: 'гель', re: /гель/i },\n  { out: 'аэрозоль', re: /аэрозол/i },\n  { out: 'спрей', re: /спрей/i },\n  { out: 'капли', re: /капли/i },\n  { out: 'трава', re: /трава/i },\n];\n\nfunction normalizeUnits(s) {\n  let t = String(s || '');\n  t = t.replace(/(\\d+(?:[.,]\\d+)?)\\s*[мm]кг(?![а-яёa-z])/gi, '$1 мкг');\n  t = t.replace(/(\\d+(?:[.,]\\d+)?)\\s*[мm][гg](?![а-яёa-z])/gi, '$1 мг');\n  t = t.replace(/(\\d+(?:[.,]\\d+)?)\\s*[мm][лl](?![а-яёa-z])/gi, '$1 мл');\n  t = t.replace(/(\\d+(?:[.,]\\d+)?)\\s*%/g, '$1%');\n  t = t.replace(/(\\d+(?:[.,]\\d+)?)\\s*[гg](?![а-яёa-z])/gi, '$1 г');\n  t = t.replace(/(?:№|Nо|No|N)\\s*(\\d+)/gi, 'N$1');\n  return collapseSpaces(t);\n}\n\nfunction findForm(head) {\n  let best = null;\n  for (const rule of FORM_RULES) {\n    const m = head.match(rule.re);\n    if (!m || m.index === undefined) continue;\n    if (!best || m.index < best.index || (m.index === best.index && m[0].length > best.match.length)) {\n      best = { out: rule.out, index: m.index, match: m[0] };\n    }\n  }\n  return best;\n}\n\nfunction manufacturerShort(mfr) {\n  const t = safeText(mfr);\n  if (!t) return '';\n  const stop = new Set(['ооо', 'ао', 'пао', 'зао', 'оао', 'ип', 'пao']);\n  const tokens = t.split(/\\s+/).filter((tok) => !stop.has(tok.toLowerCase()));\n  return tokens[0] || t.split(/\\s+/)[0] || t;\n}\n\nfunction quotePart(s) {\n  const t = safeText(s);\n  if (!t) return null;\n  return `\"${t.replace(/\"/g, '')}\"`;\n}\n\nfunction buildIdentity(j) {\n  const warnings = [];\n  const original = j.normalized_text_full != null && j.normalized_text_full !== ''\n    ? String(j.normalized_text_full)\n    : String(j.normalized_text || '');\n  const normalized_text_full = original;\n\n  const segments = original.split('|').map((s) => collapseSpaces(s)).filter(Boolean);\n  const head = segments[0] || '';\n  const tails = [];\n  for (let i = 1; i < segments.length; i++) {\n    if (!tails.includes(segments[i])) tails.push(segments[i]);\n  }\n\n  const formHit = findForm(head);\n  let brand = safeText(j.brand_or_product_name);\n  let form = safeText(j.dosage_form);\n  let after = head;\n  if (formHit) {\n    if (!brand) brand = collapseSpaces(head.slice(0, formHit.index));\n    if (!form) form = formHit.out;\n    after = head.slice(formHit.index + formHit.match.length);\n  } else if (!brand) {\n    const toks = head.split(/\\s+/).filter(Boolean);\n    brand = toks[0] || '';\n    after = toks.slice(1).join(' ');\n    if (!form) warnings.push('form_missing');\n  }\n\n  after = normalizeUnits(after);\n\n  let strength = safeText(j.strength);\n  if (!strength) {\n    const sm = after.match(/(\\d+(?:[.,]\\d+)?\\s*(?:мкг|мг|%))/i);\n    if (sm) strength = sm[1].replace(/\\s+/g, ' ');\n  }\n  strength = strength ? normalizeUnits(strength) : '';\n\n  let pack = safeText(j.pack);\n  if (!pack) {\n    const pm = after.match(/\\bN(\\d+)\\b/i);\n    if (pm) pack = `N${pm[1]}`;\n  }\n  if (!pack) {\n    const vm = after.match(/(\\d+(?:[.,]\\d+)?\\s*мл)(?![а-яёa-z])/i);\n    if (vm) pack = normalizeUnits(vm[1]);\n  }\n  if (!pack) {\n    const gm = after.match(/(\\d+(?:[.,]\\d+)?\\s*г)(?![а-яёa-z])/i);\n    if (gm && !/мг/i.test(gm[1])) pack = normalizeUnits(gm[1]);\n  }\n\n  let manufacturer = safeText(j.manufacturer_normalized) || tails[0] || '';\n\n  if (!brand) warnings.push('brand_missing');\n  if (!form) warnings.push('form_missing');\n  if (!strength) warnings.push('strength_missing');\n  if (!pack) warnings.push('pack_missing');\n  if (!manufacturer) warnings.push('manufacturer_missing');\n\n  const identityParts = [brand, form, strength, pack, manufacturer].filter(Boolean);\n  const rx_otc_identity_text = identityParts.join(' ');\n\n  const queryBits = [];\n  if (brand) queryBits.push(quotePart(brand));\n  if (form) queryBits.push(quotePart(form));\n  if (strength) queryBits.push(quotePart(strength));\n  const rx_otc_identity_query = queryBits.filter(Boolean).join(' ');\n\n  const rx_otc_identity_fingerprint = rx_otc_identity_text\n    .toLowerCase()\n    .replace(/ё/g, 'е')\n    .replace(/\\s+/g, ' ')\n    .trim();\n\n  const mnn = safeText(j.mnn_if_known);\n  const used_mnn_as_primary_query = !brand && Boolean(mnn);\n\n  return {\n    normalized_text_full,\n    rx_otc_brand_norm: brand || null,\n    rx_otc_form_norm: form || null,\n    rx_otc_strength_norm: strength || null,\n    rx_otc_pack_norm: pack || null,\n    rx_otc_manufacturer_norm: manufacturer || null,\n    rx_otc_manufacturer_short: manufacturerShort(manufacturer) || null,\n    rx_otc_identity_text: rx_otc_identity_text || null,\n    rx_otc_identity_query: rx_otc_identity_query || null,\n    rx_otc_identity_fingerprint: rx_otc_identity_fingerprint || null,\n    identity_build_warnings: warnings,\n    used_mnn_as_primary_query,\n  };\n}\n\nconst items = $input.all();\nreturn items.map((item, i) => ({\n  json: { ...item.json, ...buildIdentity(item.json || {}) },\n  pairedItem: { item: i },\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1240,
+        260
+      ],
+      "id": "d793fe4a-5e32-5630-814e-00013af9de85",
+      "name": "Rx — Build Product Identity"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn items.map((item, i) => {\n  const j = item.json || {};\n\n  const ids = (j.constants && j.constants.m2_excluded_product_ids) || [];\n  const pid = Number(j.product_id);\n  const exclude = ids.map(Number).includes(pid);\n  if (exclude) {\n    return {\n      json: {\n        ...j,\n        m2_gate: \"exclude\",\n        candidate_rx_otc_value: null,\n        final_rx_otc_value: null,\n        outcome: \"not_applicable\",\n        error_code: \"E_M2_NON_DRUG\",\n        search_query_count: 0,\n        fetched_page_count: 0,\n        transport_retry_attempt_count: 0,\n        budget_exhausted: false,\n        q1_planned_queries: [],\n        q2_planned_queries: [],\n        q3_planned_queries: []\n      },\n      pairedItem: { item: i }\n    };\n  }\n  return {\n    json: { ...j, m2_gate: \"pass\" },\n    pairedItem: { item: i }\n  };\n\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1480,
+        260
+      ],
+      "id": "3e203d12-9824-5e03-a891-2d161a125c0f",
+      "name": "Rx — M2 Non-drug Exclusion Gate"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d0a95416-b368-597f-a346-7406b6f8ec7f",
+              "leftValue": "={{ $json.m2_gate }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "exclude"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1720,
+        260
+      ],
+      "id": "fe39e9f7-3b71-5491-9eda-ac206416c3d9",
+      "name": "Rx — M2 Exclude?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn items.map((item, i) => {\n  const j = item.json || {};\n\n  const templates = [\"\\\"<brand>\\\" \\\"<form>\\\" \\\"<strength>\\\" site:grls.rosminzdrav.ru\", \"\\\"<brand>\\\" \\\"<form>\\\" \\\"<strength>\\\" ГРЛС\", \"\\\"<brand>\\\" \\\"<manufacturer>\\\" site:grls.rosminzdrav.ru\"];\n  const maxN = 3;\n  const kind = \"grls_primary\";\n  function fill(tpl) {\n    return tpl\n      .split(\"<brand>\").join(j.rx_otc_brand_norm || \"\")\n      .split(\"<form>\").join(j.rx_otc_form_norm || \"\")\n      .split(\"<strength>\").join(j.rx_otc_strength_norm || \"\")\n      .split(\"<manufacturer>\").join(j.rx_otc_manufacturer_short || \"\");\n  }\n  const planned = [];\n  if (j.rx_otc_brand_norm) {\n    for (let n = 0; n < templates.length && planned.length < maxN; n++) {\n      planned.push({\n        query_kind: kind,\n        query_order: n + 1,\n        query: fill(templates[n]),\n        stubbed: true,\n        executed: false\n      });\n    }\n  }\n  return {\n    json: {\n      ...j,\n      q1_planned_queries: planned,\n      current_query_kind: kind\n    },\n    pairedItem: { item: i }\n  };\n\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1960,
+        80
+      ],
+      "id": "6bae773e-d9f9-5d26-b60b-b6f60591e900",
+      "name": "Q1 — Build GRLS Query"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn items.map((item, i) => {\n  const j = item.json || {};\n\n  return {\n    json: {\n      ...j,\n      stubbed: true,\n      http_status: 0,\n      retrieved_candidates: [],\n      search_query_count: 0,\n      fetched_page_count: 0,\n      transport_retry_attempt_count: 0,\n      executed_search_query_count: 0,\n      executed_fetch_page_count: 0\n    },\n    pairedItem: { item: i }\n  };\n\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2200,
+        80
+      ],
+      "id": "a69ce099-9cc6-5ecf-be17-d34718b36714",
+      "name": "Q1 — Fetch Stub"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn items.map((item, i) => {\n  const j = item.json || {};\n\n  return {\n    json: {\n      ...j,\n      retrieved_candidates: [],\n      parsed_stub: true,\n      layer_error_code: \"E_SOURCE_NOT_FOUND\"\n    },\n    pairedItem: { item: i }\n  };\n\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2440,
+        80
+      ],
+      "id": "6a3fe2a5-891a-5c8f-9263-9b2d3ae1276a",
+      "name": "Q1 — Parse P1 Stub"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn items.map((item, i) => {\n  const j = item.json || {};\n\n  return {\n    json: {\n      ...j,\n      validation_passed: false,\n      tier1_accepted: false,\n      validated_evidence: [],\n      reject_reason: \"stub_no_candidates\"\n    },\n    pairedItem: { item: i }\n  };\n\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2680,
+        80
+      ],
+      "id": "57b6c4ff-2c3d-5186-975a-b899cdb9edef",
+      "name": "Rx — Validate P1 Stub"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn items.map((item, i) => {\n  const j = item.json || {};\n\n  const templates = [\"\\\"<brand>\\\" \\\"<form>\\\" \\\"<strength>\\\" инструкция условия отпуска\", \"\\\"<brand>\\\" \\\"<form>\\\" \\\"<strength>\\\" \\\"по рецепту\\\"\", \"\\\"<brand>\\\" \\\"<form>\\\" \\\"<strength>\\\" \\\"без рецепта\\\"\"];\n  const maxN = 3;\n  const kind = \"official_instruction\";\n  function fill(tpl) {\n    return tpl\n      .split(\"<brand>\").join(j.rx_otc_brand_norm || \"\")\n      .split(\"<form>\").join(j.rx_otc_form_norm || \"\")\n      .split(\"<strength>\").join(j.rx_otc_strength_norm || \"\")\n      .split(\"<manufacturer>\").join(j.rx_otc_manufacturer_short || \"\");\n  }\n  const planned = [];\n  if (j.rx_otc_brand_norm) {\n    for (let n = 0; n < templates.length && planned.length < maxN; n++) {\n      planned.push({\n        query_kind: kind,\n        query_order: n + 1,\n        query: fill(templates[n]),\n        stubbed: true,\n        executed: false\n      });\n    }\n  }\n  return {\n    json: {\n      ...j,\n      q2_planned_queries: planned,\n      current_query_kind: kind\n    },\n    pairedItem: { item: i }\n  };\n\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1960,
+        280
+      ],
+      "id": "328d0863-64d3-5dbf-9f2c-fdc9f63588f8",
+      "name": "Q2 — Build Official Query"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn items.map((item, i) => {\n  const j = item.json || {};\n\n  return {\n    json: {\n      ...j,\n      stubbed: true,\n      http_status: 0,\n      retrieved_candidates: [],\n      search_query_count: 0,\n      fetched_page_count: 0,\n      transport_retry_attempt_count: 0,\n      executed_search_query_count: 0,\n      executed_fetch_page_count: 0\n    },\n    pairedItem: { item: i }\n  };\n\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2200,
+        280
+      ],
+      "id": "d1d07fb9-29cc-5547-9fff-800a9f6fa388",
+      "name": "Q2 — Fetch Stub"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn items.map((item, i) => {\n  const j = item.json || {};\n\n  return {\n    json: {\n      ...j,\n      retrieved_candidates: [],\n      parsed_stub: true,\n      layer_error_code: \"E_SOURCE_NOT_FOUND\"\n    },\n    pairedItem: { item: i }\n  };\n\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2440,
+        280
+      ],
+      "id": "a68346f2-f8fb-5551-9942-9f0e1d6ef533",
+      "name": "Q2 — Parse Official Stub"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn items.map((item, i) => {\n  const j = item.json || {};\n\n  return {\n    json: {\n      ...j,\n      validation_passed: false,\n      tier1_accepted: false,\n      validated_evidence: [],\n      reject_reason: \"stub_no_candidates\"\n    },\n    pairedItem: { item: i }\n  };\n\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2680,
+        280
+      ],
+      "id": "1d77eb04-0f59-5c32-98cc-ad7993aa7b3c",
+      "name": "Rx — Validate P1 Official Stub"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn items.map((item, i) => {\n  const j = item.json || {};\n\n  const templates = [\"\\\"<brand>\\\" \\\"<form>\\\" \\\"<strength>\\\" site:rlsnet.ru\", \"\\\"<brand>\\\" \\\"<form>\\\" \\\"<strength>\\\" site:vidal.ru\"];\n  const maxN = 2;\n  const kind = \"support_card\";\n  function fill(tpl) {\n    return tpl\n      .split(\"<brand>\").join(j.rx_otc_brand_norm || \"\")\n      .split(\"<form>\").join(j.rx_otc_form_norm || \"\")\n      .split(\"<strength>\").join(j.rx_otc_strength_norm || \"\")\n      .split(\"<manufacturer>\").join(j.rx_otc_manufacturer_short || \"\");\n  }\n  const planned = [];\n  if (j.rx_otc_brand_norm) {\n    for (let n = 0; n < templates.length && planned.length < maxN; n++) {\n      planned.push({\n        query_kind: kind,\n        query_order: n + 1,\n        query: fill(templates[n]),\n        stubbed: true,\n        executed: false\n      });\n    }\n  }\n  return {\n    json: {\n      ...j,\n      q3_planned_queries: planned,\n      current_query_kind: kind\n    },\n    pairedItem: { item: i }\n  };\n\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1960,
+        480
+      ],
+      "id": "43b91090-6962-55e3-810d-169cf182aa0c",
+      "name": "Q3 — Build Support Query"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn items.map((item, i) => {\n  const j = item.json || {};\n\n  return {\n    json: {\n      ...j,\n      stubbed: true,\n      http_status: 0,\n      retrieved_candidates: [],\n      search_query_count: 0,\n      fetched_page_count: 0,\n      transport_retry_attempt_count: 0,\n      executed_search_query_count: 0,\n      executed_fetch_page_count: 0\n    },\n    pairedItem: { item: i }\n  };\n\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2200,
+        480
+      ],
+      "id": "942c8b5c-d450-5173-8a71-d38873b4e690",
+      "name": "Q3 — Fetch Stub"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn items.map((item, i) => {\n  const j = item.json || {};\n\n  return {\n    json: {\n      ...j,\n      retrieved_candidates: [],\n      parsed_stub: true,\n      layer_error_code: \"E_SOURCE_NOT_FOUND\"\n    },\n    pairedItem: { item: i }\n  };\n\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2440,
+        480
+      ],
+      "id": "150425d4-6355-598a-b9a0-a830aab4220e",
+      "name": "Q3 — Parse Support Stub"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn items.map((item, i) => {\n  const j = item.json || {};\n\n  return {\n    json: {\n      ...j,\n      validation_passed: false,\n      tier1_accepted: false,\n      validated_evidence: [],\n      reject_reason: \"stub_no_candidates\"\n    },\n    pairedItem: { item: i }\n  };\n\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2680,
+        480
+      ],
+      "id": "ea397a0c-3328-5a77-865a-e491614a81b0",
+      "name": "Rx — Validate P2 Stub"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn items.map((item, i) => {\n  const j = item.json || {};\n\n  return {\n    json: {\n      ...j,\n      candidate_rx_otc_value: null,\n      final_rx_otc_value: null,\n      outcome: \"unresolved\",\n      error_code: \"E_SOURCE_NOT_FOUND\",\n      conflict_status: \"unknown\",\n      validation_passed: false,\n      search_query_count: 0,\n      fetched_page_count: 0,\n      transport_retry_attempt_count: 0,\n      budget_exhausted: false\n    },\n    pairedItem: { item: i }\n  };\n\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2920,
+        280
+      ],
+      "id": "23295404-aed9-5bb3-a0fc-26f9eeddfa83",
+      "name": "Rx — Conflict Resolver Stub"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn items.map((item, i) => {\n  const j = item.json || {};\n\n  const m2 = j.m2_gate || \"pass\";\n  const valid = j.input_validation_passed !== false;\n  let outcome = \"unresolved\";\n  let error_code = \"E_SOURCE_NOT_FOUND\";\n  if (!valid) {\n    outcome = \"rejected\";\n    error_code = \"E_INPUT_IDENTITY\";\n  } else if (m2 === \"exclude\") {\n    outcome = \"not_applicable\";\n    error_code = \"E_M2_NON_DRUG\";\n  }\n  const q1 = Array.isArray(j.q1_planned_queries) ? j.q1_planned_queries : [];\n  const q2 = Array.isArray(j.q2_planned_queries) ? j.q2_planned_queries : [];\n  const q3 = Array.isArray(j.q3_planned_queries) ? j.q3_planned_queries : [];\n  const audit_result = {\n    candidate_rx_otc_value: null,\n    final_rx_otc_value: null,\n    outcome,\n    error_code,\n    validation_passed: false,\n    search_query_count: 0,\n    fetched_page_count: 0,\n    transport_retry_attempt_count: 0,\n    budget_exhausted: false\n  };\n  return {\n    json: {\n      ...j,\n      ...audit_result,\n      m2_gate: valid ? (m2 === \"exclude\" ? \"exclude\" : \"pass\") : (j.m2_gate || null),\n      audit_result,\n      query_plan: {\n        q1_count: q1.length,\n        q2_count: q2.length,\n        q3_count: q3.length,\n        logical_search_budget: 8,\n        fetched_page_budget: 4,\n        executed_search_query_count: 0,\n        executed_fetch_page_count: 0,\n        transport_retry_attempt_count: 0\n      }\n    },\n    pairedItem: { item: i }\n  };\n\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3160,
+        380
+      ],
+      "id": "2f6c402c-e202-5367-9184-2cc165c3014f",
+      "name": "Art — Build Audit Result"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn items.map((item, i) => {\n  const j = item.json || {};\n\n  const isolation = (j.constants && j.constants.isolation) || j.isolation || {\n    external_http: false, llm: false, postgres_write: false,\n    snapshot_update: false, attr_update: false, product_kind_update: false,\n    workflow_active: false\n  };\n  const webhook_response = {\n    workflow: \"rx-otc-product-retrieval-dev\",\n    workflow_version: j.workflow_version || \"rx_otc_retrieval_dev_v1\",\n    mode: \"m3_2a_stub\",\n    active_expected: false,\n    run_id: null,\n    run_id_mode: \"none_no_db_in_m3_2a\",\n    product_id: j.product_id,\n    input_validation_passed: Boolean(j.input_validation_passed),\n    m2_gate: j.m2_gate || null,\n    identity: {\n      brand: j.rx_otc_brand_norm || null,\n      form: j.rx_otc_form_norm || null,\n      strength: j.rx_otc_strength_norm || null,\n      pack: j.rx_otc_pack_norm || null,\n      manufacturer: j.rx_otc_manufacturer_norm || null,\n      identity_text: j.rx_otc_identity_text || null,\n      identity_query: j.rx_otc_identity_query || null\n    },\n    query_plan: j.query_plan || {\n      q1_count: 0, q2_count: 0, q3_count: 0,\n      logical_search_budget: 8, fetched_page_budget: 4,\n      executed_search_query_count: 0, executed_fetch_page_count: 0,\n      transport_retry_attempt_count: 0\n    },\n    result: {\n      candidate_rx_otc_value: null,\n      final_rx_otc_value: null,\n      outcome: j.outcome || \"unresolved\",\n      error_code: j.error_code || \"E_SOURCE_NOT_FOUND\",\n      validation_passed: false\n    },\n    isolation_confirmation: isolation,\n    trigger_source: j.trigger_source || \"manual\"\n  };\n  return { json: { ...webhook_response, webhook_response, trigger_source: j.trigger_source || \"manual\" }, pairedItem: { item: i } };\n\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3400,
+        380
+      ],
+      "id": "71c51af5-af0a-5f0f-941a-53afd9938238",
+      "name": "Fin — Aggregate Result"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2eb53e93-ae91-5ae7-8829-39b02dcb3d68",
+              "leftValue": "={{ $json.trigger_source }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "webhook"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3640,
+        380
+      ],
+      "id": "d1e9d1c1-da20-52c0-ab6c-410e5439d828",
+      "name": "Fin — Is Webhook?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.webhook_response }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        3880,
+        280
+      ],
+      "id": "66aa6ac5-5c72-53da-9332-9a3958834b02",
+      "name": "Fin — Respond to Webhook"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        3880,
+        500
+      ],
+      "id": "0199a1f7-b64d-58e3-bdd6-2cec09cfa18c",
+      "name": "Fin — Manual Done"
+    }
+  ],
+  "connections": {
+    "In — Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "In — Normalize Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "In — Webhook": {
+      "main": [
+        [
+          {
+            "node": "In — Normalize Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "In — Normalize Input": {
+      "main": [
+        [
+          {
+            "node": "Run — Init Constants",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run — Init Constants": {
+      "main": [
+        [
+          {
+            "node": "Rx — Validate Input Contract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rx — Validate Input Contract": {
+      "main": [
+        [
+          {
+            "node": "Rx — Input Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rx — Input Valid?": {
+      "main": [
+        [
+          {
+            "node": "Rx — Build Product Identity",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Art — Build Audit Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rx — Build Product Identity": {
+      "main": [
+        [
+          {
+            "node": "Rx — M2 Non-drug Exclusion Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rx — M2 Non-drug Exclusion Gate": {
+      "main": [
+        [
+          {
+            "node": "Rx — M2 Exclude?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rx — M2 Exclude?": {
+      "main": [
+        [
+          {
+            "node": "Art — Build Audit Result",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Q1 — Build GRLS Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Q1 — Build GRLS Query": {
+      "main": [
+        [
+          {
+            "node": "Q1 — Fetch Stub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Q1 — Fetch Stub": {
+      "main": [
+        [
+          {
+            "node": "Q1 — Parse P1 Stub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Q1 — Parse P1 Stub": {
+      "main": [
+        [
+          {
+            "node": "Rx — Validate P1 Stub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rx — Validate P1 Stub": {
+      "main": [
+        [
+          {
+            "node": "Q2 — Build Official Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Q2 — Build Official Query": {
+      "main": [
+        [
+          {
+            "node": "Q2 — Fetch Stub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Q2 — Fetch Stub": {
+      "main": [
+        [
+          {
+            "node": "Q2 — Parse Official Stub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Q2 — Parse Official Stub": {
+      "main": [
+        [
+          {
+            "node": "Rx — Validate P1 Official Stub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rx — Validate P1 Official Stub": {
+      "main": [
+        [
+          {
+            "node": "Q3 — Build Support Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Q3 — Build Support Query": {
+      "main": [
+        [
+          {
+            "node": "Q3 — Fetch Stub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Q3 — Fetch Stub": {
+      "main": [
+        [
+          {
+            "node": "Q3 — Parse Support Stub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Q3 — Parse Support Stub": {
+      "main": [
+        [
+          {
+            "node": "Rx — Validate P2 Stub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rx — Validate P2 Stub": {
+      "main": [
+        [
+          {
+            "node": "Rx — Conflict Resolver Stub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rx — Conflict Resolver Stub": {
+      "main": [
+        [
+          {
+            "node": "Art — Build Audit Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Art — Build Audit Result": {
+      "main": [
+        [
+          {
+            "node": "Fin — Aggregate Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fin — Aggregate Result": {
+      "main": [
+        [
+          {
+            "node": "Fin — Is Webhook?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fin — Is Webhook?": {
+      "main": [
+        [
+          {
+            "node": "Fin — Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fin — Manual Done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

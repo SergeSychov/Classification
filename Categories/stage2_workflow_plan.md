@@ -476,13 +476,15 @@
 * **Sem0 + Sem1 attr_profile policy v2** — **finalized** (см. п.29–30): `prompt_sem0_v2` / `prompt_semantic_v3`; Wave-100 rerun chunked 10×10; progress tooling; rollback verified.
 * **Offline MNN identity gate Wave‑500 v3 + enrichment run 461 + human-review quality baseline** — **done** ✅ (см. **п.38**). MNN/RX/Age **не** влиты в live Sem / `attr_*`.
 * **Offline BAS/Other override policy v1 + human validation (M2 / M2.1)** — **done** ✅ (см. **п.39**). Audit-only; implementation contract draft **not applied**.
-* **M3.0 RX/OTC source audit + M3.1 standalone retriever design** — **done** ✅ (см. **п.40**). Design only; workflow **not created**; no `attr_rx_otc` / snapshot merge.
+* **M3.0 RX/OTC source audit + M3.1 standalone retriever design** — **done** ✅ (см. **п.40**).
+* **M3.2a skeleton created, inactive** — **done** ✅ (см. **п.41**). `rx-otc-product-retrieval-dev` (`UqssZ24Jr7Qk9ef4`); **runtime smoke pending** due task runner limitation.
 
 ### Not done
 
 * Sem human rubric labeling для Wave-100 / Wave-500 (`critical_error_rate`).
 * Apply M2 implementation contract (queue filter) — **blocked** until explicit approval.
-* **M3.2** `rx-otc-product-retrieval-dev` workflow — **not created** (skeleton / HTTP / DB blocked until explicit ask).
+* **M3.2a n8n runtime smoke** — pending (task runner / no Public API `/run`).
+* **M3.2b+** live retrieval / controlled batch — **blocked** until runtime smoke + explicit ask.
 * Age contract · Norm v4 experiment (M4–M5).
 * Optional: SplitInBatches перед Sem0 (Wave-100/500 = chunked runner из‑за Merge/LLM parallel hang).
 * Dir / Need / Cat / optional Mnn cascade + Judge rewiring for hierarchy.
@@ -492,7 +494,7 @@
 
 ### Next short steps
 
-1. **M3.2a** inactive skeleton of `rx-otc-product-retrieval-dev` (explicit ask; stubs; no HTTP/DB). Not a hard gate.
+1. **M3.2a n8n runtime smoke** (blocked by task runner). Do not start M3.2b until live execute works.
 2. Затем M3.2b/c controlled retrieval → M3.3 metrics → Age contract (M4) → Norm v4 (M5).
 3. Optional later: apply M2 queue-exclusion contract for 13 IDs (explicit approval only).
 4. Human rubric labeling Wave-100/500 (`critical_error_rate`) — parallel Sem track.
@@ -1393,7 +1395,7 @@ PROGRESS processed 500/500 (100.0%) …
 
 1. ~~Offline BAS/Other override policy~~ → **done**, см. **п.39**.
 2. ~~M3.0 source audit + M3.1 retriever design~~ → **done**, см. **п.40**.
-3. **M3.2a** inactive skeleton `rx-otc-product-retrieval-dev` (explicit ask).
+3. ~~M3.2a inactive skeleton~~ → **done**, см. **п.41**. Runtime smoke pending (task runner).
 4. **Age contract** + evidence policy (inventory `*_age_errors_v1.csv`).
 5. **Norm v4 experiment** (dedupe manufacturer/pack в `normalized_text`; offline only).
 
@@ -1466,5 +1468,28 @@ PROGRESS processed 500/500 (100.0%) …
 
 #### Next
 
-* **M3.2a** inactive skeleton (explicit ask; stubs; no HTTP/DB).
-* Not: n8n create/edit, SearXNG, LLM, PostgreSQL writes, `attr_rx_otc` merge.
+* ~~M3.2a inactive skeleton~~ → **done**, см. **п.41**.
+* **M3.2a n8n runtime smoke** pending (task runner). Do not start M3.2b until live execute works.
+
+---
+
+41. **M3.2a inactive skeleton `rx-otc-product-retrieval-dev` (2026-08-18)**
+
+* **Статус:** **done** (skeleton created, **inactive**). **Runtime smoke pending** due n8n 2.27 task-runner limitation.
+* **Workflow:** `rx-otc-product-retrieval-dev` (`UqssZ24Jr7Qk9ef4`), `workflow_version=rx_otc_retrieval_dev_v1`, `active=false`.
+* **Isolation:** no HTTP / LLM / Postgres nodes; prod Stage 2 / hierarchy-dev / `mnn-drug-enrichment` untouched; `run_id=null` (`run_id_mode=none_no_db_in_m3_2a`); no `attr_*` / snapshot / `product_kind`.
+* **Structural verification:** export 32 nodes; required topology present; webhook path `rx-otc-product-retrieval-dev`; no credentials; forbidden-node check ok. Local Code-node replay of export: Smoke A (3065 pass / unresolved), B (9197 exclude / `E_M2_NON_DRUG`), C (empty text / `E_INPUT_IDENTITY`).
+* **Runtime gap:** Public API has no `POST /workflows/{id}/run`; CLI `n8n execute` hits task-broker timeout; production webhook returns 404 while inactive (expected). Do **not** activate the workflow to force smoke. Do **not** start M3.2b until a live execute path exists.
+
+#### Key artifacts
+
+* Export: `workflows/rx-otc-product-retrieval-dev.json` + `.id`
+* Inventory / smoke: `redesign/artifacts/rx_otc_retrieval_m3_2a_{workflow_inventory,smoke_results,smoke_summary}.*`
+* Identity source: `scripts/hierarchy_nodes/rx_otc_build_identity.js`
+* Create helper: `scripts/create_rx_otc_retrieval_m3_2a.py`
+* Local replay: `scripts/rx_otc_m3_2a_local_smoke.js`
+
+#### Next
+
+* M3.2a n8n runtime smoke (task runner).
+* Not: activate workflow, HTTP/SearXNG/LLM, DB writes, `attr_rx_otc` merge, M3.2b without explicit ask.

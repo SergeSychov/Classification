@@ -1,0 +1,250 @@
+{
+  "created_at": "2026-08-18T08:15:00.612839+00:00",
+  "workflow_id": "UqssZ24Jr7Qk9ef4",
+  "workflow_name": "rx-otc-product-retrieval-dev",
+  "active": false,
+  "smoke_execution_note": "n8n Public API has no workflow /run (405). CLI `n8n execute` inside the running 2.27 container collides with task broker port 5679. Smokes A/B/C replayed the exported workflow Code/IF chain locally with mocked $input. Production webhook POST while inactive returned 404 as expected.",
+  "smoke_a": {
+    "ok": true,
+    "issues": [],
+    "execution_mode": "local_code_node_replay_of_exported_workflow_json",
+    "n8n_cli_execute": "blocked_task_broker_port_collision_n8n_2_27",
+    "aggregate": {
+      "workflow": "rx-otc-product-retrieval-dev",
+      "workflow_version": "rx_otc_retrieval_dev_v1",
+      "mode": "m3_2a_stub",
+      "active_expected": false,
+      "run_id": null,
+      "run_id_mode": "none_no_db_in_m3_2a",
+      "product_id": 3065,
+      "input_validation_passed": true,
+      "m2_gate": "pass",
+      "identity": {
+        "brand": "ФЛУКОНАЗОЛ-OBL",
+        "form": "капсулы",
+        "strength": "150 мг",
+        "pack": "N4",
+        "manufacturer": "ОБОЛЕНСКОЕ ФП АО",
+        "identity_text": "ФЛУКОНАЗОЛ-OBL капсулы 150 мг N4 ОБОЛЕНСКОЕ ФП АО",
+        "identity_query": "\"ФЛУКОНАЗОЛ-OBL\" \"капсулы\" \"150 мг\""
+      },
+      "query_plan": {
+        "q1_count": 3,
+        "q2_count": 3,
+        "q3_count": 2,
+        "logical_search_budget": 8,
+        "fetched_page_budget": 4,
+        "executed_search_query_count": 0,
+        "executed_fetch_page_count": 0,
+        "transport_retry_attempt_count": 0
+      },
+      "result": {
+        "candidate_rx_otc_value": null,
+        "final_rx_otc_value": null,
+        "outcome": "unresolved",
+        "error_code": "E_SOURCE_NOT_FOUND",
+        "validation_passed": false
+      },
+      "isolation_confirmation": {
+        "external_http": false,
+        "llm": false,
+        "postgres_write": false,
+        "snapshot_update": false,
+        "attr_update": false,
+        "product_kind_update": false,
+        "workflow_active": false
+      },
+      "trigger_source": "manual"
+    },
+    "nodes_run": [
+      "In — Manual Trigger",
+      "In — Normalize Input",
+      "Run — Init Constants",
+      "Rx — Validate Input Contract",
+      "Rx — Input Valid?",
+      "Rx — Build Product Identity",
+      "Rx — M2 Non-drug Exclusion Gate",
+      "Rx — M2 Exclude?",
+      "Q1 — Build GRLS Query",
+      "Q1 — Fetch Stub",
+      "Q1 — Parse P1 Stub",
+      "Rx — Validate P1 Stub",
+      "Q2 — Build Official Query",
+      "Q2 — Fetch Stub",
+      "Q2 — Parse Official Stub",
+      "Rx — Validate P1 Official Stub",
+      "Q3 — Build Support Query",
+      "Q3 — Fetch Stub",
+      "Q3 — Parse Support Stub",
+      "Rx — Validate P2 Stub",
+      "Rx — Conflict Resolver Stub",
+      "Art — Build Audit Result",
+      "Fin — Aggregate Result",
+      "Fin — Is Webhook?",
+      "Fin — Manual Done"
+    ],
+    "q_ran": {
+      "q1": true,
+      "q2": true,
+      "q3": true
+    }
+  },
+  "smoke_b": {
+    "ok": true,
+    "issues": [],
+    "execution_mode": "local_code_node_replay_of_exported_workflow_json",
+    "n8n_cli_execute": "blocked_task_broker_port_collision_n8n_2_27",
+    "aggregate": {
+      "workflow": "rx-otc-product-retrieval-dev",
+      "workflow_version": "rx_otc_retrieval_dev_v1",
+      "mode": "m3_2a_stub",
+      "active_expected": false,
+      "run_id": null,
+      "run_id_mode": "none_no_db_in_m3_2a",
+      "product_id": 9197,
+      "input_validation_passed": true,
+      "m2_gate": "exclude",
+      "identity": {
+        "brand": "ПОМОГУША",
+        "form": "сироп",
+        "strength": null,
+        "pack": "100 мл",
+        "manufacturer": "ЮГ ООО",
+        "identity_text": "ПОМОГУША сироп 100 мл ЮГ ООО",
+        "identity_query": "\"ПОМОГУША\" \"сироп\""
+      },
+      "query_plan": {
+        "q1_count": 0,
+        "q2_count": 0,
+        "q3_count": 0,
+        "logical_search_budget": 8,
+        "fetched_page_budget": 4,
+        "executed_search_query_count": 0,
+        "executed_fetch_page_count": 0,
+        "transport_retry_attempt_count": 0
+      },
+      "result": {
+        "candidate_rx_otc_value": null,
+        "final_rx_otc_value": null,
+        "outcome": "not_applicable",
+        "error_code": "E_M2_NON_DRUG",
+        "validation_passed": false
+      },
+      "isolation_confirmation": {
+        "external_http": false,
+        "llm": false,
+        "postgres_write": false,
+        "snapshot_update": false,
+        "attr_update": false,
+        "product_kind_update": false,
+        "workflow_active": false
+      },
+      "trigger_source": "manual"
+    },
+    "nodes_run": [
+      "In — Manual Trigger",
+      "In — Normalize Input",
+      "Run — Init Constants",
+      "Rx — Validate Input Contract",
+      "Rx — Input Valid?",
+      "Rx — Build Product Identity",
+      "Rx — M2 Non-drug Exclusion Gate",
+      "Rx — M2 Exclude?",
+      "Art — Build Audit Result",
+      "Fin — Aggregate Result",
+      "Fin — Is Webhook?",
+      "Fin — Manual Done"
+    ],
+    "q_ran": {
+      "q1": false,
+      "q2": false,
+      "q3": false
+    }
+  },
+  "smoke_c": {
+    "ok": true,
+    "issues": [],
+    "execution_mode": "local_code_node_replay_of_exported_workflow_json",
+    "n8n_cli_execute": "blocked_task_broker_port_collision_n8n_2_27",
+    "aggregate": {
+      "workflow": "rx-otc-product-retrieval-dev",
+      "workflow_version": "rx_otc_retrieval_dev_v1",
+      "mode": "m3_2a_stub",
+      "active_expected": false,
+      "run_id": null,
+      "run_id_mode": "none_no_db_in_m3_2a",
+      "product_id": 999999,
+      "input_validation_passed": false,
+      "m2_gate": null,
+      "identity": {
+        "brand": null,
+        "form": null,
+        "strength": null,
+        "pack": null,
+        "manufacturer": null,
+        "identity_text": null,
+        "identity_query": null
+      },
+      "query_plan": {
+        "q1_count": 0,
+        "q2_count": 0,
+        "q3_count": 0,
+        "logical_search_budget": 8,
+        "fetched_page_budget": 4,
+        "executed_search_query_count": 0,
+        "executed_fetch_page_count": 0,
+        "transport_retry_attempt_count": 0
+      },
+      "result": {
+        "candidate_rx_otc_value": null,
+        "final_rx_otc_value": null,
+        "outcome": "rejected",
+        "error_code": "E_INPUT_IDENTITY",
+        "validation_passed": false
+      },
+      "isolation_confirmation": {
+        "external_http": false,
+        "llm": false,
+        "postgres_write": false,
+        "snapshot_update": false,
+        "attr_update": false,
+        "product_kind_update": false,
+        "workflow_active": false
+      },
+      "trigger_source": "manual"
+    },
+    "nodes_run": [
+      "In — Manual Trigger",
+      "In — Normalize Input",
+      "Run — Init Constants",
+      "Rx — Validate Input Contract",
+      "Rx — Input Valid?",
+      "Art — Build Audit Result",
+      "Fin — Aggregate Result",
+      "Fin — Is Webhook?",
+      "Fin — Manual Done"
+    ],
+    "q_ran": {
+      "q1": false,
+      "q2": false,
+      "q3": false
+    }
+  },
+  "production_webhook_while_inactive": {
+    "url": "/webhook/rx-otc-product-retrieval-dev",
+    "status": 404,
+    "expected": "404 because active=false",
+    "body_excerpt": "{\"code\":404,\"message\":\"The requested webhook \\\"POST rx-otc-product-retrieval-dev\\\" is not registered.\"}"
+  },
+  "isolation": {
+    "prod_stage2_id": "BaBjEPi78taRj2G5",
+    "prod_stage2_updatedAt": "2026-07-19T19:50:02.799Z",
+    "prod_unchanged": true,
+    "hierarchy_dev_id": "o8sugljHYuUs7IEC",
+    "hierarchy_dev_updatedAt": "2026-08-13T07:48:03.215Z",
+    "hierarchy_unchanged": true,
+    "no_classification_runs": true,
+    "run_id": null,
+    "no_git_commit": true
+  }
+}
