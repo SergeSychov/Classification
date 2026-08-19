@@ -458,7 +458,7 @@
 
 ---
 
-## Hierarchy redesign progress (updated 2026-08-18)
+## Hierarchy redesign progress (updated 2026-08-19)
 
 Отдельный трек от current Stage 2. Канон: `redesign/20_MIGRATION_PLAN.md`, статус: `redesign/00_PROJECT_STATUS.md`, короткий roadmap: `redesign/29_SHORT_ROADMAP.md`.  
 **Prod Stage 2** (`classification-stage2-dev`, `BaBjEPi78taRj2G5`) — **не менялся**.
@@ -477,15 +477,17 @@
 * **Offline MNN identity gate Wave‑500 v3 + enrichment run 461 + human-review quality baseline** — **done** ✅ (см. **п.38**). MNN/RX/Age **не** влиты в live Sem / `attr_*`.
 * **Offline BAS/Other override policy v1 + human validation (M2 / M2.1)** — **done** ✅ (см. **п.39**). Audit-only; implementation contract draft **not applied**.
 * **M3.0 RX/OTC source audit + M3.1 standalone retriever design** — **done** ✅ (см. **п.40**).
-* **M3.2a skeleton created, inactive** — **done** ✅ (см. **п.41**). `rx-otc-product-retrieval-dev` (`UqssZ24Jr7Qk9ef4`); **runtime smoke pending** due task runner limitation.
+* **M3.2a skeleton created, inactive** — **done** ✅ (см. **п.41**). `rx-otc-product-retrieval-dev` (`UqssZ24Jr7Qk9ef4`).
+* **M3.2a n8n runtime smoke** — **done** ✅ (см. **п.42**). CLI execs **42679/42680/42681**; workflow left inactive.
+* **M3.2b one-item live retrieval** — **done** ✅ (см. **п.43**). SKU `3065`; runner-side SearXNG+fetch; n8n left inactive.
+* **M3 RX/OTC research closeout** — **done** ✅ (см. **п.44**). Decision: `KEEP_RX_OTC_P2_SUPPORT_ONLY` / `DO_NOT_RUN_PHASE_A_YET`.
 
 ### Not done
 
 * Sem human rubric labeling для Wave-100 / Wave-500 (`critical_error_rate`).
 * Apply M2 implementation contract (queue filter) — **blocked** until explicit approval.
-* **M3.2a n8n runtime smoke** — pending (task runner / no Public API `/run`).
-* **M3.2b+** live retrieval / controlled batch — **blocked** until runtime smoke + explicit ask.
-* Age contract · Norm v4 experiment (M4–M5).
+* **M3.2c** 11+30 retrieval batch — **blocked / not scheduled** (no stable P1 route; re-entry in **п.44**).
+* Age contract · Norm v4 experiment (M4–M5) — **next offline track**.
 * Optional: SplitInBatches перед Sem0 (Wave-100/500 = chunked runner из‑за Merge/LLM parallel hang).
 * Dir / Need / Cat / optional Mnn cascade + Judge rewiring for hierarchy.
 * Prod Stage 2 Load allowlist-exclude patch.
@@ -494,11 +496,11 @@
 
 ### Next short steps
 
-1. **M3.2a n8n runtime smoke** (blocked by task runner). Do not start M3.2b until live execute works.
-2. Затем M3.2b/c controlled retrieval → M3.3 metrics → Age contract (M4) → Norm v4 (M5).
+1. **M4** Age contract + evidence policy — offline/audit-only; not a routing gate until controlled review.
+2. Parallel Sem track: human rubric labeling Wave-100/500 (`critical_error_rate`).
 3. Optional later: apply M2 queue-exclusion contract for 13 IDs (explicit approval only).
-4. Human rubric labeling Wave-100/500 (`critical_error_rate`) — parallel Sem track.
-5. Dir → Need → Cat → optional Mnn → Judge only after Sem gate + explicit MNN merge approval.
+4. Dir → Need → Cat → optional Mnn → Judge only after Sem gate + explicit MNN merge approval.
+5. M3.2c / RX P1 re-entry — only if **п.44** re-entry criteria are met. Do not activate `rx-otc-product-retrieval-dev`.
 
 ---
 
@@ -1395,9 +1397,11 @@ PROGRESS processed 500/500 (100.0%) …
 
 1. ~~Offline BAS/Other override policy~~ → **done**, см. **п.39**.
 2. ~~M3.0 source audit + M3.1 retriever design~~ → **done**, см. **п.40**.
-3. ~~M3.2a inactive skeleton~~ → **done**, см. **п.41**. Runtime smoke pending (task runner).
-4. **Age contract** + evidence policy (inventory `*_age_errors_v1.csv`).
-5. **Norm v4 experiment** (dedupe manufacturer/pack в `normalized_text`; offline only).
+3. ~~M3.2a inactive skeleton + n8n runtime smoke~~ → **done**, см. **п.41** / **п.42**.
+4. ~~M3.2b one-item live retrieval~~ → **done**, см. **п.43**.
+5. ~~M3 RX/OTC research closeout~~ → **done**, см. **п.44**.
+6. **Age contract** + evidence policy (inventory `*_age_errors_v1.csv`) — **next offline track**.
+7. **Norm v4 experiment** (dedupe manufacturer/pack в `normalized_text`; offline only).
 
 #### Key artifacts
 
@@ -1475,11 +1479,11 @@ PROGRESS processed 500/500 (100.0%) …
 
 41. **M3.2a inactive skeleton `rx-otc-product-retrieval-dev` (2026-08-18)**
 
-* **Статус:** **done** (skeleton created, **inactive**). **Runtime smoke pending** due n8n 2.27 task-runner limitation.
+* **Статус:** **done** (skeleton created, **inactive**). Runtime smoke: **п.42**.
 * **Workflow:** `rx-otc-product-retrieval-dev` (`UqssZ24Jr7Qk9ef4`), `workflow_version=rx_otc_retrieval_dev_v1`, `active=false`.
 * **Isolation:** no HTTP / LLM / Postgres nodes; prod Stage 2 / hierarchy-dev / `mnn-drug-enrichment` untouched; `run_id=null` (`run_id_mode=none_no_db_in_m3_2a`); no `attr_*` / snapshot / `product_kind`.
 * **Structural verification:** export 32 nodes; required topology present; webhook path `rx-otc-product-retrieval-dev`; no credentials; forbidden-node check ok. Local Code-node replay of export: Smoke A (3065 pass / unresolved), B (9197 exclude / `E_M2_NON_DRUG`), C (empty text / `E_INPUT_IDENTITY`).
-* **Runtime gap:** Public API has no `POST /workflows/{id}/run`; CLI `n8n execute` hits task-broker timeout; production webhook returns 404 while inactive (expected). Do **not** activate the workflow to force smoke. Do **not** start M3.2b until a live execute path exists.
+* **Runtime gap (closed in п.42):** Public API has no `POST /workflows/{id}/run`; production webhook returns 404 while inactive (expected). CLI `n8n execute` needs `N8N_RUNNERS_BROKER_PORT≠5679`.
 
 #### Key artifacts
 
@@ -1491,5 +1495,115 @@ PROGRESS processed 500/500 (100.0%) …
 
 #### Next
 
-* M3.2a n8n runtime smoke (task runner).
+* ~~M3.2a n8n runtime smoke~~ → **done**, см. **п.42**.
 * Not: activate workflow, HTTP/SearXNG/LLM, DB writes, `attr_rx_otc` merge, M3.2b without explicit ask.
+
+---
+
+42. **M3.2a n8n runtime smoke `rx-otc-product-retrieval-dev` (2026-08-18)**
+
+* **Статус:** **done** (live CLI executes on inactive workflow). Prod Stage 2 / hierarchy-dev / `mnn-drug-enrichment` / snapshot / `attr_*` — **не менялись**.
+* **Workflow:** `rx-otc-product-retrieval-dev` (`UqssZ24Jr7Qk9ef4`) left `active=false`. Export jsCode restored after smokes (matches git).
+* **Execute path:** `docker exec -e N8N_RUNNERS_BROKER_PORT=15679 n8n execute --id=…`. Public API `/run` still 405. Default broker 5679 is taken by the live instance. `n8n execute` **ignores pinData** (Manual Trigger starts as `{}`); runner temporarily injects the case payload into `In — Normalize Input`, then restores the git export.
+* **Results (success, ~3 s each, sequential):**
+
+| Case | exec | m2 | outcome | error |
+|------|------|----|---------|-------|
+| A eligible 3065 | **42679** | pass | unresolved | `E_SOURCE_NOT_FOUND` (stubs, executed search/fetch = 0; Q1/Q2/Q3 planned 3/3/2) |
+| B exclude 9197 | **42680** | exclude | not_applicable | `E_M2_NON_DRUG` (Q1/Q2/Q3 did not run) |
+| C invalid 999999 | **42681** | — | rejected | `E_INPUT_IDENTITY` (Q1/Q2/Q3 did not run) |
+
+* Production webhook while inactive: **HTTP 404** (expected). `run_id=null`. Isolation flags all false.
+* Earlier failed CLI **42674** (08:09 UTC) was task-broker timeout on port 5679 — superseded.
+
+#### Key artifacts
+
+* Runtime: `redesign/artifacts/rx_otc_retrieval_m3_2a_runtime_smoke_{results.json,summary.md}`
+* Runner: `scripts/run_rx_otc_m3_2a_runtime_smoke.py`
+
+#### Next
+
+* ~~M3.2b one-item live retrieval~~ → **done**, см. **п.43**.
+* Not: activate skeleton, LLM, DB writes, M3.2c batch, `attr_rx_otc` merge.
+
+---
+
+43. **M3.2b one-item live RX/OTC retrieval SKU 3065 (2026-08-18)**
+
+* **Статус:** **done** (runner-side SearXNG + page fetch). Prod Stage 2 / hierarchy-dev / `mnn-drug-enrichment` / snapshot / `attr_*` / n8n RX/OTC workflow — **не менялись**. Workflow `rx-otc-product-retrieval-dev` (`UqssZ24Jr7Qk9ef4`) left `active=false` (HTTP must land in git artifacts, not n8n).
+* **SKU:** `3065` Флуконазол-OBL капс. 150 мг №4 (M2-13 not sent). Identity: `"ФЛУКОНАЗОЛ-OBL" "капсулы" "150 мг"`. `run_id=20260818` ephemeral artifact-only (no `classification_runs`).
+* **Search:** 7 logical queries (Q1=3, Q2=3, Q3=1; cap 8). Default SearXNG engines unresponsive (429/CAPTCHA); same logical queries retried with `engines=bing` (1 transport retry). Q1 `site:grls` returned **no** GRLS `Grls_view_V2` records.
+* **Fetch:** 4 pages (cap 4). Brand-matching P2 only in Q3 (Q1/Q2 do not spend fetch budget on pharmacy/RLS). Vidal `fluconazole-obl__37379` = P2 product card, identity A, explicit «Без рецепта». `apteka.ru` = JS shell, no status.
+* **Outcome:** `supported_only` / candidate `otc` / **`final_rx_otc_value=null`** (P2 never sets final). Comparators read-only: sem=`rx`, catalog=`otc`. Human-review `expected_rx_otc_manual` left empty.
+* **Isolation:** LLM false; postgres/snapshot/`attr_*`/`product_kind` false; n8n inactive.
+
+#### Key artifacts
+
+* Runner: `scripts/run_rx_otc_m3_2b_one_item.py`
+* `redesign/artifacts/mnn_rx_otc_retrieval_m3_2b_{one_item.json,human_review.csv,summary.md}`
+* Raw: `redesign/artifacts/mnn_rx_otc_retrieval_v1_searxng_raw.jsonl`
+
+#### Next
+
+* ~~M3 research closeout~~ → **done**, см. **п.44**.
+* Not: activate skeleton, LLM, DB writes, `attr_rx_otc` merge, M3.2c.
+
+---
+
+44. **M3 closeout — RX/OTC evidence feasibility decision (2026-08-19)**
+
+* **Title:** M3 closeout — RX/OTC evidence feasibility decision.
+* **Статус:** **done** (research closed / paused). Prod Stage 2 / hierarchy-dev / snapshot / `attr_*` / `product_kind` / `product_type` / Sem live / PostgreSQL / `classification_runs` — **не менялись**. Workflow `rx-otc-product-retrieval-dev` (`UqssZ24Jr7Qk9ef4`) remains **inactive**. No CAPTCHA/login bypass.
+
+#### Completed
+
+* M3.0 source audit
+* M3.1 standalone RX/OTC retriever design
+* M3.2a inactive skeleton + n8n runtime smoke
+* M3.2b one-item live P2 support test
+* M3.2b.2 evidence contract v2 patch
+* M3.2b.3 SearXNG/Bing P1 feasibility (5 SKU)
+* M3.2b.4 direct official GRLS access investigation (10 SKU)
+* M3.2b.5 MAH/official instruction feasibility (10 SKU)
+* Brandquad / distributor probes (research/support only; not official P1)
+* Investigation synthesis v1
+
+#### Confirmed technical facts
+
+* Wave-500 baseline RX/OTC: **72/83 = 86.7%**; **11** confirmed RX/OTC errors; M3.0 **0/11** sufficient product-specific evidence.
+* **No stable unattended official GRLS P1 route:** public form/record endpoints exist (`GRLS.aspx` POST, `Grls_View_v2`) but final testing encountered TLS / WAF 403 / `/cp/login` barriers. No CAPTCHA/login bypass. M3.2b.4 valid P1 in final CSV: **0/10**.
+* **MAH P1b route is only partially feasible:** **2/10** valid official product-specific Termikon spray/cream instructions. Not a general mass route.
+* Brandquad public GRLS mirror may be useful research/support data but is **not** official P1 and must not set `final_rx_otc_value`.
+* P2 (Vidal/RLS/pharmacy/ASNA) remain supporting-only. P2 may set `candidate_rx_otc_value` but **never** `final_rx_otc_value`.
+* M3.2b evidence contract v2 passes: `discovery_hits` / `fetched_documents` / `validated_evidence` separated; only fetched HTTP 2xx content can validate status.
+* Identity guards correctly reject form conflicts: Termikon spray vs cream/tablets; Duspatalin tablets 135 mg vs capsules 200 mg.
+* Do **not** claim final RX/OTC correctness, P1 coverage beyond 2/10 P1b feasibility, any DB/production merge, or that Brandquad is official.
+
+#### Decision
+
+`KEEP_RX_OTC_P2_SUPPORT_ONLY` and `DO_NOT_RUN_PHASE_A_YET`.
+
+#### Operational policy
+
+* RX/OTC must not be merged into `attr_rx_otc` / snapshot / Sem.
+* RX/OTC must not be a hard routing gate for RX clusters.
+* P2 may be displayed as audit/human-review soft signal only, with identity guard by brand/form/strength/manufacturer.
+* Standalone workflow remains inactive.
+* M3.2c (11 errors + 30 blind) does **not** run.
+
+#### Future re-entry criteria
+
+* stable public official GRLS interface without login/WAF; **or**
+* approved MAH/official instruction source registry with enough coverage; **or**
+* separate user-approved decision to validate P2 as a soft signal via a new human-reviewed experiment.
+
+#### Key artifacts
+
+* Synthesis: `redesign/artifacts/mnn_rx_otc_investigation_synthesis_v1.md`
+* Contract v2: `redesign/m3_2b_rx_otc_evidence_contract_v2.md`
+* M3.2b.3/4/5 summaries: `redesign/artifacts/mnn_rx_otc_retrieval_m3_2b_3_summary.md`, `mnn_rx_otc_grls_access_v1_summary.md`, `mnn_rx_otc_p1b_instruction_v1_summary.md`
+
+#### Next
+
+* **M4** Age contract + evidence policy (offline/audit-only).
+* Not: M3.2c, workflow activation, snapshot/`attr_*` merge.

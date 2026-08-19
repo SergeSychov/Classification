@@ -146,7 +146,16 @@ Outputs: `mnn_tool_search_{slug}.csv` + `*_raw.jsonl`, `mnn_tool_search_bakeoff_
 
 ---
 
-## 6. Quick pointers
+## 6. M3 RX/OTC research closeout (2026-08-19)
+
+- M3.0 → M3.2b.5 research **closed / paused**. Decision: **`KEEP_RX_OTC_P2_SUPPORT_ONLY`** and **`DO_NOT_RUN_PHASE_A_YET`**.
+- No production / hierarchy-dev / PostgreSQL / `classification_runs` / snapshot / `attr_*` / `product_kind` changes. Workflow `rx-otc-product-retrieval-dev` (`UqssZ24Jr7Qk9ef4`) remains inactive. M3.2c not run.
+- Scoped Git checkpoint planned (docs + isolated research tooling + compact artifacts only). Raw JSONL / caches / cookies / HTML dumps excluded.
+- Next main offline track: **M4** Age contract + evidence policy. Do not start M4 in this closeout.
+
+---
+
+## 7. Quick pointers
 
 | Topic | Where |
 |-------|--------|

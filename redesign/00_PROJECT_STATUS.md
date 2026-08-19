@@ -1,6 +1,6 @@
 # Project status — classification redesign
 
-Updated: 2026-08-18
+Updated: 2026-08-19
 Canonical migration design: [`20_MIGRATION_PLAN.md`](20_MIGRATION_PLAN.md)
 
 ## Architecture decision status
@@ -23,9 +23,15 @@ Canonical migration design: [`20_MIGRATION_PLAN.md`](20_MIGRATION_PLAN.md)
 
 **M3.0 RX/OTC source audit + M3.1 standalone retriever design done** (2026-08-18): M3.0 confirmed 11 RX/OTC error rows, **0/11** product-specific sufficient evidence, **0** GRLS product-card evidence. M3.1 locked RX/OTC as a **separate standalone workflow design** for future inactive workflow `rx-otc-product-retrieval-dev` (not a sub-branch of `mnn-drug-enrichment`, not wired to Stage 2 / hierarchy). P1 GRLS/official vs P2 supporting-only (`final_rx_otc_value` stays null) vs P3 discovery; M2-13 excluded from retrieval; **19198** stays Drug / out of precision denom until `expected_rx_otc_manual`. Canon: [`m3_1_rx_otc_retriever_design.md`](m3_1_rx_otc_retriever_design.md). Journal **п.40**.
 
-**M3.2a skeleton created, inactive** (2026-08-18): workflow `rx-otc-product-retrieval-dev` (`UqssZ24Jr7Qk9ef4`), `workflow_version=rx_otc_retrieval_dev_v1`, **active=false**. Stubs only — no HTTP / LLM / Postgres. Structural verification of export passed (32 nodes, required topology, no forbidden connectors). **Runtime smoke pending** due n8n 2.27 task-runner limitation (`n8n execute` broker timeout; Public API has no `/run`; production webhook 404 while inactive). Local Code-node replay of export: A/B/C pass. Journal **п.41**.
+**M3.2a skeleton created, inactive** (2026-08-18): workflow `rx-otc-product-retrieval-dev` (`UqssZ24Jr7Qk9ef4`), `workflow_version=rx_otc_retrieval_dev_v1`, **active=false**. Stubs only — no HTTP / LLM / Postgres. Structural verification of export passed (32 nodes, required topology, no forbidden connectors). Local Code-node replay of export: A/B/C pass. Journal **п.41**.
 
-**Next planned step (MNN offline):** M3.2a **n8n runtime smoke** (blocked by task runner). Do **not** start M3.2b live retrieval until a live execute path exists. Not a hard routing gate.
+**M3.2a n8n runtime smoke done** (2026-08-18): CLI executes **42679** (A 3065 pass/unresolved), **42680** (B 9197 exclude/`E_M2_NON_DRUG`), **42681** (C invalid/`E_INPUT_IDENTITY`); workflow left **inactive**; prod/hierarchy untouched; `run_id=null`. Execute path: `n8n execute` with `N8N_RUNNERS_BROKER_PORT=15679`. Journal **п.42**.
+
+**M3.2b one-item live retrieval done** (2026-08-18): SKU `3065` via runner-side SearXNG+fetch (`scripts/run_rx_otc_m3_2b_one_item.py`); n8n skeleton left **inactive**; outcome `supported_only` / candidate `otc` / `final_rx_otc_value=null` (P2 Vidal card; no GRLS P1). `run_id=20260818` artifacts only. Isolation: no LLM / Postgres / snapshot / `attr_*`. Journal **п.43**.
+
+**M3 RX/OTC research closed for now** (2026-08-19): M3.0 → M3.2b.5 feasibility complete. Status: **`KEEP_RX_OTC_P2_SUPPORT_ONLY`**. **`DO_NOT_RUN_PHASE_A_YET`**. No stable unattended official GRLS P1 route (0/10 valid P1); MAH/instruction P1b only **2/10** (Termikon form-specific, not a general route). Workflow `rx-otc-product-retrieval-dev` exists, is standalone and **inactive**. It is not connected to Stage 2/hierarchy and has no DB/snapshot/attr writes. Current policy: P2 only candidate/support signal, never `final_rx_otc_value`. RX/OTC is not a routing gate. Brandquad is not official P1. M3.2c 11+30 batch must not run. Journal **п.44**.
+
+**Next main track (MNN offline):** **M4** Age contract + evidence policy (offline/audit-only; not used in routing until controlled review).
 **Parallel Sem:** Wave-100/500 rubric → `critical_error_rate` (п.28). Hierarchy remains snapshot-off / prod untouched.
 
 | Track | Status |
