@@ -1,0 +1,169 @@
+{
+  "model_id": "age_evidence_model_v1",
+  "policy_version": "age_contract_v1",
+  "status": "design_only_not_implemented",
+  "date": "2026-08-19",
+  "task": "M4.0",
+  "isolation": {
+    "no_db_migration": true,
+    "no_attr_age_segment_write": true,
+    "no_snapshot_write": true,
+    "no_semantic_attrs_write": true,
+    "no_product_kind_write": true,
+    "no_n8n_workflow": true,
+    "no_web_or_llm": true,
+    "age_not_used_in_routing": true,
+    "do_not_copy_rx_otc_workflow": true,
+    "keep_rx_otc_p2_support_only": true,
+    "do_not_run_phase_a_yet": true
+  },
+  "canonical_final_values": [
+    "дети",
+    "взрослые",
+    "универсальный",
+    "unknown",
+    "not_applicable",
+    "conflict"
+  ],
+  "hard_negatives": [
+    "absence_of_age_data_is_not_universal",
+    "absence_of_child_warning_is_not_universal",
+    "sem_adults_is_not_adult_only_evidence",
+    "pediatric_dose_alone_is_not_children_only",
+    "mnn_acceptance_does_not_accept_age",
+    "not_applicable_is_not_for_drugs_with_missing_age",
+    "unknown_is_a_valid_safe_outcome"
+  ],
+  "fields": {
+    "age_min_years": {
+      "type": "number_or_null",
+      "description": "Lowest product-specific allowed age in years when an explicit threshold is captured. Null if not stated."
+    },
+    "age_max_years": {
+      "type": "number_or_null",
+      "description": "Highest product-specific allowed age in years when an explicit upper bound is captured. Null if not stated."
+    },
+    "age_population_scope": {
+      "type": "enum",
+      "allowed": [
+        "children_only",
+        "adults_only",
+        "children_and_adults",
+        "unknown",
+        "not_applicable"
+      ],
+      "maps_toward": {
+        "children_only": "дети",
+        "adults_only": "взрослые",
+        "children_and_adults": "универсальный",
+        "unknown": "unknown",
+        "not_applicable": "not_applicable"
+      }
+    },
+    "age_explicit_text": {
+      "type": "string_or_null",
+      "description": "Verbatim captured phrase from a product-specific source (e.g. 'с 12 лет', 'только взрослым'). Empty/null is not evidence."
+    },
+    "age_evidence_url": {
+      "type": "url_or_null",
+      "description": "URL of the document/card from which age_explicit_text was taken. GRLS landings are not sufficient."
+    },
+    "age_source_type": {
+      "type": "enum",
+      "allowed": [
+        "official_instruction_product_specific",
+        "official_manufacturer_or_MAH",
+        "grls_product_record",
+        "rls_or_vidal_product_card",
+        "pharmacy_product_card",
+        "generic_mnn_or_molecule",
+        "search_snippet",
+        "unknown"
+      ]
+    },
+    "age_source_tier": {
+      "type": "enum",
+      "allowed": ["P1", "P2", "P3"],
+      "mapping": {
+        "P1": [
+          "official_instruction_product_specific",
+          "official_manufacturer_or_MAH",
+          "grls_product_record"
+        ],
+        "P2": ["rls_or_vidal_product_card", "pharmacy_product_card"],
+        "P3": ["generic_mnn_or_molecule", "search_snippet", "unknown"]
+      }
+    },
+    "age_identity_grade": {
+      "type": "enum",
+      "allowed": ["A", "B", "C", "D", "unknown"],
+      "description": "Brand/form/strength match of the evidence to the SKU text. Not a medical judgement."
+    },
+    "age_evidence_grade": {
+      "type": "enum",
+      "allowed": ["A", "B", "C", "D", "none"],
+      "description": "Strength of the Age statement itself. none = no explicit Age phrase captured."
+    },
+    "age_conflict_status": {
+      "type": "enum",
+      "allowed": [
+        "no_conflict",
+        "baseline_vs_enrichment_conflict",
+        "previous_vs_identity_conflict",
+        "multiple_source_conflict",
+        "unknown"
+      ]
+    },
+    "age_normalization_method": {
+      "type": "enum",
+      "allowed": [
+        "explicit_adult_only",
+        "explicit_children_only",
+        "explicit_min_age_plus_adult_use",
+        "product_marked_children",
+        "not_resolved",
+        "not_applicable",
+        "conflict"
+      ]
+    }
+  },
+  "future_acceptance_rule": {
+    "status": "proposed_not_applied",
+    "final_age_allowed_from_p1_only": true,
+    "p2_sets_final_age": false,
+    "p3_sets_final_age": false,
+    "require": [
+      "age_source_tier=P1",
+      "age_identity_grade in {A,B}",
+      "age_explicit_text non-empty",
+      "age_conflict_status=no_conflict",
+      "age_population_scope in {children_only,adults_only,children_and_adults,not_applicable}"
+    ],
+    "otherwise": "unknown",
+    "m2_approved_non_drug_ids": [
+      56, 75, 249, 3763, 5322, 8201, 9197, 18179, 18830, 21387, 22548, 23695, 26319
+    ],
+    "m2_age_value": "not_applicable"
+  },
+  "normalization_from_scope": {
+    "children_only": "дети",
+    "adults_only": "взрослые",
+    "children_and_adults": "универсальный",
+    "unknown": "unknown",
+    "not_applicable": "not_applicable",
+    "notes": [
+      "children_and_adults still requires captured min age when a pediatric threshold exists",
+      "do not map empty evidence to универсальный"
+    ]
+  },
+  "human_hint_parse": {
+    "is_canonical_ground_truth": false,
+    "patterns": {
+      "универсальн": "универсальный",
+      "взросл": "взрослые",
+      "детск": "дети",
+      "unknown|неизвест": "unknown"
+    },
+    "strengths": ["explicit_label_note", "ambiguous_label_note", "not_available"]
+  }
+}
