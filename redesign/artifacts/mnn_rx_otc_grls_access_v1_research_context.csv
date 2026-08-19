@@ -1,0 +1,11 @@
+product_id,request_kind,url,http_status,official_host,identity_grade,explicit_status_excerpt,reject_reason,from_fetch,p1_access_status
+3065,none,,,,,,portal_blocked,False,p1_portal_blocked
+4922,none,,,,,,portal_blocked,False,p1_portal_blocked
+4924,none,,,,,,portal_blocked,False,p1_portal_blocked
+19370,none,,,,,,portal_blocked,False,p1_portal_blocked
+26115,none,,,,,,portal_blocked,False,p1_portal_blocked
+10046,none,,,,,,portal_blocked,False,p1_portal_blocked
+7275,none,,,,,,portal_blocked,False,p1_portal_blocked
+1053,none,,,,,,portal_blocked,False,p1_portal_blocked
+2621,none,,,,,,portal_blocked,False,p1_portal_blocked
+18377,none,,,,,,portal_blocked,False,p1_portal_blocked

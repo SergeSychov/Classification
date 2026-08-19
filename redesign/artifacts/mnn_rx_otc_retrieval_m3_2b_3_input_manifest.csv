@@ -1,0 +1,6 @@
+product_id,normalized_text_full,brand,form,strength,pack,manufacturer,input_source_artifact,m2_gate,expected_test_focus
+3065,ФЛУКОНАЗОЛ-OBL КАПС. 150МГ №4 | ОБОЛЕНСКОЕ ФП АО | ОБОЛЕНСКОЕ ФП АО,ФЛУКОНАЗОЛ-OBL,капсулы,150 мг,N4,ОБОЛЕНСКОЕ ФП АО,redesign/artifacts/mnn_identity_enrichment_pass_review_rx_otc_errors_v1.csv,pass,p1_discovery
+4922,ТЕРМИКОН СПРЕЙ Д/НАРУЖ. ПРИМ. 1% ФЛ. 30Г | ФАРМСТАНДАРТ-ЛЕКСРЕДСТВА ОАО | ФАРМСТАНДАРТ-ЛЕКСРЕДСТВА ОАО,ТЕРМИКОН,спрей,1%,,ФАРМСТАНДАРТ-ЛЕКСРЕДСТВА ОАО,redesign/artifacts/mnn_identity_enrichment_pass_review_rx_otc_errors_v1.csv,pass,form_mismatch_guard
+4924,ТЕРМИКОН КРЕМ Д/НАРУЖ. ПРИМ. 1% ТУБА 15Г | ЛЕККО ЗАО | ЛЕККО ЗАО,ТЕРМИКОН,крем,1%,,ЛЕККО ЗАО,redesign/artifacts/mnn_identity_enrichment_pass_review_rx_otc_errors_v1.csv,pass,official_instruction_feasibility
+19370,ДЮСПАТАЛИН ТАБЛ. П/О 135МГ №15 ВЕРОФАРМ | ВЕРОФАРМ АО | ВЕРОФАРМ АО,ДЮСПАТАЛИН,таблетки,135 мг,N15,ВЕРОФАРМ АО,redesign/artifacts/mnn_identity_enrichment_pass_review_rx_otc_errors_v1.csv,pass,form_mismatch_guard
+26115,АМБРОКСОЛ ТАБЛ. 30МГ №20 ВЕРТЕКС | ВЕРТЕКС АО | ВЕРТЕКС АО,АМБРОКСОЛ,таблетки,30 мг,N20,ВЕРТЕКС АО,redesign/artifacts/mnn_identity_enrichment_pass_review_rx_otc_errors_v1.csv,pass,skip_path_no_existing_evidence

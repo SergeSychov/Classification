@@ -17,6 +17,8 @@ n8n 2.27 Public API has no `POST /workflows/{id}/run`.
 CLI `n8n execute` inside the running container hits task-broker port 5679 already in use.
 Production webhook while inactive: **HTTP 404** (expected; workflow stays inactive).
 
+**Live n8n runtime smoke later the same day:** journal **п.42**; execs **42679 / 42680 / 42681**; see `rx_otc_retrieval_m3_2a_runtime_smoke_summary.md`.
+
 Smokes A/B/C replayed the **exported** workflow Code/IF chain (`workflows/rx-otc-product-retrieval-dev.json`) with mocked `$input` — same jsCode as on n8n.
 
 ## Results

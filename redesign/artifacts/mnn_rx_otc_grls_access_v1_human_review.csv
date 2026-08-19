@@ -1,0 +1,11 @@
+product_id,normalized_text_full,brand,form,strength,pack,manufacturer,p1_record_url,p1_record_source_type,p1_identity_grade,p1_explicit_status_text,p1_candidate_rx_otc_value,p1_validation_passed,official_instruction_url,official_instruction_explicit_status_text,p1_access_status,form_mismatch_detected,near_brand_detected,access_blocker,label_identity_ok,label_source_ok,label_status_extraction_ok,label_notes
+3065,ФЛУКОНАЗОЛ-OBL КАПС. 150МГ №4 | ОБОЛЕНСКОЕ ФП АО | ОБОЛЕНСКОЕ ФП АО,ФЛУКОНАЗОЛ-OBL,капсулы,150 мг,N4,ОБОЛЕНСКОЕ ФП АО,,,,,,False,,,p1_portal_blocked,False,False,waf_403,,,,
+4922,ТЕРМИКОН СПРЕЙ Д/НАРУЖ. ПРИМ. 1% ФЛ. 30Г | ФАРМСТАНДАРТ-ЛЕКСРЕДСТВА ОАО | ФАРМСТАНДАРТ-ЛЕКСРЕДСТВА ОАО,ТЕРМИКОН,спрей,1%,30Г,ФАРМСТАНДАРТ-ЛЕКСРЕДСТВА ОАО,,,,,,False,,,p1_portal_blocked,False,False,waf_403,,,,
+4924,ТЕРМИКОН КРЕМ Д/НАРУЖ. ПРИМ. 1% ТУБА 15Г | ЛЕККО ЗАО | ЛЕККО ЗАО,ТЕРМИКОН,крем,1%,15Г,ЛЕККО ЗАО,,,,,,False,,,p1_portal_blocked,False,False,waf_403,,,,
+19370,ДЮСПАТАЛИН ТАБЛ. П/О 135МГ №15 ВЕРОФАРМ | ВЕРОФАРМ АО | ВЕРОФАРМ АО,ДЮСПАТАЛИН,таблетки,135 мг,N15,ВЕРОФАРМ АО,,,,,,False,,,p1_portal_blocked,False,False,waf_403,,,,
+26115,АМБРОКСОЛ ТАБЛ. 30МГ №20 ВЕРТЕКС | ВЕРТЕКС АО | ВЕРТЕКС АО,АМБРОКСОЛ,таблетки,30 мг,N20,ВЕРТЕКС АО,,,,,,False,,,p1_portal_blocked,False,False,waf_403,,,,
+10046,ПАПАВЕРИН ТАБЛ. 40МГ №10 ИРБИТСКИЙ ХФЗ | ИРБИТСКИЙ ХИМЗАВОД ОАО | ИРБИТСКИЙ ХИМЗАВОД ОАО,ПАПАВЕРИН,таблетки,40 мг,N10,ИРБИТСКИЙ ХИМЗАВОД ОАО,,,,,,False,,,p1_portal_blocked,False,False,waf_403,,,,
+7275,САНОВАСК ТАБЛ. П/КИШ/РАСТ/ПЛЕН/ОБ. 50МГ №30 | ИРБИТСКИЙ ХИМЗАВОД ОАО | ИРБИТСКИЙ ХИМЗАВОД ОАО,САНОВАСК,таблетки,50 мг,N30,ИРБИТСКИЙ ХИМЗАВОД ОАО,,,,,,False,,,p1_portal_blocked,False,False,waf_403,,,,
+1053,"ЭКЗОРОЛФИНЛАК ЛАК Д/НОГТЕЙ 5% ФЛ. 2,5МЛ | ПАУЛЬ В. БЕЙФЕРС ГМБХ | ПАУЛЬ В. БЕЙФЕРС ГМБХ",ЭКЗОРОЛФИНЛАК,лак,5%,2.5МЛ,ПАУЛЬ В. БЕЙФЕРС ГМБХ,,,,,,False,,,p1_portal_blocked,False,False,waf_403,,,,
+2621,ФУРАЦИЛИН ТАБЛ. Д/Р-РА Д/МЕСТН. И НАРУЖ. ПРИМ. 20МГ №20 ТАТХИМФАРМПРЕПАРАТЫ | ТАТХИМФАРМПРЕПАРАТЫ АО | ТАТХИМФАРМПРЕПАРАТЫ АО,ФУРАЦИЛИН,таблетки,20 мг,N20,ТАТХИМФАРМПРЕПАРАТЫ АО,,,,,,False,,,p1_portal_blocked,False,False,waf_403,,,,
+18377,ЙОД Р-Р Д/НАРУЖ. ПРИМ. СПИРТ. 5% ФЛ. 25МЛ ГИППОКРАТ | ГИППОКРАТ | ГИППОКРАТ,ЙОД,раствор,5%,25МЛ,ГИППОКРАТ,,,,,,False,,,p1_portal_blocked,False,False,waf_403,,,,

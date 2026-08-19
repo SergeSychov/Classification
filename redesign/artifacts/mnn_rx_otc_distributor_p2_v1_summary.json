@@ -1,0 +1,101 @@
+{
+  "task": "Distributor P2 public-catalog probe",
+  "hosts": [
+    "asna.ru",
+    "katren.ru",
+    "puls.ru",
+    "protek.ru",
+    "pharmk.ru",
+    "bsspharm.ru"
+  ],
+  "public_product_catalog_hosts": [
+    "asna.ru"
+  ],
+  "p2_valid_explicit_status_count": 9,
+  "p2_access_status_counts": {
+    "p2_valid_explicit_status": 9,
+    "p2_record_found_identity_insufficient": 1
+  },
+  "route_feasibility": "P2_DISTRIBUTOR_PUBLIC_CATALOG_ASNA_ONLY",
+  "recommendation": "KEEP_RX_OTC_P2_SUPPORT_ONLY",
+  "request_budget": {
+    "global_max": 40,
+    "used": 26
+  },
+  "official_p1": false,
+  "final_rx_otc_always_null": true,
+  "do_not_run_phase_a": true,
+  "competitive_independent_distributors": false,
+  "rows": [
+    {
+      "product_id": 3065,
+      "access": "p2_valid_explicit_status",
+      "url": "https://www.asna.ru/cards/flukonazol_obl_150mg_1_sht__kapsuly_alium_ao.html",
+      "grade": "A",
+      "candidate": "otc"
+    },
+    {
+      "product_id": 4922,
+      "access": "p2_valid_explicit_status",
+      "url": "https://www.asna.ru/cards/termikon_1_30g_sprey_dnaruzhnogo_primeneniya_farmstandart-tomskkhimfarm_oao.html",
+      "grade": "A",
+      "candidate": "otc"
+    },
+    {
+      "product_id": 4924,
+      "access": "p2_valid_explicit_status",
+      "url": "https://www.asna.ru/cards/termikon_1_15g_krem_dnaruzhnogo_primeneniya_farmstandart-tomskkhimfarm_oao.html",
+      "grade": "A",
+      "candidate": "otc"
+    },
+    {
+      "product_id": 19370,
+      "access": "p2_valid_explicit_status",
+      "url": "https://www.asna.ru/cards/dyuspatalin_duo_135mg8443mg_n30_tab_pokrytye_plenochnoy_obolochkoy_verofarm_ao.html",
+      "grade": "A",
+      "candidate": "otc"
+    },
+    {
+      "product_id": 26115,
+      "access": "p2_valid_explicit_status",
+      "url": "https://www.asna.ru/cards/ambroksol_velfarm_30mg_n50_tab_velfarm_ooo.html",
+      "grade": "A",
+      "candidate": "otc"
+    },
+    {
+      "product_id": 10046,
+      "access": "p2_valid_explicit_status",
+      "url": "https://www.asna.ru/cards/papaverina_gidrokhlorid_ms_40mg_n20_tab_medisorb.html",
+      "grade": "A",
+      "candidate": "otc"
+    },
+    {
+      "product_id": 7275,
+      "access": "p2_valid_explicit_status",
+      "url": "https://www.asna.ru/cards/sanovask_50mg_n30_tab_pokrytye_kishechnorastvorimoy_plenochnoy_obolochkoy_irbitskiy_khimfarmzavod_oao.html",
+      "grade": "A",
+      "candidate": "otc"
+    },
+    {
+      "product_id": 1053,
+      "access": "p2_record_found_identity_insufficient",
+      "url": "https://www.asna.ru/cards/fitolaks_tab_500mg_n40_evalar.html",
+      "grade": "D",
+      "candidate": ""
+    },
+    {
+      "product_id": 2621,
+      "access": "p2_valid_explicit_status",
+      "url": "https://www.asna.ru/cards/furatsilin_aveksima_20mg_n20_tab_shipuchie_dprigotovleniya_r-ra_dmestnogonaruzhnogo_primeneniya_irbitskiy_khfz.html",
+      "grade": "A",
+      "candidate": "otc"
+    },
+    {
+      "product_id": 18377,
+      "access": "p2_valid_explicit_status",
+      "url": "https://www.asna.ru/cards/yod_5__10ml_rastvor_dlya_narujnogo_primeneniya_spirtovoy_flakon_s_lopatkoy_moskovskaya_farmacevticheskaya_fabrika_zao.html",
+      "grade": "A",
+      "candidate": "otc"
+    }
+  ]
+}

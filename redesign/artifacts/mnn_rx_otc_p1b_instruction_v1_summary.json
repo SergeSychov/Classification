@@ -1,0 +1,126 @@
+{
+  "task": "M3.2b.5 P1b official instruction / MAH probe",
+  "contract_version": "rx_otc_evidence_contract_v2",
+  "runner": "scripts/run_rx_otc_p1b_instruction_v1.py",
+  "eligible_sku_count": 10,
+  "product_ids": [
+    3065,
+    4922,
+    4924,
+    19370,
+    26115,
+    10046,
+    7275,
+    1053,
+    2621,
+    18377
+  ],
+  "p1b_access_status_counts": {
+    "p1b_host_not_found": 4,
+    "p1b_valid_explicit_status": 2,
+    "p1b_record_found_identity_insufficient": 1,
+    "p1b_record_found_status_missing": 1,
+    "p1b_record_not_found": 2
+  },
+  "p1b_valid_explicit_status_count": 2,
+  "request_budget": {
+    "global_max": 40,
+    "used": 37,
+    "min_delay_sec": 1.5,
+    "timeout_sec": 20
+  },
+  "route_feasibility": "P1B_ROUTE_PARTIALLY_FEASIBLE",
+  "recommendation": "DESIGN_OFFICIAL_INSTRUCTION_MAH_ADAPTER",
+  "form_mismatch_guards": {
+    "4922_form": "спрей",
+    "4924_form": "крем",
+    "4922_mismatch": false,
+    "4924_mismatch": false,
+    "19370_form": "таблетки",
+    "19370_mismatch": false
+  },
+  "final_rx_otc_always_null": true,
+  "does_not_change_official_grls_decision": true,
+  "rows": [
+    {
+      "product_id": 3065,
+      "access": "p1b_host_not_found",
+      "url": "",
+      "grade": "",
+      "candidate": "",
+      "conflict": false
+    },
+    {
+      "product_id": 4922,
+      "access": "p1b_valid_explicit_status",
+      "url": "https://termikon.ru/instrukcii/termikon-sprey-instrukciya.html",
+      "grade": "A",
+      "candidate": "otc",
+      "conflict": false
+    },
+    {
+      "product_id": 4924,
+      "access": "p1b_valid_explicit_status",
+      "url": "https://termikon.ru/instrukcii/termikon-krem-instrukciya.html",
+      "grade": "A",
+      "candidate": "otc",
+      "conflict": false
+    },
+    {
+      "product_id": 19370,
+      "access": "p1b_record_found_status_missing",
+      "url": "https://duspatalin.ru/instruktsiya/135/",
+      "grade": "A",
+      "candidate": "",
+      "conflict": false
+    },
+    {
+      "product_id": 26115,
+      "access": "p1b_record_not_found",
+      "url": "",
+      "grade": "",
+      "candidate": "",
+      "conflict": false
+    },
+    {
+      "product_id": 10046,
+      "access": "p1b_host_not_found",
+      "url": "",
+      "grade": "",
+      "candidate": "",
+      "conflict": false
+    },
+    {
+      "product_id": 7275,
+      "access": "p1b_host_not_found",
+      "url": "",
+      "grade": "",
+      "candidate": "",
+      "conflict": false
+    },
+    {
+      "product_id": 1053,
+      "access": "p1b_host_not_found",
+      "url": "",
+      "grade": "",
+      "candidate": "",
+      "conflict": false
+    },
+    {
+      "product_id": 2621,
+      "access": "p1b_record_not_found",
+      "url": "",
+      "grade": "",
+      "candidate": "",
+      "conflict": false
+    },
+    {
+      "product_id": 18377,
+      "access": "p1b_record_found_identity_insufficient",
+      "url": "https://gippokrat.ru/doc/price/price_31.07.2023_min.pdf",
+      "grade": "D",
+      "candidate": "",
+      "conflict": false
+    }
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "all_skus_pass": true,
+  "per_sku": [
+    {
+      "product_id": 3065,
+      "all_validated_from_fetch": true,
+      "all_validated_http_2xx": true,
+      "all_status_text_from_fetched_content": true,
+      "p2_final_value_null": true,
+      "p3_candidate_count": 0,
+      "discovery_candidate_count": 0,
+      "only_p1_may_set_final": true,
+      "used_mnn_as_primary_query_false": true,
+      "logical_le_8": true,
+      "fetched_le_4": true,
+      "pass": true
+    },
+    {
+      "product_id": 4922,
+      "all_validated_from_fetch": true,
+      "all_validated_http_2xx": true,
+      "all_status_text_from_fetched_content": true,
+      "p2_final_value_null": true,
+      "p3_candidate_count": 0,
+      "discovery_candidate_count": 0,
+      "only_p1_may_set_final": true,
+      "used_mnn_as_primary_query_false": true,
+      "logical_le_8": true,
+      "fetched_le_4": true,
+      "pass": true
+    },
+    {
+      "product_id": 4924,
+      "all_validated_from_fetch": true,
+      "all_validated_http_2xx": true,
+      "all_status_text_from_fetched_content": true,
+      "p2_final_value_null": true,
+      "p3_candidate_count": 0,
+      "discovery_candidate_count": 0,
+      "only_p1_may_set_final": true,
+      "used_mnn_as_primary_query_false": true,
+      "logical_le_8": true,
+      "fetched_le_4": true,
+      "pass": true
+    },
+    {
+      "product_id": 19370,
+      "all_validated_from_fetch": true,
+      "all_validated_http_2xx": true,
+      "all_status_text_from_fetched_content": true,
+      "p2_final_value_null": true,
+      "p3_candidate_count": 0,
+      "discovery_candidate_count": 0,
+      "only_p1_may_set_final": true,
+      "used_mnn_as_primary_query_false": true,
+      "logical_le_8": true,
+      "fetched_le_4": true,
+      "pass": true
+    },
+    {
+      "product_id": 26115,
+      "all_validated_from_fetch": true,
+      "all_validated_http_2xx": true,
+      "all_status_text_from_fetched_content": true,
+      "p2_final_value_null": true,
+      "p3_candidate_count": 0,
+      "discovery_candidate_count": 0,
+      "only_p1_may_set_final": true,
+      "used_mnn_as_primary_query_false": true,
+      "logical_le_8": true,
+      "fetched_le_4": true,
+      "pass": true
+    }
+  ]
+}

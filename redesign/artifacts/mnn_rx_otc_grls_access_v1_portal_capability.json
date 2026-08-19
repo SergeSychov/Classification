@@ -1,0 +1,67 @@
+{
+  "portal_entry_url": "https://grls.rosminzdrav.ru/",
+  "http_status": 200,
+  "redirect_chain": [
+    {
+      "status": 302,
+      "url": "https://grls.rosminzdrav.ru/cp/login"
+    }
+  ],
+  "content_type": "text/html",
+  "response_characteristics": {
+    "title": "Государственный реестр лекарственных средств",
+    "html_bytes": 212949,
+    "text_len": 44,
+    "form_count": 0,
+    "js_postback_signals": false,
+    "has_trade_field": false,
+    "view_link_count_on_entry": 0,
+    "inspect_outcome": "ok",
+    "follow_aspx": false
+  },
+  "html_form_actions": [],
+  "publicly_visible_form_inputs": [],
+  "script_references_relevant_to_search": [],
+  "candidate_official_endpoint_paths": [
+    "/cp/login"
+  ],
+  "cookie_session_requirement_observed": "observed_set_on_response",
+  "csrf_requirement_observed": "not_visible",
+  "captcha_or_waf_observed": true,
+  "robots_rate_limit_signals": [],
+  "direct_public_lookup_feasible": "false",
+  "network_disabled": false,
+  "host_classification": {
+    "url": "https://grls.rosminzdrav.ru",
+    "host": "grls.rosminzdrav.ru",
+    "class": "official_grls_portal",
+    "why_official": "Official Minzdrav GRLS portal host"
+  },
+  "final_url": "https://grls.rosminzdrav.ru/cp/login",
+  "blocker": "login_required",
+  "excerpt": "Государственный реестр лекарственных средств",
+  "search_interface": {
+    "method": "GET",
+    "action": "https://grls.rosminzdrav.ru/cp/login",
+    "get_param_names": {},
+    "form_field_names": {},
+    "post_possible": false
+  },
+  "observed_public_interface_before_login_wall": {
+    "method": "POST",
+    "action": "https://grls.rosminzdrav.ru/GRLS.aspx",
+    "form_fields": {
+      "trade": "ctl00$plate$txtTorg",
+      "inn": "ctl00$plate$txtMNN",
+      "form": "ctl00$plate$LF",
+      "manufacturer": "ctl00$plate$txtMnf",
+      "holder": "ctl00$plate$ownName",
+      "reg": "ctl00$plate$txtRegNm",
+      "submit": "ctl00$plate$bSeek",
+      "isFS": "0"
+    },
+    "card_path": "Grls_View_v2.aspx?routingGuid={uuid}",
+    "row_js": "det(routingGuid, isFS)"
+  },
+  "notes": "Last inspect redirected to /cp/login after WAF 403. Earlier in this investigation GRLS.aspx public POST (txtTorg/bSeek/isFS=0) and Grls_View_v2 cards were reachable; that window is not the final live CSV state. Login/WAF were not bypassed."
+}

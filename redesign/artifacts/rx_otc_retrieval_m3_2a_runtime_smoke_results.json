@@ -1,0 +1,259 @@
+{
+  "created_at": "2026-08-18T18:27:44.070661+00:00",
+  "workflow_id": "UqssZ24Jr7Qk9ef4",
+  "workflow_name": "rx-otc-product-retrieval-dev",
+  "active": false,
+  "execution_mode": "n8n_cli_execute_broker_port_15679",
+  "smoke_a": {
+    "ok": true,
+    "issues": [],
+    "execution_id": "42679",
+    "status": "success",
+    "m2_gate": "pass",
+    "input_validation_passed": true,
+    "outcome": "unresolved",
+    "error_code": "E_SOURCE_NOT_FOUND",
+    "identity": {
+      "brand": "ФЛУКОНАЗОЛ-OBL",
+      "form": "капсулы",
+      "strength": "150 мг",
+      "pack": "N4",
+      "manufacturer": "ОБОЛЕНСКОЕ ФП АО",
+      "identity_text": "ФЛУКОНАЗОЛ-OBL капсулы 150 мг N4 ОБОЛЕНСКОЕ ФП АО",
+      "identity_query": "\"ФЛУКОНАЗОЛ-OBL\" \"капсулы\" \"150 мг\""
+    },
+    "query_plan": {
+      "q1_count": 3,
+      "q2_count": 3,
+      "q3_count": 2,
+      "logical_search_budget": 8,
+      "fetched_page_budget": 4,
+      "executed_search_query_count": 0,
+      "executed_fetch_page_count": 0,
+      "transport_retry_attempt_count": 0
+    },
+    "q_ran": {
+      "q1": true,
+      "q2": true,
+      "q3": true
+    },
+    "isolation": {
+      "external_http": false,
+      "llm": false,
+      "postgres_write": false,
+      "snapshot_update": false,
+      "attr_update": false,
+      "product_kind_update": false,
+      "workflow_active": false
+    },
+    "run_id": null,
+    "cli_issues": null,
+    "error": null
+  },
+  "smoke_b": {
+    "ok": true,
+    "issues": [],
+    "execution_id": "42680",
+    "status": "success",
+    "m2_gate": "exclude",
+    "input_validation_passed": true,
+    "outcome": "not_applicable",
+    "error_code": "E_M2_NON_DRUG",
+    "identity": {
+      "brand": "ПОМОГУША",
+      "form": "сироп",
+      "strength": null,
+      "pack": "100 мл",
+      "manufacturer": "ЮГ ООО",
+      "identity_text": "ПОМОГУША сироп 100 мл ЮГ ООО",
+      "identity_query": "\"ПОМОГУША\" \"сироп\""
+    },
+    "query_plan": {
+      "q1_count": 0,
+      "q2_count": 0,
+      "q3_count": 0,
+      "logical_search_budget": 8,
+      "fetched_page_budget": 4,
+      "executed_search_query_count": 0,
+      "executed_fetch_page_count": 0,
+      "transport_retry_attempt_count": 0
+    },
+    "q_ran": {
+      "q1": false,
+      "q2": false,
+      "q3": false
+    },
+    "isolation": {
+      "external_http": false,
+      "llm": false,
+      "postgres_write": false,
+      "snapshot_update": false,
+      "attr_update": false,
+      "product_kind_update": false,
+      "workflow_active": false
+    },
+    "run_id": null,
+    "cli_issues": null,
+    "error": null
+  },
+  "smoke_c": {
+    "ok": true,
+    "issues": [],
+    "execution_id": "42681",
+    "status": "success",
+    "m2_gate": null,
+    "input_validation_passed": false,
+    "outcome": "rejected",
+    "error_code": "E_INPUT_IDENTITY",
+    "identity": {
+      "brand": null,
+      "form": null,
+      "strength": null,
+      "pack": null,
+      "manufacturer": null,
+      "identity_text": null,
+      "identity_query": null
+    },
+    "query_plan": {
+      "q1_count": 0,
+      "q2_count": 0,
+      "q3_count": 0,
+      "logical_search_budget": 8,
+      "fetched_page_budget": 4,
+      "executed_search_query_count": 0,
+      "executed_fetch_page_count": 0,
+      "transport_retry_attempt_count": 0
+    },
+    "q_ran": {
+      "q1": false,
+      "q2": false,
+      "q3": false
+    },
+    "isolation": {
+      "external_http": false,
+      "llm": false,
+      "postgres_write": false,
+      "snapshot_update": false,
+      "attr_update": false,
+      "product_kind_update": false,
+      "workflow_active": false
+    },
+    "run_id": null,
+    "cli_issues": null,
+    "error": null
+  },
+  "production_webhook_while_inactive": {
+    "url": "/webhook/rx-otc-product-retrieval-dev",
+    "status": 404,
+    "body_excerpt": "{\"code\":404,\"message\":\"The requested webhook \\\"POST rx-otc-product-retrieval-dev\\\" is not registered.\",\"hint\":\"The workflow must be active for a production URL to run successfully. You can activate the workflow using the toggle in the top-right of the editor. Note that unlike test URL calls, production URL calls aren't shown on the canvas (only in the executions list)\"}",
+    "expected": "404 because active=false"
+  },
+  "isolation": {
+    "prod_before": {
+      "id": "BaBjEPi78taRj2G5",
+      "name": "classification-stage2-dev",
+      "active": false,
+      "updatedAt": "2026-07-19T19:50:02.799Z",
+      "node_count": 61
+    },
+    "prod_after": {
+      "id": "BaBjEPi78taRj2G5",
+      "name": "classification-stage2-dev",
+      "active": false,
+      "updatedAt": "2026-07-19T19:50:02.799Z",
+      "node_count": 61
+    },
+    "hierarchy_before": {
+      "id": "o8sugljHYuUs7IEC",
+      "name": "classification-stage2-hierarchy-dev",
+      "active": false,
+      "updatedAt": "2026-08-13T07:48:03.215Z",
+      "node_count": 83
+    },
+    "hierarchy_after": {
+      "id": "o8sugljHYuUs7IEC",
+      "name": "classification-stage2-hierarchy-dev",
+      "active": false,
+      "updatedAt": "2026-08-13T07:48:03.215Z",
+      "node_count": 83
+    },
+    "prod_unchanged": true,
+    "hierarchy_unchanged": true,
+    "workflow_left_inactive": true
+  },
+  "forbidden_node_check": {
+    "ok": true,
+    "forbidden_nodes": [],
+    "has_postgres": false,
+    "has_http_or_llm": false,
+    "node_names": [
+      "Note — Isolation",
+      "Note — P1",
+      "Note — P2",
+      "Note — M2",
+      "Note — M3.2b",
+      "In — Manual Trigger",
+      "In — Webhook",
+      "In — Normalize Input",
+      "Run — Init Constants",
+      "Rx — Validate Input Contract",
+      "Rx — Input Valid?",
+      "Rx — Build Product Identity",
+      "Rx — M2 Non-drug Exclusion Gate",
+      "Rx — M2 Exclude?",
+      "Q1 — Build GRLS Query",
+      "Q1 — Fetch Stub",
+      "Q1 — Parse P1 Stub",
+      "Rx — Validate P1 Stub",
+      "Q2 — Build Official Query",
+      "Q2 — Fetch Stub",
+      "Q2 — Parse Official Stub",
+      "Rx — Validate P1 Official Stub",
+      "Q3 — Build Support Query",
+      "Q3 — Fetch Stub",
+      "Q3 — Parse Support Stub",
+      "Rx — Validate P2 Stub",
+      "Rx — Conflict Resolver Stub",
+      "Art — Build Audit Result",
+      "Fin — Aggregate Result",
+      "Fin — Is Webhook?",
+      "Fin — Respond to Webhook",
+      "Fin — Manual Done"
+    ],
+    "node_types": [
+      "n8n-nodes-base.stickyNote",
+      "n8n-nodes-base.stickyNote",
+      "n8n-nodes-base.stickyNote",
+      "n8n-nodes-base.stickyNote",
+      "n8n-nodes-base.stickyNote",
+      "n8n-nodes-base.manualTrigger",
+      "n8n-nodes-base.webhook",
+      "n8n-nodes-base.code",
+      "n8n-nodes-base.code",
+      "n8n-nodes-base.code",
+      "n8n-nodes-base.if",
+      "n8n-nodes-base.code",
+      "n8n-nodes-base.code",
+      "n8n-nodes-base.if",
+      "n8n-nodes-base.code",
+      "n8n-nodes-base.code",
+      "n8n-nodes-base.code",
+      "n8n-nodes-base.code",
+      "n8n-nodes-base.code",
+      "n8n-nodes-base.code",
+      "n8n-nodes-base.code",
+      "n8n-nodes-base.code",
+      "n8n-nodes-base.code",
+      "n8n-nodes-base.code",
+      "n8n-nodes-base.code",
+      "n8n-nodes-base.code",
+      "n8n-nodes-base.code",
+      "n8n-nodes-base.code",
+      "n8n-nodes-base.code",
+      "n8n-nodes-base.if",
+      "n8n-nodes-base.respondToWebhook",
+      "n8n-nodes-base.noOp"
+    ],
+    "node_count": 32
+  }
+}

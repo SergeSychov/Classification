@@ -1,0 +1,123 @@
+{
+  "task": "Brandquad pharm.brandquad.ru GRLS mirror probe",
+  "host": "pharm.brandquad.ru",
+  "official_p1": false,
+  "does_not_change_m324_official_decision": true,
+  "m324_official_route": "P1_ROUTE_NOT_FEASIBLE",
+  "mirror_feasibility": "MIRROR_ROUTE_FEASIBLE",
+  "valid_explicit_status_count": 6,
+  "status_counts": {
+    "mirror_status_conflict": 1,
+    "mirror_valid_explicit_status": 6,
+    "mirror_record_found_identity_insufficient": 2,
+    "mirror_record_found_status_missing": 1
+  },
+  "requests_used": 11,
+  "global_max": 20,
+  "product_ids": [
+    3065,
+    4922,
+    4924,
+    19370,
+    26115,
+    10046,
+    7275,
+    1053,
+    2621,
+    18377
+  ],
+  "form_mismatch_guards": {
+    "4922_form": "спрей",
+    "4924_form": "крем",
+    "4922_mismatch": false,
+    "4924_mismatch": false,
+    "19370_form": "таблетки",
+    "19370_mismatch": false
+  },
+  "recommendation": "KEEP_RX_OTC_P2_SUPPORT_ONLY_FOR_OFFICIAL_P1; Brandquad is third-party comparator only",
+  "final_rx_otc_always_null": true,
+  "outcome_always_feasibility_only": true,
+  "inspected_at": "2026-08-19T07:26:28.824492+00:00",
+  "rows": [
+    {
+      "product_id": 3065,
+      "access": "mirror_status_conflict",
+      "grade": "B",
+      "reg": "ЛП-№(001911)-(РГ-RU)",
+      "status": "По рецепту; Без рецепта",
+      "candidate": ""
+    },
+    {
+      "product_id": 4922,
+      "access": "mirror_valid_explicit_status",
+      "grade": "A",
+      "reg": "ЛСР-001548/07",
+      "status": "Без рецепта",
+      "candidate": "OTC"
+    },
+    {
+      "product_id": 4924,
+      "access": "mirror_valid_explicit_status",
+      "grade": "A",
+      "reg": "ЛС-002394",
+      "status": "Без рецепта",
+      "candidate": "OTC"
+    },
+    {
+      "product_id": 19370,
+      "access": "mirror_valid_explicit_status",
+      "grade": "A",
+      "reg": "ЛП-001454",
+      "status": "Без рецепта",
+      "candidate": "OTC"
+    },
+    {
+      "product_id": 26115,
+      "access": "mirror_valid_explicit_status",
+      "grade": "A",
+      "reg": "ЛП-№(008195)-(РГ-RU)",
+      "status": "Без рецепта",
+      "candidate": "OTC"
+    },
+    {
+      "product_id": 10046,
+      "access": "mirror_valid_explicit_status",
+      "grade": "A",
+      "reg": "ЛП-№(009756)-(РГ-RU)",
+      "status": "Без рецепта",
+      "candidate": "OTC"
+    },
+    {
+      "product_id": 7275,
+      "access": "mirror_record_found_identity_insufficient",
+      "grade": "C",
+      "reg": "ЛП-007754",
+      "status": "Без рецепта",
+      "candidate": ""
+    },
+    {
+      "product_id": 1053,
+      "access": "mirror_record_found_status_missing",
+      "grade": "A",
+      "reg": "ЛП-003919",
+      "status": "",
+      "candidate": ""
+    },
+    {
+      "product_id": 2621,
+      "access": "mirror_valid_explicit_status",
+      "grade": "A",
+      "reg": "ЛС-001911",
+      "status": "Без рецепта",
+      "candidate": "OTC"
+    },
+    {
+      "product_id": 18377,
+      "access": "mirror_record_found_identity_insufficient",
+      "grade": "C",
+      "reg": "ЛСР-006245/10",
+      "status": "Без рецепта",
+      "candidate": ""
+    }
+  ]
+}
