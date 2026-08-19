@@ -1,0 +1,287 @@
+{
+  "age_replay_conflict_status_distribution": {
+    "baseline_vs_enrichment_conflict": 22,
+    "no_conflict": 59,
+    "not_applicable": 13,
+    "unknown": 6
+  },
+  "age_replay_decision_distribution": {
+    "conflict_requires_evidence": 22,
+    "downgrade_unsupported_to_unknown": 57,
+    "insufficient_existing_evidence": 2,
+    "m2_not_applicable_candidate": 13,
+    "retain_safe_unknown": 6
+  },
+  "age_replay_queue_action_distribution": {
+    "not_applicable_no_drug_age_review": 13,
+    "require_product_specific_evidence": 8,
+    "send_to_age_contract_review": 79
+  },
+  "age_replay_value_distribution": {
+    "conflict": 22,
+    "not_applicable": 13,
+    "unknown": 65
+  },
+  "constraints_respected": {
+    "no_attr_snapshot_product_kind": true,
+    "no_commit_push": true,
+    "no_web_llm_db_n8n": true,
+    "offline_replay_only": true,
+    "v1_artifacts_not_overwritten": true
+  },
+  "current_age_distribution": {
+    "not_applicable": 15,
+    "unknown": 6,
+    "взрослые": 43,
+    "универсальный": 36
+  },
+  "examples": {
+    "conflict": [
+      {
+        "conflict": "baseline_vs_enrichment_conflict",
+        "current": "универсальный",
+        "decision": "conflict_requires_evidence",
+        "normalized_text": "ГЕПАРИН 5000ЕД/мл 5мл N5 р-р для в/в и п/к введения Армавирская биологическая фабрика фгуп",
+        "product_id": "54",
+        "replay": "conflict"
+      },
+      {
+        "conflict": "baseline_vs_enrichment_conflict",
+        "current": "универсальный",
+        "decision": "conflict_requires_evidence",
+        "normalized_text": "ГАСТРАСАН ЭКСПРЕСС 680мг+80мг N12 таб. жевательные Апельсин ЮжФарм ООО | ЮжФарм ООО | ЮжФа",
+        "product_id": "73",
+        "replay": "conflict"
+      }
+    ],
+    "corrected_45": [
+      {
+        "conflict": "unknown",
+        "current": "not_applicable",
+        "decision": "insufficient_existing_evidence",
+        "normalized_text": "АКВИОН КОЖА ВОЛОСЫ НОГТИ таб. N60 ВТФ ООО | ВТФ ООО | ВТФ ООО | N60",
+        "product_id": "45",
+        "replay": "unknown"
+      }
+    ],
+    "downgrade": [
+      {
+        "conflict": "no_conflict",
+        "current": "взрослые",
+        "decision": "downgrade_unsupported_to_unknown",
+        "normalized_text": "ХАЙЛЕФЛОКС 500мг N5 таб. покрытые пленочной оболочкой Хайгланс Лабораториз Пвт.Лтд. | Хайг",
+        "product_id": "8",
+        "replay": "unknown"
+      },
+      {
+        "conflict": "no_conflict",
+        "current": "взрослые",
+        "decision": "downgrade_unsupported_to_unknown",
+        "normalized_text": "МЕРИФАТИН МВ 750мг N60 таб. с пролонгированным высвобождением Фармасинтез-Тюмень ООО | Фар",
+        "product_id": "28",
+        "replay": "unknown"
+      }
+    ],
+    "m2_not_applicable": [
+      {
+        "conflict": "not_applicable",
+        "current": "not_applicable",
+        "decision": "m2_not_applicable_candidate",
+        "normalized_text": "РИТОФЛЕКС МСМ таб. N60 Фармацевтическая Фабрика ООО | Фармацевтическая фабрика ООО | Фарма",
+        "product_id": "56",
+        "replay": "not_applicable"
+      },
+      {
+        "conflict": "not_applicable",
+        "current": "not_applicable",
+        "decision": "m2_not_applicable_candidate",
+        "normalized_text": "САМБУКУС БУЗИНА ИММУНИТЕТ таб. массой 700мг N30 Грин сайд ООО | Грин Сайд ООО | Грин Сайд ",
+        "product_id": "75",
+        "replay": "not_applicable"
+      }
+    ],
+    "retain_safe_unknown": [
+      {
+        "conflict": "unknown",
+        "current": "unknown",
+        "decision": "retain_safe_unknown",
+        "normalized_text": "ФЛУКОНАЗОЛ-OBL КАПС. 150МГ №4 | ОБОЛЕНСКОЕ ФП АО | ОБОЛЕНСКОЕ ФП АО",
+        "product_id": "3065",
+        "replay": "unknown"
+      },
+      {
+        "conflict": "no_conflict",
+        "current": "unknown",
+        "decision": "retain_safe_unknown",
+        "normalized_text": "ПАРОДОНТОЦИД ОПОЛАСКИВАТЕЛЬ ДЛЯ ПОЛОСТИ РТА 250МЛ | МОСКОВСКАЯ ФФ | МОСКОВСКАЯ ФФ",
+        "product_id": "9941",
+        "replay": "unknown"
+      }
+    ]
+  },
+  "input_sha256": {
+    "m4_age_evidence_model_v1.json": "df51b20e09948d49c018bd616ff474ead859519d0078c8a18a864030cec8a9e9",
+    "m4_age_segment_contract_v1.md": "ba0927931f8bf732ab293e528d3456e9429b44374f25374483bd3495402eea40",
+    "mnn_age_policy_replay_v1.csv": "7eaa8f9c320c45fb3999400b1a9fabab76b3fe2b3433ebe8896c93d7fb230530",
+    "mnn_age_policy_replay_v1.py": "a7cbbe9355a107b956c91de1c2225427697bd7ab2d854e2298070e2521f565c9",
+    "mnn_age_policy_replay_v1_human_review.csv": "35094c8630807f5b472ba6e81fc55a9b0e1a63b3d18747a2a175a09fd09cb436",
+    "mnn_age_policy_replay_v1_summary.md": "64c1b9d55506a619afbec2a7712ce4164987f3d3a2533312d15507f082e4ef84",
+    "mnn_identity_enrichment_pass_human_review_v2 - mnn_identity_enrichment_pass_human_review_v2.csv": "ec167da556040e71e458c6bc74ba832b9f5cc60372d4e6e3de346f1373f93f5b",
+    "mnn_identity_enrichment_pass_research_context.csv": "7fe535fd4bf4dc9c22df995e61f3c542fd84be84275e5becd23a863d12a45146",
+    "mnn_identity_enrichment_pass_results.csv": "be3e8c74ec63c303261ae2aa3d7a79fbf545e2b7df60f4b9e5c485d276f94736",
+    "mnn_non_drug_override_policy_v1_reviewed.csv": "2a30637e73d6ddf2d5ff8096ac57f8d2ae06c692b208135dcd5c676c0b900a12"
+  },
+  "no_new_evidence": true,
+  "policy_version": "age_policy_replay_v2",
+  "preflight": {
+    "historical_na_without_m2_count": 2,
+    "historical_na_without_m2_ids": [
+      "11272",
+      "45"
+    ],
+    "m2_approved_count": 13,
+    "m2_approved_ids": [
+      "56",
+      "75",
+      "249",
+      "3763",
+      "5322",
+      "8201",
+      "9197",
+      "18179",
+      "18830",
+      "21387",
+      "22548",
+      "23695",
+      "26319"
+    ],
+    "product_45_in_m2": false,
+    "reviewed_row_count": 100,
+    "unique_product_id": 100
+  },
+  "queues": {
+    "drug_age_pilot_sample_count": 40,
+    "drug_age_review_count": 87,
+    "m2_non_drug_review_count": 13,
+    "pilot_ids": [
+      "54",
+      "88",
+      "486",
+      "844",
+      "1765",
+      "2621",
+      "4481",
+      "5270",
+      "9301",
+      "10046",
+      "11142",
+      "16485",
+      "16623",
+      "18125",
+      "24255",
+      "72",
+      "884",
+      "1668",
+      "3556",
+      "4487",
+      "4593",
+      "4922",
+      "5267",
+      "7816",
+      "7858",
+      "9511",
+      "10536",
+      "21019",
+      "24095",
+      "24750",
+      "45",
+      "11272",
+      "20122",
+      "20614",
+      "26115",
+      "3065",
+      "9941",
+      "15150",
+      "19198",
+      "21010"
+    ],
+    "pilot_meta": {
+      "includes_product_45": true,
+      "picked": {
+        "conflict_requires_evidence": 15,
+        "downgrade_unsupported_to_unknown": 15,
+        "special_identity_product": 5,
+        "unknown_or_insufficient": 5
+      },
+      "product_45_stratum": "special_identity_product",
+      "redistributed_count": 0,
+      "shortfall_after": {
+        "conflict_requires_evidence": 0,
+        "downgrade_unsupported_to_unknown": 0,
+        "special_identity_product": 0,
+        "unknown_or_insufficient": 0
+      },
+      "shortfall_before_redistribute_note": "shortfall values after pinning/fill/redistribute",
+      "target": {
+        "conflict_requires_evidence": 15,
+        "downgrade_unsupported_to_unknown": 15,
+        "special_identity_product": 5,
+        "unknown_or_insufficient": 5
+      }
+    },
+    "pilot_stratum_distribution": {
+      "conflict_requires_evidence": 15,
+      "downgrade_unsupported_to_unknown": 15,
+      "special_identity_product": 5,
+      "unknown_or_insufficient": 5
+    },
+    "pilot_subset_of_drug": true,
+    "queue_overlap": []
+  },
+  "replay_row_count": 100,
+  "replay_version": "mnn_age_policy_replay_v2",
+  "safety_checks": {
+    "all_m2_approved_not_applicable": true,
+    "historical_na_without_m2_are_unknown": true,
+    "historical_na_without_m2_not_conflict": true,
+    "no_current_age_accepted_to_db": true,
+    "no_evidence_added": true,
+    "no_hidden_source_winner": true,
+    "no_non_m2_not_applicable": true,
+    "product_45_unknown_not_conflict": true
+  },
+  "task": "M4.1.1",
+  "unique_product_id": 100,
+  "v1_to_v2": {
+    "changed_count": 2,
+    "changed_rows": [
+      {
+        "product_id": "45",
+        "v1_decision": "conflict_requires_evidence",
+        "v1_value": "conflict",
+        "v2_decision": "insufficient_existing_evidence",
+        "v2_value": "unknown"
+      },
+      {
+        "product_id": "11272",
+        "v1_decision": "conflict_requires_evidence",
+        "v1_value": "conflict",
+        "v2_decision": "insufficient_existing_evidence",
+        "v2_value": "unknown"
+      }
+    ],
+    "conflict_to_unknown_count": 2,
+    "conflict_to_unknown_ids": [
+      "45",
+      "11272"
+    ],
+    "historical_not_applicable_without_m2_count": 2,
+    "historical_not_applicable_without_m2_ids": [
+      "45",
+      "11272"
+    ],
+    "includes_45": true,
+    "m2_not_applicable_retained": 13,
+    "total_rows_unchanged_count": true
+  }
+}

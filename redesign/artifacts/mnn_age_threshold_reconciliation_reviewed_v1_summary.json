@@ -1,0 +1,284 @@
+{
+  "analysis": {
+    "adult_only_18plus": 16,
+    "child_plus_adult_0_6_universal": 13,
+    "children_only": 0,
+    "exception_ids": [
+      "10046"
+    ],
+    "normalized_12_16_to_universal": 10,
+    "remaining_manual_exceptions": 1,
+    "unknown_thresholds": 1
+  },
+  "conclusion": "Age threshold and age segment are separate. 12/14/15/16+ is not adults-only if child+adult scope is confirmed. This remains manual/audit-only and is not a DB/routing update.",
+  "contrast_to_original_labels": {
+    "should_be_adults": 26,
+    "should_be_adults_normalized_to_universal": 10,
+    "should_be_adults_normalized_to_universal_ids": [
+      "72",
+      "1668",
+      "3065",
+      "9301",
+      "9511",
+      "11272",
+      "16485",
+      "16623",
+      "19198",
+      "24750"
+    ],
+    "should_be_adults_stayed_adults": 16,
+    "should_be_adults_stayed_adults_ids": [
+      "45",
+      "54",
+      "88",
+      "486",
+      "884",
+      "1765",
+      "3556",
+      "4593",
+      "4922",
+      "5267",
+      "7816",
+      "7858",
+      "15150",
+      "18125",
+      "20122",
+      "24095"
+    ],
+    "should_be_universal": 14,
+    "should_be_universal_got_explicit_threshold": 13,
+    "should_be_universal_got_explicit_threshold_ids": [
+      "844",
+      "2621",
+      "4481",
+      "4487",
+      "5270",
+      "9941",
+      "10536",
+      "11142",
+      "20614",
+      "21010",
+      "21019",
+      "24255",
+      "26115"
+    ],
+    "should_be_universal_remain_unknown_or_exception": 1,
+    "should_be_universal_remain_unknown_or_exception_ids": [
+      "10046"
+    ]
+  },
+  "date": "2026-08-19",
+  "examples": {
+    "adolescent_to_universal": [
+      {
+        "label_age_pilot": "should_be_adults",
+        "normalized_text": "ФАРИНГАЛ таб. 650мг N10 Салута-М | Салута-М ООО | Салута-М ООО | N10",
+        "notes": "Взрослый с 12 лет",
+        "product_id": "72",
+        "reviewed_age_decision": "reviewed_child_or_adolescent_plus_adult",
+        "reviewed_age_min_years": "12",
+        "reviewed_age_segment": "универсальный"
+      },
+      {
+        "label_age_pilot": "should_be_adults",
+        "normalized_text": "ЧАБРЕЦА ТРАВА Ф/П 1,5Г №20 ЗДОРОВЬЕ | Здоровье фирма ЗАО | Здоровье фирма ЗАО",
+        "notes": "Взрослый с 12 лет",
+        "product_id": "1668",
+        "reviewed_age_decision": "reviewed_child_or_adolescent_plus_adult",
+        "reviewed_age_min_years": "12",
+        "reviewed_age_segment": "универсальный"
+      },
+      {
+        "label_age_pilot": "should_be_adults",
+        "normalized_text": "ФЛУКОНАЗОЛ-OBL КАПС. 150МГ №4 | ОБОЛЕНСКОЕ ФП АО | ОБОЛЕНСКОЕ ФП АО",
+        "notes": "Взрослый с 16 лет",
+        "product_id": "3065",
+        "reviewed_age_decision": "reviewed_child_or_adolescent_plus_adult",
+        "reviewed_age_min_years": "16",
+        "reviewed_age_segment": "универсальный"
+      }
+    ],
+    "adult_only": [
+      {
+        "label_age_pilot": "should_be_adults",
+        "normalized_text": "АКВИОН КОЖА ВОЛОСЫ НОГТИ таб. N60 ВТФ ООО | ВТФ ООО | ВТФ ООО | N60",
+        "notes": "Взрослый с 18 лет",
+        "product_id": "45",
+        "reviewed_age_decision": "reviewed_adult_only",
+        "reviewed_age_min_years": "18",
+        "reviewed_age_segment": "взрослые"
+      },
+      {
+        "label_age_pilot": "should_be_adults",
+        "normalized_text": "ГЕПАРИН 5000ЕД/мл 5мл N5 р-р для в/в и п/к введения Армавирская биологическая ф…",
+        "notes": "Взрослый с 18 лет",
+        "product_id": "54",
+        "reviewed_age_decision": "reviewed_adult_only",
+        "reviewed_age_min_years": "18",
+        "reviewed_age_segment": "взрослые"
+      },
+      {
+        "label_age_pilot": "should_be_adults",
+        "normalized_text": "ГЕСПЕРИДИН+ДИОСМИН 100мг+900мг N30 таб. покрытые пленочной оболочкой Алиум АО |…",
+        "notes": "Взрослый с 18 лет",
+        "product_id": "88",
+        "reviewed_age_decision": "reviewed_adult_only",
+        "reviewed_age_min_years": "18",
+        "reviewed_age_segment": "взрослые"
+      }
+    ],
+    "child_plus_adult": [
+      {
+        "label_age_pilot": "should_be_universal",
+        "normalized_text": "ЭЛЬКАР Р-Р Д/ПРИЕМА ВНУТРЬ 300МГ/МЛ ФЛ. 25МЛ | ///ПИК-ФАРМА ЛЕК | ///ПИК-ФАРМА …",
+        "notes": "Применение у детей с рождения и у взрослых.",
+        "product_id": "844",
+        "reviewed_age_decision": "reviewed_child_or_adolescent_plus_adult",
+        "reviewed_age_min_years": "0",
+        "reviewed_age_segment": "универсальный"
+      },
+      {
+        "label_age_pilot": "should_be_universal",
+        "normalized_text": "ФУРАЦИЛИН ТАБЛ. Д/Р-РА Д/МЕСТН. И НАРУЖ. ПРИМ. 20МГ №20 ТАТХИМФАРМПРЕПАРАТЫ | Т…",
+        "notes": "Применение у детей с рождения и у взрослых.",
+        "product_id": "2621",
+        "reviewed_age_decision": "reviewed_child_or_adolescent_plus_adult",
+        "reviewed_age_min_years": "0",
+        "reviewed_age_segment": "универсальный"
+      },
+      {
+        "label_age_pilot": "should_be_universal",
+        "normalized_text": "ТРАНЕКСАМОВАЯ КИСЛОТА ТАБЛ. П/ПЛЕН/ОБ. 250МГ №30 МЭЗ | МОСКОВСКИЙ ЭНДОКРИННЫЙ З…",
+        "notes": "Подтверждено применение у детей с 3 лет",
+        "product_id": "4481",
+        "reviewed_age_decision": "reviewed_child_or_adolescent_plus_adult",
+        "reviewed_age_min_years": "3",
+        "reviewed_age_segment": "универсальный"
+      }
+    ],
+    "exceptions": [
+      {
+        "label_age_pilot": "should_be_universal",
+        "normalized_text": "ПАПАВЕРИН ТАБЛ. 40МГ №10 ИРБИТСКИЙ ХФЗ | ИРБИТСКИЙ ХИМЗАВОД ОАО | ИРБИТСКИЙ ХИМ…",
+        "notes": "Применение у детей с 10 лет и у взрослых.",
+        "product_id": "10046",
+        "reviewed_age_decision": "manual_input_invalid",
+        "reviewed_age_min_years": "unknown",
+        "reviewed_age_segment": "unknown"
+      }
+    ]
+  },
+  "followup_row_count": 7,
+  "input_sha256": {
+    "m4_age_segment_contract_v1.md": "ba0927931f8bf732ab293e528d3456e9429b44374f25374483bd3495402eea40",
+    "m4_age_threshold_mapping_v1.md": "1149d776b98751df386989042178655cf2b0ddd6cca020ff6705ad84f5e3f9bb",
+    "mnn_age_policy_replay_v2_drug_age_pilot_sample.csv": "ba887ded2499287874d694cc576930e117728f7ce943e7340cb0d63704f5fcf7",
+    "mnn_age_threshold_reconciliation_v1.csv": "355cf65ef63cd86f2e11f8a570089f6f202eb3ea4b9ff6e73abcaf8eb759d39b",
+    "mnn_age_threshold_reconciliation_v1_followup - mnn_age_threshold_reconciliation_v1_followup.csv": "6b27521f8496275b163bf0fd9cdf2a6554037d4c3982b71a72a44f1b54ea7879",
+    "mnn_age_threshold_reconciliation_v1_followup.csv": "c47394405d6d8d215ebe09ef48dc8075c04fe8f15671ed71c07e0be6ff600679",
+    "mnn_age_threshold_reconciliation_v1_summary.md": "f1ca4970036f83ff52456c84a221edaef1da48842765d573d6c46b9539a84a01",
+    "mnn_non_drug_override_policy_v1_reviewed.csv": "2a30637e73d6ddf2d5ff8096ac57f8d2ae06c692b208135dcd5c676c0b900a12"
+  },
+  "isolation": {
+    "followup_input_not_modified": true,
+    "m4_2_source_not_modified": true,
+    "no_attr_snapshot_product_kind_prod_sem_changes": true,
+    "no_commit_push": true,
+    "no_web_llm_db_n8n": true,
+    "offline_reviewed_reconciliation_only": true
+  },
+  "manual_threshold_distribution_followup_labels": {
+    "0": 5,
+    "1": 0,
+    "10": 1,
+    "12": 0,
+    "14": 0,
+    "15": 0,
+    "16": 0,
+    "18": 0,
+    "2": 0,
+    "3": 0,
+    "6": 1,
+    "unknown": 0
+  },
+  "pilot_row_count": 40,
+  "policy_version": "age_threshold_reconciliation_reviewed_v1",
+  "preflight": {
+    "all_followup_matches": [
+      "mnn_age_threshold_reconciliation_v1_followup - mnn_age_threshold_reconciliation_v1_followup.csv",
+      "mnn_age_threshold_reconciliation_v1_followup.csv"
+    ],
+    "contract_conflict_rows": [],
+    "filled_min": 7,
+    "filled_notes": 7,
+    "filled_scope": 7,
+    "filled_segment": 7,
+    "followup_is_subset": true,
+    "followup_row_count": 7,
+    "followup_unique": 7,
+    "generated_followup": "mnn_age_threshold_reconciliation_v1_followup.csv",
+    "invalid_manual_rows": [
+      {
+        "errors": [
+          "invalid label_age_min_years_manual='10'"
+        ],
+        "product_id": "10046"
+      }
+    ],
+    "labelled_followup": "mnn_age_threshold_reconciliation_v1_followup - mnn_age_threshold_reconciliation_v1_followup.csv",
+    "m2_approved_count": 13,
+    "manual_min_vocab": {
+      "0": 5,
+      "10": 1,
+      "6": 1
+    },
+    "manual_scope_vocab": {
+      "children_and_adults": 7
+    },
+    "manual_segment_vocab": {
+      "универсальный": 7
+    },
+    "recon_row_count": 40,
+    "source_reconciliation": "mnn_age_threshold_reconciliation_v1.csv"
+  },
+  "reviewed_decision_distribution": {
+    "manual_input_conflict": 0,
+    "manual_input_invalid": 1,
+    "manual_segment_normalized_by_contract": 0,
+    "reviewed_adult_only": 16,
+    "reviewed_child_or_adolescent_plus_adult": 23,
+    "reviewed_children_only": 0,
+    "reviewed_unknown": 0
+  },
+  "reviewed_segment_distribution": {
+    "conflict": 0,
+    "not_applicable": 0,
+    "unknown": 1,
+    "взрослые": 16,
+    "дети": 0,
+    "универсальный": 23
+  },
+  "reviewed_threshold_distribution": {
+    "0": 5,
+    "1": 1,
+    "12": 8,
+    "14": 0,
+    "15": 1,
+    "16": 1,
+    "18": 16,
+    "2": 1,
+    "3": 3,
+    "6": 3,
+    "unknown": 1
+  },
+  "task": "M4.2.1",
+  "unique_product_id": 40,
+  "validation": {
+    "adults_have_18_or_adult_only": true,
+    "exceptions_count": 1,
+    "m2_excluded": true,
+    "no_12_16_child_adult_as_adults": true,
+    "reviewed_equals_pilot": true,
+    "unique_product_id": 40
+  }
+}

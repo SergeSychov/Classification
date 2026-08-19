@@ -1,0 +1,222 @@
+{
+  "actual_age_error_count": 24,
+  "age_conflict_status_distribution": {
+    "baseline_vs_enrichment_conflict": 11,
+    "no_conflict": 9,
+    "unknown": 4
+  },
+  "age_error_bucket_distribution": {
+    "overbroad_adult_without_evidence": 5,
+    "overbroad_universal_without_evidence": 3,
+    "source_conflict_not_escalated": 11,
+    "unknown_should_be_resolved": 5
+  },
+  "age_evidence_grade_guess_distribution": {
+    "none": 24
+  },
+  "age_source_type_guess_distribution": {
+    "official_instruction_product_specific": 2,
+    "official_manufacturer_or_MAH": 1,
+    "pharmacy_product_card": 1,
+    "rls_or_vidal_product_card": 6,
+    "unknown": 14
+  },
+  "audit_version": "mnn_age_contract_audit_v1",
+  "canonical_age_values": [
+    "conflict",
+    "not_applicable",
+    "unknown",
+    "взрослые",
+    "дети",
+    "универсальный"
+  ],
+  "constraints_respected": {
+    "do_not_run_phase_a_yet": true,
+    "keep_rx_otc_p2_support_only": true,
+    "no_attr_snapshot_product_kind_prod_sem_changes": true,
+    "no_commit_push": true,
+    "no_db_writes": true,
+    "no_input_artifact_modification": true,
+    "no_web_searxng_http_llm_n8n": true,
+    "offline_design_only": true
+  },
+  "count_mismatch_vs_expected_24": false,
+  "current_age_confidence_distribution": {
+    "high": 16,
+    "medium": 3,
+    "unknown": 5
+  },
+  "current_age_distribution": {
+    "unknown": 5,
+    "взрослые": 5,
+    "универсальный": 14
+  },
+  "current_age_method_distribution": {
+    "identity_enrichment": 9,
+    "not_resolved": 5,
+    "previous_enrichment": 7,
+    "sem_baseline": 3
+  },
+  "current_age_source_distribution": {
+    "mnn_catalog_resolution_wave500_v3": 7,
+    "mnn_identity_enrichment_pass_results": 9,
+    "none": 5,
+    "sem_wave500_mnn_v3_report": 3
+  },
+  "current_age_stage_distribution": {
+    "mnn_identity_enrichment": 9,
+    "none": 5,
+    "previous_mnn_enrichment": 7,
+    "sem1": 3
+  },
+  "expected_age_error_count": 24,
+  "final_mnn_method_distribution": {
+    "catalog_consensus": 1,
+    "enrichment": 15,
+    "input_explicit_mnn": 6,
+    "input_plus_enrichment": 1,
+    "unresolved_final": 1
+  },
+  "hint_is_parsed_reviewer_note_not_ground_truth": true,
+  "identity_gate_status_distribution": {
+    "resolved_catalog": 1,
+    "resolved_enrichment": 7,
+    "resolved_input_explicit": 6,
+    "unresolved_catalog": 10
+  },
+  "input_sha256": {
+    "mnn_identity_enrichment_pass_human_review_v2 - mnn_identity_enrichment_pass_human_review_v2.csv": "ec167da556040e71e458c6bc74ba832b9f5cc60372d4e6e3de346f1373f93f5b",
+    "mnn_identity_enrichment_pass_research_context.csv": "7fe535fd4bf4dc9c22df995e61f3c542fd84be84275e5becd23a863d12a45146",
+    "mnn_identity_enrichment_pass_results.csv": "be3e8c74ec63c303261ae2aa3d7a79fbf545e2b7df60f4b9e5c485d276f94736",
+    "mnn_identity_enrichment_pass_review_age_errors_v1.csv": "a3822ffd5adf07d99a11ae6974dcf258200122237cb0ac38a7821069dc7bb3d8",
+    "mnn_identity_enrichment_pass_review_metrics_v1.md": "14f42733965e740e2eddebc29a296625070121df70a7630be07c6e9809937ca0",
+    "mnn_identity_enrichment_pass_searxng_raw.jsonl": "99491b88b534ba76c2a8f675c33926af461e7ac5d5ae5ff2281565195ebdee1a"
+  },
+  "m2_approved_non_drug_ids": [
+    "56",
+    "75",
+    "249",
+    "3763",
+    "5322",
+    "8201",
+    "9197",
+    "18179",
+    "18830",
+    "21387",
+    "22548",
+    "23695",
+    "26319"
+  ],
+  "m2_overlap_count": 0,
+  "m2_overlap_product_ids": [],
+  "main_conclusion": {
+    "conflict_or_identity": "11/24 primary source_conflict_not_escalated; 11/24 carry baseline_vs_enrichment_conflict (typically Sem=взрослые vs enrichment=универсальный). 7/24 have generic-MNN and/or weak identity and/or wrong-form URL signals. No source winner is declared.",
+    "missing_or_weak_evidence": "5/24 primary unknown_should_be_resolved. 14/24 have no saved URLs (skip/reuse). 24/24 have no explicit Age phrase in saved titles/excerpts. Saved GRLS hits in this inventory are landings, not product records. This is an evidence-capture gap; it is not permission to retrieve yet.",
+    "normalization_policy_failure": "19/24 rows emitted взрослые or универсальный with evidence_grade=none (no explicit Age phrase in saved titles/excerpts). Primary overbroad buckets: 3 universal + 5 adult = 8/24. Sem defaults and enrichment 'универсальный' are not an Age evidence contract."
+  },
+  "manual_expected_age_hint_distribution": {
+    "взрослые": 16,
+    "универсальный": 8
+  },
+  "manual_expected_age_hint_strength_distribution": {
+    "explicit_label_note": 24
+  },
+  "no_current_age_accepted": true,
+  "pass_action_distribution": {
+    "new_enrichment": 10,
+    "reuse_existing_enrichment": 7,
+    "skip_catalog": 1,
+    "skip_strong_input_mnn": 6
+  },
+  "policy_version": "age_contract_v1",
+  "preflight": {
+    "actual_error_count": 24,
+    "all_error_labels_allowed": true,
+    "all_errors_in_results": true,
+    "all_errors_in_review_v2": true,
+    "duplicate_product_id": false,
+    "error_label_vocabulary": {
+      "incorrect": 24
+    },
+    "m2_ids_checked": [
+      "56",
+      "75",
+      "249",
+      "3763",
+      "5322",
+      "8201",
+      "9197",
+      "18179",
+      "18830",
+      "21387",
+      "22548",
+      "23695",
+      "26319"
+    ],
+    "missing_from_results": [],
+    "missing_from_review_v2": [],
+    "missing_required_columns": [],
+    "required_columns_ok": true,
+    "review_sha256_note": "Metrics v1 recorded a historical SHA for the labeled review CSV; this audit hashes the current required Sheets-export filename as-is and does not modify it.",
+    "review_v2_age_label_coverage": {
+      "correct": 59,
+      "incorrect": 24,
+      "not_labeled": 17
+    },
+    "review_v2_row_count": 100,
+    "unique_product_id_count": 24
+  },
+  "product_ids": [
+    "54",
+    "88",
+    "486",
+    "1668",
+    "1765",
+    "2023",
+    "3027",
+    "3065",
+    "4133",
+    "4924",
+    "7275",
+    "9301",
+    "10536",
+    "13616",
+    "15150",
+    "16623",
+    "18125",
+    "19198",
+    "20122",
+    "20614",
+    "21010",
+    "24750",
+    "25982",
+    "26115"
+  ],
+  "proposed_age_decision_distribution": {
+    "require_manual_review": 12,
+    "require_product_specific_evidence": 12
+  },
+  "questions": {
+    "adult_vs_universal_pair_rows": 19,
+    "any_source_conflict_flag": 11,
+    "assigned_segment_without_product_specific_age_evidence": 19,
+    "baseline_vs_enrichment_conflict_flag": 11,
+    "conflict_identity_primary": 11,
+    "evidence_grade_none": 24,
+    "generic_mnn_url_rows": 5,
+    "generic_or_weak_identity_or_wrong_form_union": 7,
+    "missing_or_weak_evidence_primary": 5,
+    "no_saved_urls": 14,
+    "normalization_policy_failure_primary": 8,
+    "overbroad_adult_primary": 5,
+    "overbroad_universal_primary": 3,
+    "research_context_missing": 14,
+    "source_conflict_not_escalated_primary": 11,
+    "source_method_with_most_errors": "identity_enrichment",
+    "unknown_should_be_resolved": 5,
+    "weak_identity_signal_rows": 2,
+    "wrong_form_or_strength_signal_rows": 1
+  },
+  "task": "M4.0",
+  "unique_product_id": 24
+}

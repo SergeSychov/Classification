@@ -1,0 +1,422 @@
+{
+  "age_replay_conflict_status_distribution": {
+    "baseline_vs_enrichment_conflict": 23,
+    "multiple_source_conflict": 1,
+    "no_conflict": 59,
+    "not_applicable": 13,
+    "unknown": 4
+  },
+  "age_replay_decision_distribution": {
+    "conflict_requires_evidence": 24,
+    "downgrade_unsupported_to_unknown": 57,
+    "m2_not_applicable_candidate": 13,
+    "retain_safe_unknown": 6
+  },
+  "age_replay_evidence_status_distribution": {
+    "conflict": 24,
+    "no_saved_evidence": 39,
+    "not_applicable": 13,
+    "product_specific_but_no_explicit_age": 23,
+    "product_specific_explicit": 1
+  },
+  "age_replay_queue_action_distribution": {
+    "not_applicable_no_drug_age_review": 13,
+    "require_product_specific_evidence": 6,
+    "send_to_age_contract_review": 81
+  },
+  "age_replay_value_distribution": {
+    "conflict": 24,
+    "not_applicable": 13,
+    "unknown": 63
+  },
+  "constraints_respected": {
+    "no_attr_snapshot_product_kind_prod_sem_changes": true,
+    "no_commit_push": true,
+    "no_db_writes": true,
+    "no_input_artifact_modification": true,
+    "no_m4_0_contract_modification": true,
+    "no_web_searxng_http_llm_n8n": true,
+    "offline_policy_replay_only": true
+  },
+  "current_age_distribution": {
+    "not_applicable": 15,
+    "unknown": 6,
+    "взрослые": 43,
+    "универсальный": 36
+  },
+  "examples": {
+    "conflict": [
+      {
+        "conflict": "multiple_source_conflict",
+        "current": "not_applicable",
+        "decision": "conflict_requires_evidence",
+        "method": "not_applicable",
+        "normalized_text": "АКВИОН КОЖА ВОЛОСЫ НОГТИ таб. N60 ВТФ ООО | ВТФ ООО | ВТФ ООО | N60",
+        "product_id": "45",
+        "replay": "conflict"
+      },
+      {
+        "conflict": "baseline_vs_enrichment_conflict",
+        "current": "универсальный",
+        "decision": "conflict_requires_evidence",
+        "method": "previous_enrichment",
+        "normalized_text": "ГЕПАРИН 5000ЕД/мл 5мл N5 р-р для в/в и п/к введения Армавирская биологическая фабрика фгуп",
+        "product_id": "54",
+        "replay": "conflict"
+      },
+      {
+        "conflict": "baseline_vs_enrichment_conflict",
+        "current": "универсальный",
+        "decision": "conflict_requires_evidence",
+        "method": "identity_enrichment",
+        "normalized_text": "ГАСТРАСАН ЭКСПРЕСС 680мг+80мг N12 таб. жевательные Апельсин ЮжФарм ООО | ЮжФарм ООО | ЮжФа",
+        "product_id": "73",
+        "replay": "conflict"
+      },
+      {
+        "conflict": "baseline_vs_enrichment_conflict",
+        "current": "универсальный",
+        "decision": "conflict_requires_evidence",
+        "method": "identity_enrichment",
+        "normalized_text": "ГЕСПЕРИДИН+ДИОСМИН 100мг+900мг N30 таб. покрытые пленочной оболочкой Алиум АО | Алиум АО |",
+        "product_id": "88",
+        "replay": "conflict"
+      },
+      {
+        "conflict": "baseline_vs_enrichment_conflict",
+        "current": "универсальный",
+        "decision": "conflict_requires_evidence",
+        "method": "identity_enrichment",
+        "normalized_text": "ЭСЦИТАЛОПРАМ КАНОН ТАБЛ. П/ПЛЕН/ОБ. 20МГ №28 | КАНОНФАРМА ПРОДАКШН ЗАО | КАНОНФАРМА ПРОДАК",
+        "product_id": "486",
+        "replay": "conflict"
+      }
+    ],
+    "current_unknown_retained": [
+      {
+        "conflict": "unknown",
+        "current": "unknown",
+        "decision": "retain_safe_unknown",
+        "method": "not_resolved",
+        "normalized_text": "ФЛУКОНАЗОЛ-OBL КАПС. 150МГ №4 | ОБОЛЕНСКОЕ ФП АО | ОБОЛЕНСКОЕ ФП АО",
+        "product_id": "3065",
+        "replay": "unknown"
+      },
+      {
+        "conflict": "no_conflict",
+        "current": "unknown",
+        "decision": "retain_safe_unknown",
+        "method": "not_resolved",
+        "normalized_text": "ПАРОДОНТОЦИД ОПОЛАСКИВАТЕЛЬ ДЛЯ ПОЛОСТИ РТА 250МЛ | МОСКОВСКАЯ ФФ | МОСКОВСКАЯ ФФ",
+        "product_id": "9941",
+        "replay": "unknown"
+      },
+      {
+        "conflict": "unknown",
+        "current": "unknown",
+        "decision": "retain_safe_unknown",
+        "method": "not_resolved",
+        "normalized_text": "ЛИДОКАИН БУФУС Р-Р Д/ИН. 100МГ/МЛ АМП. 2МЛ №10 ОБНОВЛЕНИЕ | ОБНОВЛЕНИЕ ПФК АО | ОБНОВЛЕНИЕ",
+        "product_id": "15150",
+        "replay": "unknown"
+      },
+      {
+        "conflict": "no_conflict",
+        "current": "unknown",
+        "decision": "retain_safe_unknown",
+        "method": "not_resolved",
+        "normalized_text": "ЗВЕРОБОЯ ТРАВА 50Г ФИТОФАРМ | ФИТОФАРМ ООО | ФИТОФАРМ ООО",
+        "product_id": "19198",
+        "replay": "unknown"
+      },
+      {
+        "conflict": "unknown",
+        "current": "unknown",
+        "decision": "retain_safe_unknown",
+        "method": "not_resolved",
+        "normalized_text": "ДЕКСАМЕТАЗОН-КРКА ТАБЛ. 4МГ №20 | КРКА Д.Д., НОВО МЕСТО АО/КРКА-РУС ООО | КРКА Д.Д., НОВО ",
+        "product_id": "20614",
+        "replay": "unknown"
+      }
+    ],
+    "downgrade_adults_or_universal": [
+      {
+        "conflict": "no_conflict",
+        "current": "взрослые",
+        "decision": "downgrade_unsupported_to_unknown",
+        "method": "sem_baseline",
+        "normalized_text": "ХАЙЛЕФЛОКС 500мг N5 таб. покрытые пленочной оболочкой Хайгланс Лабораториз Пвт.Лтд. | Хайг",
+        "product_id": "8",
+        "replay": "unknown"
+      },
+      {
+        "conflict": "no_conflict",
+        "current": "взрослые",
+        "decision": "downgrade_unsupported_to_unknown",
+        "method": "sem_baseline",
+        "normalized_text": "МЕРИФАТИН МВ 750мг N60 таб. с пролонгированным высвобождением Фармасинтез-Тюмень ООО | Фар",
+        "product_id": "28",
+        "replay": "unknown"
+      },
+      {
+        "conflict": "no_conflict",
+        "current": "взрослые",
+        "decision": "downgrade_unsupported_to_unknown",
+        "method": "identity_enrichment",
+        "normalized_text": "МЕЛАДАПТ 3мг N10 таб. покрытые пленочной оболочкой Озон ООО | Озон ООО | Озон ООО | N10",
+        "product_id": "34",
+        "replay": "unknown"
+      },
+      {
+        "conflict": "no_conflict",
+        "current": "взрослые",
+        "decision": "downgrade_unsupported_to_unknown",
+        "method": "sem_baseline",
+        "normalized_text": "ЭПЛЕРЕНОН-ТЕВА 25мг N30 таб. покрытые пленочной оболочкой Тева фармасьютикал воркс прайвэт",
+        "product_id": "68",
+        "replay": "unknown"
+      },
+      {
+        "conflict": "no_conflict",
+        "current": "взрослые",
+        "decision": "downgrade_unsupported_to_unknown",
+        "method": "sem_baseline",
+        "normalized_text": "РОЗУВАСТАТИН-ТЕВА 20мг N90 таб. покрытые пленочной оболочкой Р-Фарм Новосёлки | Р-Фарм нов",
+        "product_id": "70",
+        "replay": "unknown"
+      }
+    ],
+    "m2_not_applicable": [
+      {
+        "conflict": "not_applicable",
+        "current": "not_applicable",
+        "decision": "m2_not_applicable_candidate",
+        "method": "not_applicable",
+        "normalized_text": "РИТОФЛЕКС МСМ таб. N60 Фармацевтическая Фабрика ООО | Фармацевтическая фабрика ООО | Фарма",
+        "product_id": "56",
+        "replay": "not_applicable"
+      },
+      {
+        "conflict": "not_applicable",
+        "current": "not_applicable",
+        "decision": "m2_not_applicable_candidate",
+        "method": "not_applicable",
+        "normalized_text": "САМБУКУС БУЗИНА ИММУНИТЕТ таб. массой 700мг N30 Грин сайд ООО | Грин Сайд ООО | Грин Сайд ",
+        "product_id": "75",
+        "replay": "not_applicable"
+      },
+      {
+        "conflict": "not_applicable",
+        "current": "not_applicable",
+        "decision": "m2_not_applicable_candidate",
+        "method": "not_applicable",
+        "normalized_text": "ОСТЕОМЕД таб. N60 Парафарм | Парафарм ООО | Парафарм ООО | N60",
+        "product_id": "249",
+        "replay": "not_applicable"
+      },
+      {
+        "conflict": "not_applicable",
+        "current": "not_applicable",
+        "decision": "m2_not_applicable_candidate",
+        "method": "not_applicable",
+        "normalized_text": "ФАРМГРУПП НАСТОЙКА 5 ТРАВ УСПОКОИТЕЛЬНАЯ ФЛ. 250МЛ | ФАРМГРУПП ООО | ФАРМГРУПП ООО",
+        "product_id": "3763",
+        "replay": "not_applicable"
+      },
+      {
+        "conflict": "not_applicable",
+        "current": "not_applicable",
+        "decision": "m2_not_applicable_candidate",
+        "method": "not_applicable",
+        "normalized_text": "ТАВОЛГА ВЯЗОЛИСТНАЯ (ЛАБАЗНИК) ТРАВА Ф/П 1,5Г №20 ХЕРБЕС | ХЕРБЕС ООО | ХЕРБЕС ООО",
+        "product_id": "5322",
+        "replay": "not_applicable"
+      }
+    ]
+  },
+  "human_review_decision_distribution": {
+    "conflict_requires_evidence": 24,
+    "downgrade_unsupported_to_unknown": 57,
+    "m2_not_applicable_candidate": 13,
+    "retain_safe_unknown": 6
+  },
+  "human_review_queue_action_distribution": {
+    "not_applicable_no_drug_age_review": 13,
+    "require_product_specific_evidence": 6,
+    "send_to_age_contract_review": 81
+  },
+  "human_review_row_count": 100,
+  "input_sha256": {
+    "m4_age_evidence_model_v1.json": "df51b20e09948d49c018bd616ff474ead859519d0078c8a18a864030cec8a9e9",
+    "m4_age_segment_contract_v1.md": "ba0927931f8bf732ab293e528d3456e9429b44374f25374483bd3495402eea40",
+    "mnn_age_contract_audit_v1.csv": "473630f6646bd2e0597fa047c14069c2e16760ec1e8369281e7b73daf202b080",
+    "mnn_age_contract_audit_v1_summary.md": "dd81653af04f69551621eb7cf19e2c08b690a124d31f9892864643f365487f5a",
+    "mnn_identity_enrichment_pass_human_review_v2 - mnn_identity_enrichment_pass_human_review_v2.csv": "ec167da556040e71e458c6bc74ba832b9f5cc60372d4e6e3de346f1373f93f5b",
+    "mnn_identity_enrichment_pass_research_context.csv": "7fe535fd4bf4dc9c22df995e61f3c542fd84be84275e5becd23a863d12a45146",
+    "mnn_identity_enrichment_pass_results.csv": "be3e8c74ec63c303261ae2aa3d7a79fbf545e2b7df60f4b9e5c485d276f94736",
+    "mnn_non_drug_override_policy_v1_reviewed.csv": "2a30637e73d6ddf2d5ff8096ac57f8d2ae06c692b208135dcd5c676c0b900a12"
+  },
+  "no_hidden_source_winner": true,
+  "no_new_evidence": true,
+  "per_method_downgrade": {
+    "identity_enrichment": {
+      "conflict_display": 15,
+      "current_rows": 37,
+      "downgraded_to_unknown": 22,
+      "retained_as_audit_only": 0
+    },
+    "previous_enrichment": {
+      "conflict_display": 7,
+      "current_rows": 26,
+      "downgraded_to_unknown": 19,
+      "retained_as_audit_only": 0
+    },
+    "sem_baseline": {
+      "conflict_display": 0,
+      "current_rows": 16,
+      "downgraded_to_unknown": 16,
+      "retained_as_audit_only": 0
+    }
+  },
+  "policy_version": "age_contract_v1",
+  "preflight": {
+    "count_mismatch_vs_expected_100": false,
+    "duplicate_count": 0,
+    "expected_reviewed_row_count": 100,
+    "m2_approved_count": 13,
+    "m2_approved_ids": [
+      "56",
+      "75",
+      "249",
+      "3763",
+      "5322",
+      "8201",
+      "9197",
+      "18179",
+      "18830",
+      "21387",
+      "22548",
+      "23695",
+      "26319"
+    ],
+    "m2_approved_in_review": 13,
+    "missing_required_columns": [],
+    "required_columns_ok": true,
+    "reviewed_row_count": 100,
+    "unique_product_id": 100
+  },
+  "product_ids": [
+    "8",
+    "28",
+    "34",
+    "45",
+    "54",
+    "56",
+    "68",
+    "70",
+    "72",
+    "73",
+    "75",
+    "88",
+    "92",
+    "249",
+    "354",
+    "456",
+    "486",
+    "777",
+    "844",
+    "884",
+    "1053",
+    "1668",
+    "1765",
+    "2023",
+    "2348",
+    "2621",
+    "3027",
+    "3065",
+    "3556",
+    "3759",
+    "3763",
+    "3781",
+    "4133",
+    "4403",
+    "4481",
+    "4487",
+    "4593",
+    "4684",
+    "4922",
+    "4924",
+    "5010",
+    "5258",
+    "5267",
+    "5270",
+    "5322",
+    "7275",
+    "7625",
+    "7803",
+    "7816",
+    "7858",
+    "8055",
+    "8201",
+    "8753",
+    "9197",
+    "9301",
+    "9511",
+    "9941",
+    "10046",
+    "10536",
+    "11142",
+    "11272",
+    "12389",
+    "12495",
+    "13125",
+    "13616",
+    "14758",
+    "15062",
+    "15150",
+    "16485",
+    "16623",
+    "18125",
+    "18179",
+    "18377",
+    "18830",
+    "19198",
+    "19370",
+    "20122",
+    "20614",
+    "20628",
+    "21010",
+    "21019",
+    "21137",
+    "21387",
+    "22468",
+    "22548",
+    "23695",
+    "24095",
+    "24098",
+    "24255",
+    "24682",
+    "24750",
+    "24896",
+    "24901",
+    "24945",
+    "25599",
+    "25982",
+    "26001",
+    "26038",
+    "26115",
+    "26319"
+  ],
+  "replay_row_count": 100,
+  "replay_version": "mnn_age_policy_replay_v1",
+  "safety_changes": {
+    "adults_to_unknown": 43,
+    "current_to_conflict": 24,
+    "current_unknown_retained": 6,
+    "m2_to_not_applicable_candidate": 13,
+    "retained_as_audit_only": 0,
+    "universal_to_unknown": 14
+  },
+  "task": "M4.1",
+  "unique_product_id": 100
+}
