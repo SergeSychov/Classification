@@ -31,7 +31,9 @@ Canonical migration design: [`20_MIGRATION_PLAN.md`](20_MIGRATION_PLAN.md)
 
 **M3 RX/OTC research closed for now** (2026-08-19): M3.0 → M3.2b.5 feasibility complete. Status: **`KEEP_RX_OTC_P2_SUPPORT_ONLY`**. **`DO_NOT_RUN_PHASE_A_YET`**. No stable unattended official GRLS P1 route (0/10 valid P1); MAH/instruction P1b only **2/10** (Termikon form-specific, not a general route). Workflow `rx-otc-product-retrieval-dev` exists, is standalone and **inactive**. It is not connected to Stage 2/hierarchy and has no DB/snapshot/attr writes. Current policy: P2 only candidate/support signal, never `final_rx_otc_value`. RX/OTC is not a routing gate. Brandquad is not official P1. M3.2c 11+30 batch must not run. Journal **п.44**.
 
-**Next main track (MNN offline):** **M4** Age contract + evidence policy (offline/audit-only; not used in routing until controlled review).
+**M4 Age pilot contract validated** (2026-08-19, M4.0–M4.2.2): offline/audit-only. Threshold (`age_min_years`, integer **0–18**) is separate from display segment. **12/14/15/16/10 + children_and_adults → универсальный**, not adults. Adults only at **18+** or explicit adult-only. Children-only needs explicit pediatric-only evidence (0 in this 40-row drug pilot). Reviewed freeze: `mnn_age_threshold_reconciliation_reviewed_v1_1.*` (40 unique IDs; exceptions **0**; adults **16**; universal **24**). **Not** merged to `attr_age_segment` / snapshot / Sem / routing. Journal **п.45**.
+
+**Next main track (MNN offline):** **M5** Norm v4 experiment (mfr/pack dedupe; offline only). M3 remains `KEEP_RX_OTC_P2_SUPPORT_ONLY` / `DO_NOT_RUN_PHASE_A_YET`.
 **Parallel Sem:** Wave-100/500 rubric → `critical_error_rate` (п.28). Hierarchy remains snapshot-off / prod untouched.
 
 | Track | Status |

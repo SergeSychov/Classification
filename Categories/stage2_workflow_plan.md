@@ -481,13 +481,15 @@
 * **M3.2a n8n runtime smoke** — **done** ✅ (см. **п.42**). CLI execs **42679/42680/42681**; workflow left inactive.
 * **M3.2b one-item live retrieval** — **done** ✅ (см. **п.43**). SKU `3065`; runner-side SearXNG+fetch; n8n left inactive.
 * **M3 RX/OTC research closeout** — **done** ✅ (см. **п.44**). Decision: `KEEP_RX_OTC_P2_SUPPORT_ONLY` / `DO_NOT_RUN_PHASE_A_YET`.
+* **M4 Age pilot contract** — **validated** ✅ (см. **п.45**). Audit-only; not a routing gate; not merged to `attr_age_segment`.
 
 ### Not done
 
 * Sem human rubric labeling для Wave-100 / Wave-500 (`critical_error_rate`).
 * Apply M2 implementation contract (queue filter) — **blocked** until explicit approval.
 * **M3.2c** 11+30 retrieval batch — **blocked / not scheduled** (no stable P1 route; re-entry in **п.44**).
-* Age contract · Norm v4 experiment (M4–M5) — **next offline track**.
+* Age merge into live Sem / `attr_age_segment` / routing — **blocked** until explicit approval (п.45).
+* **M5** Norm v4 experiment (mfr/pack dedupe) — **next offline track**.
 * Optional: SplitInBatches перед Sem0 (Wave-100/500 = chunked runner из‑за Merge/LLM parallel hang).
 * Dir / Need / Cat / optional Mnn cascade + Judge rewiring for hierarchy.
 * Prod Stage 2 Load allowlist-exclude patch.
@@ -496,11 +498,12 @@
 
 ### Next short steps
 
-1. **M4** Age contract + evidence policy — offline/audit-only; not a routing gate until controlled review.
+1. **M5** Norm v4 experiment (mfr/pack dedupe) — offline only; no production Norm rewrite.
 2. Parallel Sem track: human rubric labeling Wave-100/500 (`critical_error_rate`).
 3. Optional later: apply M2 queue-exclusion contract for 13 IDs (explicit approval only).
 4. Dir → Need → Cat → optional Mnn → Judge only after Sem gate + explicit MNN merge approval.
 5. M3.2c / RX P1 re-entry — only if **п.44** re-entry criteria are met. Do not activate `rx-otc-product-retrieval-dev`.
+6. Age remains audit-only (п.45). Do not write `attr_age_segment`.
 
 ---
 
@@ -1400,7 +1403,7 @@ PROGRESS processed 500/500 (100.0%) …
 3. ~~M3.2a inactive skeleton + n8n runtime smoke~~ → **done**, см. **п.41** / **п.42**.
 4. ~~M3.2b one-item live retrieval~~ → **done**, см. **п.43**.
 5. ~~M3 RX/OTC research closeout~~ → **done**, см. **п.44**.
-6. **Age contract** + evidence policy (inventory `*_age_errors_v1.csv`) — **next offline track**.
+6. ~~Age contract~~ → **done**, см. **п.45**.
 7. **Norm v4 experiment** (dedupe manufacturer/pack в `normalized_text`; offline only).
 
 #### Key artifacts
@@ -1446,7 +1449,8 @@ PROGRESS processed 500/500 (100.0%) …
 
 * ~~M3.0/M3.1~~ → **done**, см. **п.40**.
 * **M3.2a** inactive skeleton `rx-otc-product-retrieval-dev` (explicit ask; не hard gate).
-* M4 Age contract → M5 Norm v4 experiment.
+* ~~M4 Age contract~~ → **done**, см. **п.45**.
+* **M5** Norm v4 experiment.
 * Apply M2 queue-exclusion contract only after explicit approval.
 
 ---
@@ -1605,5 +1609,47 @@ PROGRESS processed 500/500 (100.0%) …
 
 #### Next
 
-* **M4** Age contract + evidence policy (offline/audit-only).
+* **M4** Age contract + evidence policy (offline/audit-only) — **done**, см. **п.45**.
 * Not: M3.2c, workflow activation, snapshot/`attr_*` merge.
+* **M5** Norm v4 experiment — next offline track.
+
+---
+
+45. **M4 Age pilot contract validated (M4.0–M4.2.2) (2026-08-19)**
+
+* **Статус:** **done** (offline / audit-only; pilot contract validated). Prod Stage 2 / hierarchy-dev / snapshot / `attr_age_segment` / `attr_*` / `product_kind` / Sem live / PostgreSQL / `classification_runs` — **не менялись**. No web / LLM / n8n in M4.2.x.
+* Age is **not** a routing gate. Do not merge into `attr_age_segment` until explicit approval.
+
+#### Completed
+
+* M4.0 Age contract audit + evidence model (`age_contract_v1`)
+* M4.1 / M4.1.1 Age policy replay v1→v2 (historical `not_applicable` without M2 → unknown, not conflict)
+* M4.2 threshold reconciliation: min years separate from segment; 12/14/15/16 ≠ adults
+* M4.2.1 reviewed merge of labelled follow-up (7 rows)
+* M4.2.2 accept explicit `age_min_years=10` (integer 0–18); v1.1 freeze
+
+#### Pilot result (40 unique drug `product_id`)
+
+| reviewed_age_segment | n |
+|----------------------|--:|
+| взрослые (18+) | 16 |
+| универсальный | 24 |
+| дети | 0 |
+| unknown / conflict / not_applicable | 0 |
+| exceptions | 0 |
+
+* Of original `should_be_adults` **26**: **16** stayed adults; **10** (12–16) → universal.
+* `product_id=10046`: explicit min **10** + `children_and_adults` → универсальный; **not** remapped to 6 or 12.
+* Children-only prevalence **cannot** be inferred: 0 explicit pediatric-only rows in this sample.
+
+#### Canonical freeze
+
+* Reviewed: `redesign/artifacts/mnn_age_threshold_reconciliation_reviewed_v1_1.*`
+* Contract: `redesign/m4_age_threshold_reconciliation_reviewed_contract_v1_1.md`
+* Mapping: `redesign/m4_age_threshold_mapping_v1.md`
+* Script: `scripts/mnn_age_threshold_reconciliation_reviewed_v1.py` (writes v1_1 only; does not overwrite v1)
+
+#### Next
+
+* **M5** Norm v4 experiment (offline).
+* Not: Age DB/routing/`attr_*` merge; M3.2c; activate `rx-otc-product-retrieval-dev`.

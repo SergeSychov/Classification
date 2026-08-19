@@ -3,7 +3,7 @@
 Updated: 2026-08-19
 Status board: [`00_PROJECT_STATUS.md`](00_PROJECT_STATUS.md)  
 Migration design: [`20_MIGRATION_PLAN.md`](20_MIGRATION_PLAN.md)  
-Journal pointer: [`../Categories/stage2_workflow_plan.md`](../Categories/stage2_workflow_plan.md) (section *Hierarchy redesign progress*; Wave-100 gate = п.28; offline MNN baseline = **п.38**; BAS/Other override = **п.39**; RX/OTC retriever design = **п.40**; M3.2a skeleton = **п.41**; M3.2a runtime smoke = **п.42**; M3.2b one-item live = **п.43**; M3 closeout = **п.44**)
+Journal pointer: [`../Categories/stage2_workflow_plan.md`](../Categories/stage2_workflow_plan.md) (section *Hierarchy redesign progress*; Wave-100 gate = п.28; offline MNN baseline = **п.38**; BAS/Other override = **п.39**; RX/OTC retriever design = **п.40**; M3.2a skeleton = **п.41**; M3.2a runtime smoke = **п.42**; M3.2b one-item live = **п.43**; M3 closeout = **п.44**; M4 Age pilot = **п.45**)
 
 ## Current baseline (done)
 
@@ -53,8 +53,8 @@ Naming: **B3 = Norm + Sem** (done; Sem smoke green → Wave-100 gate open).
 | **M3.2b** | One-item live retrieval + P2 support test + contract v2 | **done / paused** (2026-08-18) | SKU `3065`; runner-side SearXNG+fetch; n8n inactive; `supported_only` / candidate `otc` / `final=null`; contract v2: discovery/fetched/validated separated | journal **п.43**; `mnn_rx_otc_retrieval_m3_2b_*` |
 | **M3.2b.3–5** | P1 feasibility (SearXNG/Bing, direct GRLS, MAH instructions) | **done / paused** (2026-08-19) | SearXNG/Bing **0 valid P1/5**; direct GRLS **0 valid P1/10** (TLS/WAF/login; no bypass); MAH **2 valid P1b/10** (Termikon form-specific only). Decision: **`KEEP_RX_OTC_P2_SUPPORT_ONLY`** | journal **п.44**; `mnn_rx_otc_investigation_synthesis_v1.md` |
 | **M3.2c+** | 11 errors + 30 blind; human metrics | **blocked / not scheduled** | No stable mass P1 route. Re-entry only if public GRLS without login/WAF, or approved MAH registry with coverage, or a new user-approved P2 soft-signal experiment. Do **not** proceed automatically to Phase A 11+30 | — |
-| **M4** | Age contract + evidence policy | **next active offline task** (after M3 closeout) | Offline/audit-only; not used in routing until controlled review | `*_age_errors_v1.csv` |
-| **M5** | Norm v4 experiment (mfr/pack dedupe) | After M4 | Offline only; no production Norm rewrite | `*_text_quality_v1.csv` |
+| **M4** | Age contract + evidence policy (pilot validated) | **done** (2026-08-19) | Offline/audit-only; min years integer 0–18 separate from segment; 12/14/15/16/10 + child+adult → universal; adults only 18+; children-only 0/40 in this sample; no `attr_*` / snapshot / routing | journal **п.45**; `mnn_age_threshold_reconciliation_reviewed_v1_1.*`; `m4_age_threshold_reconciliation_reviewed_contract_v1_1.md` |
+| **M5** | Norm v4 experiment (mfr/pack dedupe) | **next** | Offline only; no production Norm rewrite | `*_text_quality_v1.csv` |
 
 ---
 
@@ -69,7 +69,8 @@ Naming: **B3 = Norm + Sem** (done; Sem smoke green → Wave-100 gate open).
 
 ## Next action
 
-1. **M4** Age contract + evidence policy — next active offline task. Audit-only; not used in routing until controlled review. Do not activate `rx-otc-product-retrieval-dev`. Still no snapshot / `attr_*`.
+1. **M5** Norm v4 experiment (mfr/pack dedupe) — next active offline task. Still no snapshot / `attr_*`.
 2. Parallel Sem track: human rubric labeling for Wave-100/500 → `critical_error_rate`. Keep hierarchy in safe default. **Dir+** after Sem V3 gate + explicit MNN merge approval.
 3. Optional later: apply M2 queue-exclusion contract for 13 IDs — only with explicit approval.
 4. M3.2c / RX P1 re-entry — only if journal **п.44** re-entry criteria are met. Policy remains **`KEEP_RX_OTC_P2_SUPPORT_ONLY`**.
+5. Age remains audit-only (п.45). Do not merge into `attr_age_segment` / routing until explicit approval.

@@ -151,11 +151,20 @@ Outputs: `mnn_tool_search_{slug}.csv` + `*_raw.jsonl`, `mnn_tool_search_bakeoff_
 - M3.0 → M3.2b.5 research **closed / paused**. Decision: **`KEEP_RX_OTC_P2_SUPPORT_ONLY`** and **`DO_NOT_RUN_PHASE_A_YET`**.
 - No production / hierarchy-dev / PostgreSQL / `classification_runs` / snapshot / `attr_*` / `product_kind` changes. Workflow `rx-otc-product-retrieval-dev` (`UqssZ24Jr7Qk9ef4`) remains inactive. M3.2c not run.
 - Scoped Git checkpoint planned (docs + isolated research tooling + compact artifacts only). Raw JSONL / caches / cookies / HTML dumps excluded.
-- Next main offline track: **M4** Age contract + evidence policy. Do not start M4 in this closeout.
+- Next main offline track after M3 closeout was **M4** Age (now done, п.45). Do not start M4 in this M3 closeout section.
 
 ---
 
-## 7. Quick pointers
+## 7. M4 Age pilot contract (2026-08-19)
+
+- M4.0–M4.2.2 **validated** as offline/audit-only. Canonical freeze: `mnn_age_threshold_reconciliation_reviewed_v1_1.*`. Journal **п.45**.
+- Threshold (integer 0–18) is separate from segment. 12/14/15/16/10 + child+adult → universal. Adults only at 18+. `10046` min=10 accepted; not remapped to 6/12.
+- No snapshot / `attr_age_segment` / Sem / DB / n8n. Git checkpoint: docs + M4 scripts + compact Age artifacts (no raw JSONL / caches).
+- Next offline: **M5** Norm v4.
+
+---
+
+## 8. Quick pointers
 
 | Topic | Where |
 |-------|--------|
