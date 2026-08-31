@@ -254,14 +254,14 @@ flowchart TD
    - `python3 scripts/push_workflow.py classification-stage2-dev`
    - `python3 scripts/pull_workflow.py shortlist` (Stage 1)
 
-## Redesign status (2026-08-19)
+## Redesign status (2026-08-20)
 
 Hierarchy migration plan v1 **approved**; implementation track live in clone — see `redesign/20_MIGRATION_PLAN.md`, `redesign/00_PROJECT_STATUS.md`, канонический журнал: `Categories/stage2_workflow_plan.md`.
 
 - **Current Stage 2:** `classification-stage2-dev` — production-like pipeline — **unchanged**.
 - **Hierarchy clone:** `classification-stage2-hierarchy-dev` (`o8sugljHYuUs7IEC`) — **active but safe** (Load `WHERE false`; empty Fin intact).
-- **Done:** §13; **B1**; **B2**; **B3 Norm**; **B3 Sem** (log-only); offline MNN **M1–M4** (Age pilot contract validated, п.45). Age is audit-only — not in `attr_age_segment` / routing.
-- **Next offline:** **M5** Norm v4 experiment. Parallel Sem: Wave-100 rubric → `critical_error_rate`.
+- **Done:** §13; **B1**; **B2**; **B3 Norm**; **B3 Sem** (log-only); offline MNN **M1–M5.1** (Norm v4.1 pack/retrieval/name-role remediation, п.47). Age is audit-only — not in `attr_age_segment` / routing. M5.0 **not** accepted for n8n rollout.
+- **Next offline:** human review of M5.1 Norm v4.1 sample. Parallel Sem: Wave-100 rubric → `critical_error_rate`.
 - **Locked v1 design:** clone-only; terminal-only snapshot; Sheets human path; allowlist isolation (`hierarchy_experiment_enabled=false`).
 
 Note: sections above describing “primary-only / 19 nodes” may be outdated relative to the live `classification-stage2-dev` export; trust `stage2_workflow_contract.md` + workflow JSON for current Stage 2 detail.

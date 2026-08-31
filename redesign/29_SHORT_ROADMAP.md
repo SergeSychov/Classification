@@ -1,9 +1,9 @@
 # Hierarchy redesign — short roadmap
 
-Updated: 2026-08-19
+Updated: 2026-08-20
 Status board: [`00_PROJECT_STATUS.md`](00_PROJECT_STATUS.md)  
 Migration design: [`20_MIGRATION_PLAN.md`](20_MIGRATION_PLAN.md)  
-Journal pointer: [`../Categories/stage2_workflow_plan.md`](../Categories/stage2_workflow_plan.md) (section *Hierarchy redesign progress*; Wave-100 gate = п.28; offline MNN baseline = **п.38**; BAS/Other override = **п.39**; RX/OTC retriever design = **п.40**; M3.2a skeleton = **п.41**; M3.2a runtime smoke = **п.42**; M3.2b one-item live = **п.43**; M3 closeout = **п.44**; M4 Age pilot = **п.45**)
+Journal pointer: [`../Categories/stage2_workflow_plan.md`](../Categories/stage2_workflow_plan.md) (section *Hierarchy redesign progress*; Wave-100 gate = п.28; offline MNN baseline = **п.38**; BAS/Other override = **п.39**; RX/OTC retriever design = **п.40**; M3.2a skeleton = **п.41**; M3.2a runtime smoke = **п.42**; M3.2b one-item live = **п.43**; M3 closeout = **п.44**; M4 Age pilot = **п.45**; Norm v4 experiment = **п.46**; Norm v4.1 remediation = **п.47**)
 
 ## Current baseline (done)
 
@@ -54,7 +54,8 @@ Naming: **B3 = Norm + Sem** (done; Sem smoke green → Wave-100 gate open).
 | **M3.2b.3–5** | P1 feasibility (SearXNG/Bing, direct GRLS, MAH instructions) | **done / paused** (2026-08-19) | SearXNG/Bing **0 valid P1/5**; direct GRLS **0 valid P1/10** (TLS/WAF/login; no bypass); MAH **2 valid P1b/10** (Termikon form-specific only). Decision: **`KEEP_RX_OTC_P2_SUPPORT_ONLY`** | journal **п.44**; `mnn_rx_otc_investigation_synthesis_v1.md` |
 | **M3.2c+** | 11 errors + 30 blind; human metrics | **blocked / not scheduled** | No stable mass P1 route. Re-entry only if public GRLS without login/WAF, or approved MAH registry with coverage, or a new user-approved P2 soft-signal experiment. Do **not** proceed automatically to Phase A 11+30 | — |
 | **M4** | Age contract + evidence policy (pilot validated) | **done** (2026-08-19) | Offline/audit-only; min years integer 0–18 separate from segment; 12/14/15/16/10 + child+adult → universal; adults only 18+; children-only 0/40 in this sample; no `attr_*` / snapshot / routing | journal **п.45**; `mnn_age_threshold_reconciliation_reviewed_v1_1.*`; `m4_age_threshold_reconciliation_reviewed_contract_v1_1.md` |
-| **M5** | Norm v4 experiment (mfr/pack dedupe) | **next** | Offline only; no production Norm rewrite | `*_text_quality_v1.csv` |
+| **M5** | Norm v4 experiment (mfr/pack dedupe) | **done** (2026-08-19, offline) | N=100 review v2; mfr dups 100/100 deduped; pack dups 14/14; current `normalized_text` not replaced; **not accepted** for n8n rollout | journal **п.46**; `mnn_norm_v4_experiment_*`; [`m5_norm_v4_design.md`](m5_norm_v4_design.md) |
+| **M5.1** | Norm v4.1 pack + retrieval + name-role remediation | **done** (2026-08-20, offline) | Parallel `*_v4_1` only; M5.0 files unchanged; 8/9 labeled defects resolved, 54 partially_resolved; no Norm/n8n/DB/`attr_*` | journal **п.47**; `mnn_norm_v4_1_remediation_*`; [`m5_norm_v4_1_remediation_design.md`](m5_norm_v4_1_remediation_design.md) |
 
 ---
 
@@ -69,7 +70,7 @@ Naming: **B3 = Norm + Sem** (done; Sem smoke green → Wave-100 gate open).
 
 ## Next action
 
-1. **M5** Norm v4 experiment (mfr/pack dedupe) — next active offline task. Still no snapshot / `attr_*`.
+1. Human review of **M5.1** Norm v4.1 sample (`mnn_norm_v4_1_remediation_human_review.csv`) — still no snapshot / `attr_*` / live Norm rewrite. M5.0 is not accepted for wiring.
 2. Parallel Sem track: human rubric labeling for Wave-100/500 → `critical_error_rate`. Keep hierarchy in safe default. **Dir+** after Sem V3 gate + explicit MNN merge approval.
 3. Optional later: apply M2 queue-exclusion contract for 13 IDs — only with explicit approval.
 4. M3.2c / RX P1 re-entry — only if journal **п.44** re-entry criteria are met. Policy remains **`KEEP_RX_OTC_P2_SUPPORT_ONLY`**.

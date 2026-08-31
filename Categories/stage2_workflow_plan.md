@@ -482,6 +482,8 @@
 * **M3.2b one-item live retrieval** — **done** ✅ (см. **п.43**). SKU `3065`; runner-side SearXNG+fetch; n8n left inactive.
 * **M3 RX/OTC research closeout** — **done** ✅ (см. **п.44**). Decision: `KEEP_RX_OTC_P2_SUPPORT_ONLY` / `DO_NOT_RUN_PHASE_A_YET`.
 * **M4 Age pilot contract** — **validated** ✅ (см. **п.45**). Audit-only; not a routing gate; not merged to `attr_age_segment`.
+* **M5.0 Norm v4 offline experiment** — **done** ✅ (см. **п.46**). Parallel fields only; current `normalized_text` not replaced. **Not accepted** for hierarchy-dev / n8n rollout.
+* **M5.1 Norm v4.1 offline remediation** — **done** ✅ (см. **п.47**). Pack structure + retrieval composite + manufacturer-prefix recovery; `*_v4_1` only.
 
 ### Not done
 
@@ -489,7 +491,7 @@
 * Apply M2 implementation contract (queue filter) — **blocked** until explicit approval.
 * **M3.2c** 11+30 retrieval batch — **blocked / not scheduled** (no stable P1 route; re-entry in **п.44**).
 * Age merge into live Sem / `attr_age_segment` / routing — **blocked** until explicit approval (п.45).
-* **M5** Norm v4 experiment (mfr/pack dedupe) — **next offline track**.
+* Human review of Norm v4.1 sample + any live Norm v4.1 wiring — **not started** (п.47). M5.0 labels exist; M5.0 **not** accepted for live wiring.
 * Optional: SplitInBatches перед Sem0 (Wave-100/500 = chunked runner из‑за Merge/LLM parallel hang).
 * Dir / Need / Cat / optional Mnn cascade + Judge rewiring for hierarchy.
 * Prod Stage 2 Load allowlist-exclude patch.
@@ -498,7 +500,7 @@
 
 ### Next short steps
 
-1. **M5** Norm v4 experiment (mfr/pack dedupe) — offline only; no production Norm rewrite.
+1. Human review of **M5.1** Norm v4.1 sample — offline labels only; no production Norm rewrite; no v4.0 rollout.
 2. Parallel Sem track: human rubric labeling Wave-100/500 (`critical_error_rate`).
 3. Optional later: apply M2 queue-exclusion contract for 13 IDs (explicit approval only).
 4. Dir → Need → Cat → optional Mnn → Judge only after Sem gate + explicit MNN merge approval.
@@ -1404,7 +1406,8 @@ PROGRESS processed 500/500 (100.0%) …
 4. ~~M3.2b one-item live retrieval~~ → **done**, см. **п.43**.
 5. ~~M3 RX/OTC research closeout~~ → **done**, см. **п.44**.
 6. ~~Age contract~~ → **done**, см. **п.45**.
-7. **Norm v4 experiment** (dedupe manufacturer/pack в `normalized_text`; offline only).
+7. ~~Norm v4 experiment~~ → **done**, см. **п.46**.
+8. ~~Norm v4.1 remediation~~ → **done**, см. **п.47**.
 
 #### Key artifacts
 
@@ -1450,7 +1453,8 @@ PROGRESS processed 500/500 (100.0%) …
 * ~~M3.0/M3.1~~ → **done**, см. **п.40**.
 * **M3.2a** inactive skeleton `rx-otc-product-retrieval-dev` (explicit ask; не hard gate).
 * ~~M4 Age contract~~ → **done**, см. **п.45**.
-* **M5** Norm v4 experiment.
+* ~~M5~~ Norm v4 experiment → **done**, см. **п.46**.
+* ~~M5.1~~ Norm v4.1 remediation → **done**, см. **п.47**.
 * Apply M2 queue-exclusion contract only after explicit approval.
 
 ---
@@ -1611,7 +1615,8 @@ PROGRESS processed 500/500 (100.0%) …
 
 * **M4** Age contract + evidence policy (offline/audit-only) — **done**, см. **п.45**.
 * Not: M3.2c, workflow activation, snapshot/`attr_*` merge.
-* **M5** Norm v4 experiment — next offline track.
+* **M5** Norm v4 experiment — **done**, см. **п.46**.
+* **M5.1** Norm v4.1 remediation — **done**, см. **п.47**.
 
 ---
 
@@ -1651,5 +1656,83 @@ PROGRESS processed 500/500 (100.0%) …
 
 #### Next
 
-* **M5** Norm v4 experiment (offline).
-* Not: Age DB/routing/`attr_*` merge; M3.2c; activate `rx-otc-product-retrieval-dev`.
+* Human review of **M5.1** Norm v4.1 sample (offline). See **п.47**.
+* Not: Age DB/routing/`attr_*` merge; M3.2c; activate `rx-otc-product-retrieval-dev`; overwrite live `normalized_text`.
+
+---
+
+46. **M5.0 offline Norm v4 text experiment (2026-08-19)**
+
+* **Статус:** **done** (offline / audit-only). Prod Stage 2 / hierarchy-dev / `Norm — Normalize Product` / snapshot / `attr_*` / `product_kind` / Sem live / PostgreSQL / `classification_runs` — **не менялись**. No web / LLM / n8n.
+* Current `normalized_text` is **not** replaced. v4 fields are parallel experiment outputs only.
+
+#### Sample (human-review v2, N=100)
+
+* Manufacturer-like tail duplicates before: **100/100**; rows deduplicated: **100**
+* Pack token duplicates before: **14/100**; rows deduplicated: **14**
+* Exceptions (ambiguous_parse, not auto-fixed): see `mnn_norm_v4_experiment_exceptions.csv`
+* Human-review sample: **50** rows, labels empty
+* Safety: no empty v4 projections; no possible_brand/form/strength/pack_loss in this run
+
+#### Canonical artifacts
+
+* Script: `scripts/mnn_norm_v4_experiment.py`
+* Outputs: `redesign/artifacts/mnn_norm_v4_experiment_{full,summary,text_quality,human_review,exceptions,data_dictionary}.*`
+* Design: `redesign/m5_norm_v4_design.md`
+* Future n8n (not implemented): `redesign/m5_norm_v4_future_n8n_plan.md`
+
+#### Next
+
+* Human labels on `label_norm_v4_*` — **done** (reviewed CSV). M5.0 **not** accepted for live Norm rewrite / hierarchy-dev Code node / prod / `attr_*` merge. See **п.47**.
+
+---
+
+47. **M5.1 offline Norm v4.1 remediation (2026-08-20)**
+
+* **Статус:** **done** (offline / audit-only). Prod Stage 2 / hierarchy-dev / `Norm — Normalize Product` / snapshot / `attr_*` / `product_kind` / Sem live / PostgreSQL / `classification_runs` — **не менялись**. No web / LLM / n8n. No git commit/push.
+* M5.0 artifacts/script/contract are **historical baseline** and were **not overwritten**. Current `normalized_text` is **not** replaced. v4.1 fields are parallel only.
+* M5.0 is **not** accepted for hierarchy-dev / n8n rollout.
+
+#### Inputs
+
+* Labeled review: `mnn_norm_v4_experiment_human_reviewed.csv` (N=50 unique IDs). Blank labels are not treated as yes.
+* M5.0 full experiment N=100 (same Wave-500 human-review v2 universe).
+
+#### M5.0 label counts (reviewed file)
+
+* identity_preserved: yes **41** / no **4** / uncertain **5** / blank **0**
+* query_appropriate: yes **41** / no **3** / uncertain **6** / blank **0**
+* manufacturer_correct: yes **50** / no **0** / uncertain **0** / blank **0**
+* Defect rows (any no/uncertain): **9** (`54`, `844`, `1053`, `2348`, `3763`, `4487`, `4922`, `4924`, `8055`)
+
+#### M5.1 result (N=100)
+
+* Retrieval: query without manufacturer; disambiguator = manufacturer; `enrichment_retrieval_text_v4_1` = join rule. Leaks **0**; join mismatches **0**; disambiguator non-empty **100/100**.
+* Pack: explicit container **17**; unit amount **30**; explicit N count **83**; inferred N1 **12**; parsed/partial/ambiguous **95/5/0**. Query gained container **17**, unit amount **6**, pack count **12**.
+* Manufacturer-prefix: detected **1** / recovered **1** (`3763`). Brand = `5 трав успокоительная` (not Фармгрупп).
+* Forms: `3759` гранулы (not порошок); `22548` драже (not таблетки); `9941` ополаскиватель (not unknown).
+* M5.0 defects: resolved **8** / partially_resolved **1** (`54` Гепарин: 5 мл+N5 restored, ампула not inferred — source has no `амп.`) / still_open **0**.
+* Exceptions: **7**. Regression: **60/60** pass. Human-review sample: **50** (mandatory IDs present).
+* Spec examples 1–4/6–9 mapped to real IDs 54/844/1053/2348/4487/4922/4924/8055.
+
+#### Canonical artifacts
+
+* Script: `scripts/mnn_norm_v4_1_remediation.py`
+* Outputs: `redesign/artifacts/mnn_norm_v4_1_remediation_{full,summary,text_quality,human_review,exceptions,data_dictionary,regression_cases}.*`
+* Design: `redesign/m5_norm_v4_1_remediation_design.md`
+* Future n8n (not implemented): `redesign/m5_norm_v4_1_future_n8n_plan.md`
+
+#### Isolation
+
+```text
+offline reviewed remediation only;
+no web/LLM/DB/n8n;
+no attr/snapshot/product_kind/prod/Sem changes;
+no commit/push.
+```
+
+#### Next
+
+* Human labels on `label_norm_v4_1_*`.
+* Not: live Norm rewrite; hierarchy-dev Code node; prod; `attr_*` merge; overwrite `normalized_text`.
+

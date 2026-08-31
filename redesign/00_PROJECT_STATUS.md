@@ -1,6 +1,6 @@
 # Project status — classification redesign
 
-Updated: 2026-08-19
+Updated: 2026-08-20
 Canonical migration design: [`20_MIGRATION_PLAN.md`](20_MIGRATION_PLAN.md)
 
 ## Architecture decision status
@@ -33,7 +33,11 @@ Canonical migration design: [`20_MIGRATION_PLAN.md`](20_MIGRATION_PLAN.md)
 
 **M4 Age pilot contract validated** (2026-08-19, M4.0–M4.2.2): offline/audit-only. Threshold (`age_min_years`, integer **0–18**) is separate from display segment. **12/14/15/16/10 + children_and_adults → универсальный**, not adults. Adults only at **18+** or explicit adult-only. Children-only needs explicit pediatric-only evidence (0 in this 40-row drug pilot). Reviewed freeze: `mnn_age_threshold_reconciliation_reviewed_v1_1.*` (40 unique IDs; exceptions **0**; adults **16**; universal **24**). **Not** merged to `attr_age_segment` / snapshot / Sem / routing. Journal **п.45**.
 
-**Next main track (MNN offline):** **M5** Norm v4 experiment (mfr/pack dedupe; offline only). M3 remains `KEEP_RX_OTC_P2_SUPPORT_ONLY` / `DO_NOT_RUN_PHASE_A_YET`.
+**M5.0 offline Norm v4 text experiment done** (2026-08-19): Wave-500 human-review v2 N=100. Manufacturer-tail dups **100/100** deduplicated; pack dups **14/14** deduplicated. Parallel fields only (`normalized_text_full_v4` / `product_identity_text_v4` / `enrichment_query_text_v4`). Current `normalized_text` **not** replaced. Norm node / n8n / DB / `attr_*` / snapshot / `product_kind` untouched. Journal **п.46**. **Not accepted** for hierarchy-dev / n8n rollout (pack mix, query without manufacturer, Farmgrupp name-role).
+
+**M5.1 offline Norm v4.1 remediation done** (2026-08-20): pack structure + retrieval composite + manufacturer-prefix name recovery on the same N=100, using labeled `mnn_norm_v4_experiment_human_reviewed.csv`. New parallel `*_v4_1` fields only; M5.0 files unchanged. M5.0 defects: **8 resolved / 1 partially_resolved (54 Гепарин, no амп. in source) / 0 still_open**. Journal **п.47**. **Not** wired to n8n.
+
+**Next main track (MNN offline):** human review of Norm v4.1 sample (50 rows). M3 remains `KEEP_RX_OTC_P2_SUPPORT_ONLY` / `DO_NOT_RUN_PHASE_A_YET`.
 **Parallel Sem:** Wave-100/500 rubric → `critical_error_rate` (п.28). Hierarchy remains snapshot-off / prod untouched.
 
 | Track | Status |
