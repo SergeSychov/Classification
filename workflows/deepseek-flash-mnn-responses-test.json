@@ -1,0 +1,492 @@
+{
+  "name": "[TEST] DeepSeek MNN — AI Agent web_search RU",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## DeepSeek — AI Agent + web search (RU)\n\n**Цель:** МНН только из внешних источников (tool search), без внутренней базы знаний. Поиск — в **русском сегменте** интернета.\n\n### Триггеры\n- Manual Execute\n- Webhook `POST /webhook/test/deepseek-flash-mnn`\n  - body/query: `limit` (0 = все), `product_id` (опционально)\n\n### Данные\nCSV: `/files/sem_wave500_mnn_tool_search_input.csv`\n\n### Промпты\nВ Config (system/user) → **Build Prompt** → **AI Agent**.\n\n### Модель / tools\n- `DeepSeek Chat Model` (`deepseek-chat`, native credential)\n  - `deepseek-v4-flash` нельзя в Agent+tools: thinking/`reasoning_content` ломает multi-turn в n8n\n- Code Tool `web_search_ru` → DuckDuckGo Lite (`kl=ru-ru`, `site:.ru`)",
+        "height": 460,
+        "width": 540
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [80, 40],
+      "id": "note-ds-flash-1",
+      "name": "NOTE"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [160, 520],
+      "id": "manual-ds-flash-1",
+      "name": "Manual Trigger"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "test/deepseek-flash-mnn",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [160, 720],
+      "id": "webhook-ds-flash-1",
+      "name": "Webhook",
+      "webhookId": "webhook-ds-flash-1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c1",
+              "name": "limit",
+              "value": "={{ Number($json.body?.limit ?? $json.query?.limit ?? 3) || 0 }}",
+              "type": "number"
+            },
+            {
+              "id": "c2",
+              "name": "product_id_filter",
+              "value": "={{ String($json.body?.product_id ?? $json.query?.product_id ?? '') }}",
+              "type": "string"
+            },
+            {
+              "id": "c3",
+              "name": "csv_path",
+              "value": "/files/sem_wave500_mnn_tool_search_input.csv",
+              "type": "string"
+            },
+            {
+              "id": "c4",
+              "name": "model",
+              "value": "deepseek-chat",
+              "type": "string"
+            },
+            {
+              "id": "c5",
+              "name": "prompt_system",
+              "value": "Ты — фармацевтический эксперт. Не ищи ответ во внутренней базе знаний модели и не полагайся на память.\n\nОбязательно вызови инструмент web_search_ru перед ответом. Ищи исключительно в русском сегменте интернета: формулируй запросы на русском языке; приоритет у источников .ru и российских справочников (ГРЛС, РЛС/RLS, Vidal.ru, инструкции производителей РФ, аптечные сайты РФ). Не опирайся на англоязычные или зарубежные источники, если есть русские.\n\nОтветь только валидным JSON без markdown: {\"mnn\":\"строка или null\",\"status\":\"found|not_found|conflict\"}.",
+              "type": "string"
+            },
+            {
+              "id": "c6",
+              "name": "prompt_user_template",
+              "value": "Найди МНН для препарата '{normalized_text}'. Сначала вызови web_search_ru по русскому сегменту интернета, затем верни JSON.",
+              "type": "string"
+            },
+            {
+              "id": "c7",
+              "name": "source",
+              "value": "webhook",
+              "type": "string"
+            },
+            {
+              "id": "c8",
+              "name": "started_at",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [420, 720],
+      "id": "cfg-webhook-1",
+      "name": "Config — Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "m1",
+              "name": "limit",
+              "value": 3,
+              "type": "number"
+            },
+            {
+              "id": "m2",
+              "name": "product_id_filter",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "m3",
+              "name": "csv_path",
+              "value": "/files/sem_wave500_mnn_tool_search_input.csv",
+              "type": "string"
+            },
+            {
+              "id": "m4",
+              "name": "model",
+              "value": "deepseek-chat",
+              "type": "string"
+            },
+            {
+              "id": "m5",
+              "name": "prompt_system",
+              "value": "Ты — фармацевтический эксперт. Не ищи ответ во внутренней базе знаний модели и не полагайся на память.\n\nОбязательно вызови инструмент web_search_ru перед ответом. Ищи исключительно в русском сегменте интернета: формулируй запросы на русском языке; приоритет у источников .ru и российских справочников (ГРЛС, РЛС/RLS, Vidal.ru, инструкции производителей РФ, аптечные сайты РФ). Не опирайся на англоязычные или зарубежные источники, если есть русские.\n\nОтветь только валидным JSON без markdown: {\"mnn\":\"строка или null\",\"status\":\"found|not_found|conflict\"}.",
+              "type": "string"
+            },
+            {
+              "id": "m6",
+              "name": "prompt_user_template",
+              "value": "Найди МНН для препарата '{normalized_text}'. Сначала вызови web_search_ru по русскому сегменту интернета, затем верни JSON.",
+              "type": "string"
+            },
+            {
+              "id": "m7",
+              "name": "source",
+              "value": "manual",
+              "type": "string"
+            },
+            {
+              "id": "m8",
+              "name": "started_at",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [420, 520],
+      "id": "cfg-manual-1",
+      "name": "Config — Manual"
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [640, 620],
+      "id": "merge-cfg-1",
+      "name": "Merge Config"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.deepseek.com/user/balance",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [860, 620],
+      "id": "bal-before-1",
+      "name": "DeepSeek Balance — Before",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Gmg28IgPyPk5vSBf",
+          "name": "DeepSeek Balance Auth"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Merge Config').first().json;\nconst bal = $input.first().json || {};\nreturn [{\n  json: {\n    ...cfg,\n    balance_before: bal,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1080, 620],
+      "id": "attach-bal-1",
+      "name": "Attach Balance Before"
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "fileSelector": "={{ $('Attach Balance Before').first().json.csv_path }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [1300, 620],
+      "id": "read-csv-1",
+      "name": "Read CSV From Disk"
+    },
+    {
+      "parameters": {
+        "operation": "csv",
+        "options": {
+          "headerRow": true,
+          "delimiter": ","
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [1520, 620],
+      "id": "extract-csv-1",
+      "name": "Extract CSV Rows"
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Attach Balance Before').first().json;\nconst limit = Number(cfg.limit) || 0;\nconst pidFilter = String(cfg.product_id_filter || '').trim();\nlet rows = items.map((i) => i.json);\nif (pidFilter) {\n  rows = rows.filter((r) => String(r.product_id || '') === pidFilter);\n}\nif (limit > 0) {\n  rows = rows.slice(0, limit);\n}\nreturn rows.map((r) => ({\n  json: {\n    ...r,\n    _cfg_model: cfg.model,\n    _cfg_prompt_system: cfg.prompt_system,\n    _cfg_prompt_user_template: cfg.prompt_user_template,\n    _cfg_source: cfg.source,\n    _cfg_started_at: cfg.started_at,\n    _cfg_balance_before: cfg.balance_before,\n    _cfg_limit: limit,\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1740, 620],
+      "id": "filter-rows-1",
+      "name": "Filter / Limit Rows"
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1960, 620],
+      "id": "batch-1",
+      "name": "Split In Batches"
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = items[0].json;\nconst system = String(row._cfg_prompt_system || '');\nconst tmpl = String(row._cfg_prompt_user_template || \"Найди МНН для препарата '{normalized_text}'\");\nconst text = String(row.normalized_text || '').trim();\nconst user = tmpl.split('{normalized_text}').join(text);\nconst started = Date.now();\nreturn [{\n  json: {\n    ...row,\n    prompt_system: system,\n    prompt_user: user,\n    _http_started_ms: started,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2180, 520],
+      "id": "build-prompt-1",
+      "name": "Build Prompt"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt_user }}",
+        "options": {
+          "systemMessage": "={{ $json.prompt_system }}",
+          "maxIterations": 6,
+          "returnIntermediateSteps": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [2400, 520],
+      "id": "agent-ds-1",
+      "name": "AI Agent",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "model": "deepseek-chat",
+        "options": {
+          "temperature": 0.1,
+          "maxTokens": 800,
+          "timeout": 180000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "position": [2400, 740],
+      "id": "llm-ds-1",
+      "name": "DeepSeek Chat Model",
+      "credentials": {
+        "deepSeekApi": {
+          "id": "xyaJwQg88odvtCfC",
+          "name": "DeepSeek account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "web_search_ru",
+        "description": "Веб-поиск по русскому сегменту интернета для проверки МНН/действующих веществ. Передай поисковый запрос на русском (можно добавить МНН, ГРЛС, РЛС, Vidal, инструкция).",
+        "language": "javaScript",
+        "jsCode": "const raw = (typeof query === 'string') ? query : (query && (query.query || query.q || query.input)) || '';\nconst q = String(raw || '').trim();\nif (!q) return 'empty query';\nconst url = 'https://lite.duckduckgo.com/lite/?kl=ru-ru&q=' + encodeURIComponent(q + ' site:.ru');\nlet html = '';\ntry {\n  html = await this.helpers.httpRequest({\n    method: 'GET',\n    url,\n    headers: {\n      'User-Agent': 'Mozilla/5.0 (compatible; n8n-mnn-agent/1.0)',\n      'Accept': 'text/html',\n    },\n    encoding: 'text',\n    returnFullResponse: false,\n  });\n} catch (e) {\n  return 'search_error: ' + String(e && e.message ? e.message : e);\n}\nconst text = String(html || '')\n  .replace(/<script[\\s\\S]*?<\\/script>/gi, ' ')\n  .replace(/<style[\\s\\S]*?<\\/style>/gi, ' ')\n  .replace(/<[^>]+>/g, ' ')\n  .replace(/&nbsp;/g, ' ')\n  .replace(/&amp;/g, '&')\n  .replace(/\\s+/g, ' ')\n  .trim();\nreturn text.slice(0, 3500) || 'no_results';",
+        "specifyInputSchema": true,
+        "schemaType": "fromJson",
+        "jsonSchemaExample": "{\n  \"query\": \"аскорутин мнн инструкция\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.2,
+      "position": [2180, 740],
+      "id": "tool-search-1",
+      "name": "Web Search RU"
+    },
+    {
+      "parameters": {
+        "jsCode": "const prep = $('Build Prompt').item.json;\nconst agent = items[0].json || {};\n\nfunction extractJson(text) {\n  if (!text) return null;\n  let t = String(text).trim();\n  const fence = t.match(/^```(?:json)?\\s*\\n?([\\s\\S]+?)\\n?```\\s*$/i);\n  if (fence) t = fence[1].trim();\n  const a = t.indexOf('{'); const b = t.lastIndexOf('}');\n  if (a >= 0 && b > a) t = t.slice(a, b + 1);\n  try { const o = JSON.parse(t); return (o && typeof o === 'object') ? o : null; } catch (e) { return null; }\n}\n\nlet text = '';\nif (typeof agent.output === 'string') text = agent.output;\nelse if (agent.output != null) text = JSON.stringify(agent.output);\nelse if (typeof agent.text === 'string') text = agent.text;\nelse if (agent.error) text = String(agent.error.message || agent.error);\n\nconst steps = agent.intermediateSteps || agent.intermediate_steps || [];\nconst searchUsed = Array.isArray(steps) && steps.length > 0 ? 1 : 0;\nconst searchCalls = Array.isArray(steps) ? steps.length : 0;\nconst queries = [];\nfor (const step of (Array.isArray(steps) ? steps : [])) {\n  const action = step.action || step;\n  const input = action.toolInput || action.tool_input || action.input || {};\n  const q = (typeof input === 'string') ? input : (input.q || input.query || input.input || '');\n  if (q) queries.push(String(q));\n}\n\nconst parsed = extractJson(text);\nlet toolStatus = 'invalid_json';\nlet toolMnn = '';\nif (agent.error) {\n  toolStatus = 'api_error';\n} else if (parsed) {\n  toolStatus = String(parsed.status || 'not_found');\n  if (!['found','not_found','conflict'].includes(toolStatus)) toolStatus = 'not_found';\n  toolMnn = parsed.mnn == null ? '' : String(parsed.mnn).trim();\n  if (!toolMnn || toolMnn.toLowerCase() === 'null') toolMnn = '';\n  if (toolStatus !== 'found') toolMnn = '';\n  if (toolStatus === 'found' && !toolMnn) toolStatus = 'not_found';\n}\n\nconst latency = prep._http_started_ms ? (Date.now() - Number(prep._http_started_ms)) : null;\n\nreturn [{\n  json: {\n    product_id: prep.product_id,\n    run_id: prep.run_id,\n    normalized_text: prep.normalized_text,\n    win_mnn: prep.win_mnn,\n    qwen_search_status: prep.qwen_search_status,\n    qwen_search_mnn: prep.qwen_search_mnn,\n    prompt_system: prep.prompt_system,\n    prompt_user: prep.prompt_user,\n    model: prep._cfg_model,\n    tool_status: toolStatus,\n    tool_mnn: toolMnn,\n    search_used: searchUsed,\n    search_call_count: searchCalls,\n    search_queries: queries,\n    raw_text: text,\n    latency_ms: latency,\n    prompt_tokens: 0,\n    completion_tokens: 0,\n    total_tokens: 0,\n    api_error: agent.error ? String(agent.error.message || agent.error).slice(0, 500) : '',\n    _cfg_source: prep._cfg_source,\n    _cfg_started_at: prep._cfg_started_at,\n    _cfg_balance_before: prep._cfg_balance_before,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2620, 520],
+      "id": "parse-1",
+      "name": "Parse Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = items.map((i) => i.json);\nconst n = rows.length;\nconst found = rows.filter((r) => r.tool_status === 'found').length;\nconst searchUsed = rows.filter((r) => Number(r.search_used) === 1).length;\nconst tokens = rows.reduce((a, r) => a + Number(r.total_tokens || 0), 0);\nconst lat = rows.map((r) => Number(r.latency_ms || 0)).filter((x) => x > 0).sort((a,b)=>a-b);\nconst p50 = lat.length ? lat[Math.floor((lat.length-1)*0.5)] : null;\nconst first = rows[0] || {};\nreturn [{\n  json: {\n    provider: 'deepseek-ai-agent',\n    model: first.model || 'deepseek-chat',\n    source: first._cfg_source || null,\n    started_at: first._cfg_started_at || null,\n    finished_at: new Date().toISOString(),\n    n,\n    found_count: found,\n    coverage: n ? Number((found / n).toFixed(4)) : 0,\n    search_used_rate: n ? Number((searchUsed / n).toFixed(4)) : 0,\n    total_tokens: tokens,\n    latency_p50_ms: p50,\n    balance_before: first._cfg_balance_before || null,\n    rows,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2180, 900],
+      "id": "summary-1",
+      "name": "Summary"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.deepseek.com/user/balance",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2400, 900],
+      "id": "bal-after-1",
+      "name": "DeepSeek Balance — After",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Gmg28IgPyPk5vSBf",
+          "name": "DeepSeek Balance Auth"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const summary = $('Summary').first().json;\nconst balAfter = $input.first().json || {};\nreturn [{\n  json: {\n    ...summary,\n    balance_after: balAfter,\n    status: 'ok',\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2620, 900],
+      "id": "final-1",
+      "name": "Final Payload"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "if-webhook-1",
+              "leftValue": "={{ $json.source }}",
+              "rightValue": "webhook",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2840, 900],
+      "id": "if-webhook-1",
+      "name": "If Webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [3060, 820],
+      "id": "respond-1",
+      "name": "Respond Webhook"
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [[{ "node": "Config — Manual", "type": "main", "index": 0 }]]
+    },
+    "Webhook": {
+      "main": [[{ "node": "Config — Webhook", "type": "main", "index": 0 }]]
+    },
+    "Config — Manual": {
+      "main": [[{ "node": "Merge Config", "type": "main", "index": 0 }]]
+    },
+    "Config — Webhook": {
+      "main": [[{ "node": "Merge Config", "type": "main", "index": 0 }]]
+    },
+    "Merge Config": {
+      "main": [[{ "node": "DeepSeek Balance — Before", "type": "main", "index": 0 }]]
+    },
+    "DeepSeek Balance — Before": {
+      "main": [[{ "node": "Attach Balance Before", "type": "main", "index": 0 }]]
+    },
+    "Attach Balance Before": {
+      "main": [[{ "node": "Read CSV From Disk", "type": "main", "index": 0 }]]
+    },
+    "Read CSV From Disk": {
+      "main": [[{ "node": "Extract CSV Rows", "type": "main", "index": 0 }]]
+    },
+    "Extract CSV Rows": {
+      "main": [[{ "node": "Filter / Limit Rows", "type": "main", "index": 0 }]]
+    },
+    "Filter / Limit Rows": {
+      "main": [[{ "node": "Split In Batches", "type": "main", "index": 0 }]]
+    },
+    "Split In Batches": {
+      "main": [
+        [{ "node": "Summary", "type": "main", "index": 0 }],
+        [{ "node": "Build Prompt", "type": "main", "index": 0 }]
+      ]
+    },
+    "Build Prompt": {
+      "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]]
+    },
+    "AI Agent": {
+      "main": [[{ "node": "Parse Response", "type": "main", "index": 0 }]]
+    },
+    "DeepSeek Chat Model": {
+      "ai_languageModel": [[{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "Web Search RU": {
+      "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "Parse Response": {
+      "main": [[{ "node": "Split In Batches", "type": "main", "index": 0 }]]
+    },
+    "Summary": {
+      "main": [[{ "node": "DeepSeek Balance — After", "type": "main", "index": 0 }]]
+    },
+    "DeepSeek Balance — After": {
+      "main": [[{ "node": "Final Payload", "type": "main", "index": 0 }]]
+    },
+    "Final Payload": {
+      "main": [[{ "node": "If Webhook", "type": "main", "index": 0 }]]
+    },
+    "If Webhook": {
+      "main": [
+        [{ "node": "Respond Webhook", "type": "main", "index": 0 }],
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

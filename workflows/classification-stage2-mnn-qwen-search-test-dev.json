@@ -1,0 +1,117 @@
+{
+  "name": "classification-stage2-mnn-qwen-search-test-dev",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "id": "mnn-qwen-trig-001",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "content": "## MNN Qwen Web Search — TEST ONLY\n\nОтдельный offline/test workflow. **Не** встраивать в Sem0/Sem1/Norm.\n\n### Важно\n- Real web search на Polza: HTTP body `plugins: [{id:\"web\", engine:\"exa\"}]`\n- DashScope `enable_search` на Polza **игнорируется** (нет annotations)\n- Без `annotations` → `qwen_search_status=search_not_confirmed`, MNN не принимается\n- Полный прогон Wave-500 drugs: `python3 scripts/mnn_qwen_web_search_test.py`\n\nЭтот n8n-smoke гоняет **1 товар** через HTTP Request → Post-process.",
+        "height": 320,
+        "width": 560
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [180, 40],
+      "id": "mnn-qwen-note-001",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "jsCode": "const model = 'qwen/qwen3.5-flash-02-23@reasoning_effort=none';\nconst PROMPT_VERSION = 'mnn_qwen_web_search_v1';\n\nconst SYSTEM_PROMPT = `Ты являешься верификатором MNN для российских аптечных товаров.\\n\\nТвоя задача — использовать web search и определить международное непатентованное наименование\\nили основные действующие вещества только для конкретного лекарственного препарата.\\n\\nПравила:\\n\\n1. Используй результаты веб-поиска, а не только внутренние знания.\\n2. Сначала проверь идентичность товара.\\n3. Возвращай MNN только если найденный источник относится именно к этому товару.\\n4. Не подменяй MNN терапевтическим классом.\\n5. Не угадывай MNN по памяти.\\n6. Если источники противоречат — mnn=null и status=conflict|not_found.\\n7. Комбинации через \\\" + \\\" только если прямо указаны в источнике.\\n8. Ответ только валидный JSON.`;\n\nconst row = {\n  product_id: 'smoke-nurofen',\n  run_id: '',\n  mnn_test_run_id: $execution.id || ('n8n-' + Date.now()),\n  product_kind: 'drug',\n  normalized_text: 'НУРОФЕН ТАБЛ. П/О 200МГ №20',\n  attr_brand: 'Нурофен',\n  attr_dosage_form: 'таблетки',\n  attr_dosage: '200 мг',\n  attr_administration_route: '',\n  semantic_explanation: '',\n  catalog_mnn_for_comparison: 'Ибупрофен',\n  catalog_source_summary: 'smoke',\n};\n\nconst user = `Определи MNN для следующего товара через web search.\\n\\nИсходный товар:\\n- product_id: ${row.product_id}\\n- normalized_text: ${row.normalized_text}\\n- бренд / торговое наименование: ${row.attr_brand}\\n- лекарственная форма: ${row.attr_dosage_form}\\n- дозировка / концентрация: ${row.attr_dosage}\\n- путь введения: —\\n- дополнительный семантический контекст: —\\n\\nПриоритетно ищи в русскоязычных источниках (Ютека, Еаптека, Apteka.ru, Здравсити).\\n\\nВерни строго JSON с полями mnn, status, model_confidence, short_explanation, identity_match, used_source_indexes, evidence.`;\n\nconst searchPrompt = 'Нурофен таблетки 200 мг';\n\nreturn [{\n  json: {\n    ...row,\n    qwen_search_prompt_version: PROMPT_VERSION,\n    qwen_search_query: searchPrompt,\n    qwen_search_model: model,\n    qwen_search_provider: 'polza',\n    qwen_search_enabled: true,\n    _qwen_started_ms: Date.now(),\n    polza_request_body: {\n      model,\n      temperature: 0.1,\n      max_tokens: 900,\n      messages: [\n        { role: 'system', content: SYSTEM_PROMPT },\n        { role: 'user', content: user },\n      ],\n      plugins: [\n        {\n          id: 'web',\n          engine: 'exa',\n          max_results: 5,\n          search_prompt: searchPrompt,\n        },\n      ],\n    },\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300],
+      "id": "mnn-qwen-prep-001",
+      "name": "MNN Qwen Search — Build Prompt"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://polza.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.polza_request_body }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 300],
+      "id": "mnn-qwen-http-001",
+      "name": "Polza — Qwen Web Search HTTP",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_WITH_POLZA_HEADER_CREDENTIAL",
+          "name": "Polza Bearer (header Authorization)"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const prep = $('MNN Qwen Search — Build Prompt').all();\nreturn items.map((item, index) => {\n  const base = { ...(prep[index] || prep[0] || {}).json, ...(item.json || {}) };\n  const err = item.json && (item.json.error || item.json.message);\n  // HTTP node puts response body in json; on failure may nest differently\n  const looksLikeCompletion = Array.isArray((item.json || {}).choices);\n  const out = {\n    ...base,\n    polza_raw: looksLikeCompletion ? item.json : null,\n    qwen_http_error: looksLikeCompletion ? null : (err || (!looksLikeCompletion ? JSON.stringify(item.json).slice(0, 300) : null)),\n    qwen_search_latency_ms: base._qwen_started_ms ? (Date.now() - Number(base._qwen_started_ms)) : null,\n  };\n  delete out.polza_request_body;\n  return { json: out, pairedItem: item.pairedItem ?? { item: index } };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, 300],
+      "id": "mnn-qwen-merge-001",
+      "name": "Merge HTTP + input"
+    },
+    {
+      "parameters": {
+        "jsCode": "const PROMPT_VERSION = 'mnn_qwen_web_search_v1';\nconst ALLOWED_STATUS = new Set(['found', 'not_found', 'conflict']);\n\nfunction extractJsonString(value) {\n  if (value === null || value === undefined) return null;\n  if (typeof value === 'object') return JSON.stringify(value);\n  let text = String(value).trim();\n  const fence = text.match(/^```(?:json)?\\s*\\n?([\\s\\S]+?)\\n?```\\s*$/i);\n  if (fence) text = fence[1].trim();\n  const start = text.indexOf('{');\n  const end = text.lastIndexOf('}');\n  if (start >= 0 && end > start) text = text.slice(start, end + 1);\n  return text;\n}\n\nfunction extractAnnotations(api) {\n  const sources = [];\n  if (!api || typeof api !== 'object') return sources;\n  const msg = (((api.choices || [])[0] || {}).message) || {};\n  const anns = msg.annotations || [];\n  if (Array.isArray(anns)) {\n    anns.forEach((a, i) => {\n      const uc = (a && a.url_citation) || a || {};\n      const url = uc.url || a.url || null;\n      if (!url) return;\n      sources.push({ index: i + 1, url: String(url), title: uc.title || null, snippet: uc.content || null });\n    });\n  }\n  return sources;\n}\n\nfunction normalizeMnnLight(s) {\n  if (s === null || s === undefined) return null;\n  let t = String(s).trim();\n  if (!t || t.toLowerCase() === 'null') return null;\n  return t.replace(/\\*/g, ' ').replace(/\\s+/g, ' ').trim() || null;\n}\n\nfunction foldKey(s) {\n  return String(s || '').toLowerCase().replace(/ё/g, 'е').replace(/\\s+/g, ' ').trim()\n    .replace(/\\s*[+,;/|]\\s*/g, '+').split('+').filter(Boolean).sort().join('+');\n}\n\nreturn items.map((item, index) => {\n  const j = { ...(item.json || {}) };\n  const api = j.polza_raw || null;\n  const apiError = j.qwen_http_error || null;\n  const base = { ...j };\n  delete base.polza_raw; delete base.qwen_http_error; delete base._qwen_started_ms;\n\n  if (apiError) {\n    return { json: { ...base, qwen_search_status: 'api_error', qwen_search_mnn: null, qwen_search_source_count: 0, qwen_search_sources_json: '[]', qwen_search_error: String(apiError).slice(0, 500), qwen_vs_catalog_status: 'qwen_api_error', qwen_vs_catalog_comment: 'HTTP/API error' }, pairedItem: item.pairedItem ?? { item: index } };\n  }\n\n  const sources = extractAnnotations(api);\n  const content = (((api || {}).choices || [{}])[0].message || {}).content;\n  let parsed = null;\n  try {\n    const raw = extractJsonString(content);\n    if (raw) parsed = JSON.parse(raw);\n  } catch (e) {\n    parsed = null;\n  }\n  const primary = sources[0] || null;\n\n  if (!sources.length) {\n    return { json: { ...base, qwen_search_status: 'search_not_confirmed', qwen_search_mnn: null, qwen_search_source_count: 0, qwen_search_sources_json: '[]', qwen_search_error: 'no_source_annotations', qwen_search_short_explanation: (parsed && parsed.short_explanation) || 'нет annotations', qwen_vs_catalog_status: 'qwen_search_not_confirmed', qwen_vs_catalog_comment: 'web search not confirmed' }, pairedItem: item.pairedItem ?? { item: index } };\n  }\n\n  let status = parsed ? String(parsed.status || '').trim() : 'not_found';\n  if (!ALLOWED_STATUS.has(status)) status = 'not_found';\n  let mnn = parsed ? normalizeMnnLight(parsed.mnn) : null;\n  if (status !== 'found') mnn = null;\n  if (status === 'found' && !mnn) status = 'not_found';\n\n  const catalog = String(base.catalog_mnn_for_comparison || '').trim();\n  const qwen = mnn || '';\n  let vs = 'both_empty';\n  let comment = '';\n  if (!catalog && !qwen) { vs = 'both_empty'; comment = 'оба пусты'; }\n  else if (!catalog && qwen) { vs = 'qwen_only'; comment = 'только Qwen'; }\n  else if (catalog && !qwen) { vs = 'catalog_only'; comment = 'только каталог'; }\n  else if (catalog === qwen) { vs = 'exact_match'; comment = 'exact'; }\n  else if (foldKey(catalog) === foldKey(qwen)) { vs = 'normalized_match'; comment = 'normalized'; }\n  else { vs = 'conflict'; comment = 'различаются'; }\n\n  return {\n    json: {\n      ...base,\n      qwen_search_prompt_version: PROMPT_VERSION,\n      qwen_search_status: status,\n      qwen_search_mnn: mnn,\n      qwen_search_model_confidence: parsed && typeof parsed.model_confidence === 'number' ? parsed.model_confidence : null,\n      qwen_search_short_explanation: parsed ? parsed.short_explanation : null,\n      qwen_search_evidence: parsed ? parsed.evidence : null,\n      qwen_search_source_count: sources.length,\n      qwen_search_sources_json: JSON.stringify(sources),\n      qwen_search_source_url_primary: primary ? primary.url : null,\n      qwen_search_source_title_primary: primary ? primary.title : null,\n      qwen_search_error: null,\n      qwen_vs_catalog_status: vs,\n      qwen_vs_catalog_comment: comment,\n    },\n    pairedItem: item.pairedItem ?? { item: index },\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 300],
+      "id": "mnn-qwen-post-001",
+      "name": "MNN Qwen Search — Post-process"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [[{ "node": "MNN Qwen Search — Build Prompt", "type": "main", "index": 0 }]]
+    },
+    "MNN Qwen Search — Build Prompt": {
+      "main": [[{ "node": "Polza — Qwen Web Search HTTP", "type": "main", "index": 0 }]]
+    },
+    "Polza — Qwen Web Search HTTP": {
+      "main": [[{ "node": "Merge HTTP + input", "type": "main", "index": 0 }]]
+    },
+    "Merge HTTP + input": {
+      "main": [[{ "node": "MNN Qwen Search — Post-process", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "pinData": {},
+  "versionId": "mnn-qwen-search-test-v1"
+}

@@ -1,0 +1,573 @@
+{
+  "name": "agent-balance-bot",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "0d38d2ff-5635-4e4d-88e6-f1565a06c0ff",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      },
+      "id": "5fb3de84-f5b3-48f9-85e2-37a9a9f2dd7e",
+      "name": "Daily 09:00 MSK",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "c20d0143-28c6-46f8-b5aa-871a48c36eb5",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        360
+      ],
+      "webhookId": "125ee7ed-bbc7-4870-a940-b2e712a62dcd",
+      "credentials": {
+        "telegramApi": {
+          "id": "OJ0DzHtLgelXO1nz",
+          "name": "my_apis_balance_bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://n8n.sychovtest.ru/api/v1/executions?workflowId={{ $workflow.id }}&status=running&limit=50",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "edc4a325-8003-44bf-98a3-c0ffb53aaa4e",
+      "name": "List running",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        180
+      ],
+      "continueOnFail": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "KpH1K9dsgNiZAEvJ",
+          "name": "n8n Public API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://n8n.sychovtest.ru/api/v1/executions?workflowId={{ $workflow.id }}&status=waiting&limit=50",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "6cc89df0-184b-436d-b533-0c327d4d65d7",
+      "name": "List waiting",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        180
+      ],
+      "continueOnFail": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "KpH1K9dsgNiZAEvJ",
+          "name": "n8n Public API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://n8n.sychovtest.ru/api/v1/executions?workflowId={{ $workflow.id }}&status=new&limit=50",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "f8e9585f-8cf4-41d0-b3b0-fad8e4148494",
+      "name": "List new",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        180
+      ],
+      "continueOnFail": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "KpH1K9dsgNiZAEvJ",
+          "name": "n8n Public API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst STALE_MS = 2 * 60 * 1000;\nconst currentId = String($execution.id);\nconst now = Date.now();\n\nfunction rowsFrom(nodeName) {\n  try {\n    const raw = $(nodeName).first().json;\n    if (!raw) return [];\n    if (Array.isArray(raw.data)) return raw.data;\n    if (Array.isArray(raw)) return raw;\n    if (raw.id) return [raw];\n    return [];\n  } catch (e) {\n    return [];\n  }\n}\n\nconst rows = []\n  .concat(rowsFrom('List running'))\n  .concat(rowsFrom('List waiting'))\n  .concat(rowsFrom('List new'));\n\nconst seen = {};\nconst stale = [];\nfor (const row of rows) {\n  const eid = String(row.id || '');\n  if (!eid || eid === currentId || seen[eid]) continue;\n  seen[eid] = true;\n  const st = String(row.status || '');\n  if (['running', 'waiting', 'new'].indexOf(st) === -1) continue;\n  const started = Date.parse(row.startedAt || '');\n  if (Number.isFinite(started) && (now - started) < STALE_MS) continue;\n  // missing startedAt (queued `new`) counts as stale, except the current run\n  stale.push({\n    json: {\n      executionId: eid,\n      startedAt: row.startedAt || '',\n      status: st,\n    },\n  });\n}\n\nif (!stale.length) {\n  return [{ json: { executionId: null } }];\n}\nreturn stale;\n"
+      },
+      "id": "b82b03fb-d243-4c78-ab8b-7737242ceb7d",
+      "name": "Select stale",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "aadf95cd-c1c1-4445-9305-36c2187ec5d0",
+              "leftValue": "={{ $json.executionId }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "aa9e0400-6df6-464d-8618-f03e7c300fdc",
+      "name": "Has stale?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://n8n.sychovtest.ru/api/v1/executions/{{ $json.executionId }}/stop",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "10db25a8-5537-4386-a1c4-c16af1dba424",
+      "name": "Stop execution",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1080,
+        20
+      ],
+      "continueOnFail": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "KpH1K9dsgNiZAEvJ",
+          "name": "n8n Public API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst stopped = items\n  .map((item) => item.json && item.json.executionId)\n  .filter(Boolean);\nreturn [{ json: { stale_stopped: stopped } }];\n"
+      },
+      "id": "6ec4a2e8-d71c-4beb-8115-9bcb34967c51",
+      "name": "Collapse stops",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1300,
+        20
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst OPS_CHAT_ID = '410199989';\nconst THRESHOLD_USD = 1;\nconst USD_RUB_RATE = 80;\nconst DAILY_TIME = '09:00';\n\nfunction triggerSource() {\n  try { $('Telegram Trigger').first(); return 'telegram'; } catch (e) {}\n  try { $('Daily 09:00 MSK').first(); return 'schedule'; } catch (e) {}\n  try { $('Manual Trigger').first(); return 'manual'; } catch (e) {}\n  return 'unknown';\n}\n\nconst base = {\n  threshold_usd: THRESHOLD_USD,\n  usd_rub_rate: USD_RUB_RATE,\n  notify_time: DAILY_TIME,\n};\n\nconst source = triggerSource();\n\nif (source === 'telegram') {\n  const tg = $('Telegram Trigger').first().json || {};\n  const msg = tg.message || tg;\n  const textRaw = msg.text != null ? String(msg.text) : '';\n  if (!textRaw) return [];\n  const parts = textRaw.trim().split(/\\s+/);\n  const cmd = parts[0].split('@')[0].toLowerCase();\n  const chatId = String((msg.chat && msg.chat.id) || (tg.chat && tg.chat.id) || '');\n  if (!chatId) return [];\n\n  if (cmd === '/time') {\n    return [{\n      json: {\n        ...base,\n        mode: 'time_reply',\n        source: 'command',\n        telegram_chat_id: chatId,\n        message_text: [\n          `⏰ Daily report: ${DAILY_TIME} MSK`,\n          '',\n          'Time is fixed. Use /balance for a report now.',\n        ].join('\\n'),\n      },\n    }];\n  }\n\n  if (cmd !== '/balance' && cmd !== '/start') return [];\n  return [{\n    json: {\n      ...base,\n      mode: 'balances',\n      source: 'command',\n      telegram_chat_id: chatId,\n    },\n  }];\n}\n\nif (!OPS_CHAT_ID) return [];\n\nreturn [{\n  json: {\n    ...base,\n    mode: 'balances',\n    source: source === 'schedule' ? 'schedule' : 'manual',\n    telegram_chat_id: String(OPS_CHAT_ID),\n  },\n}];\n"
+      },
+      "id": "e5787053-688c-4519-88de-e80ffe68a5e3",
+      "name": "Prepare",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1300,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "acdb3760-eb2b-4212-9b6d-b134204f91c4",
+              "leftValue": "={{ $json.mode }}",
+              "rightValue": "balances",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "283eee3a-e90e-4957-80c3-f6d5ddb2b28c",
+      "name": "Is Balances?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1520,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.deepseek.com/user/balance",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "3d6c91bb-b5ab-48ce-96f5-f1276c8d0f77",
+      "name": "HTTP DeepSeek",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1740,
+        60
+      ],
+      "continueOnFail": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Gmg28IgPyPk5vSBf",
+          "name": "DeepSeek Balance Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://polza.ai/api/v1/balance",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "971d2dc5-cf8c-4322-9e77-d863db3ed7db",
+      "name": "HTTP Polza",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1740,
+        260
+      ],
+      "continueOnFail": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "XBSW3qpVBUfoEMXK",
+          "name": "Polza Balance Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "id": "241d31b6-e59f-4354-a54a-7efbc5ccd849",
+      "name": "Merge Balances",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1960,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst prep = $('Prepare').first().json;\nconst deepseek = $('HTTP DeepSeek').first().json;\nconst polza = $('HTTP Polza').first().json;\nconst thrUsd = Number(prep.threshold_usd);\nconst rate = Number(prep.usd_rub_rate);\nconst thresholdUsd = Number.isFinite(thrUsd) ? thrUsd : 1;\nconst usdRubRate = Number.isFinite(rate) && rate > 0 ? rate : 80;\n\nfunction money(amount, currency) {\n  const n = Number(amount);\n  if (!Number.isFinite(n)) return '?';\n  const cur = String(currency || '').toUpperCase();\n  if (cur === 'USD') return `$${n.toFixed(2)}`;\n  if (cur === 'RUB') return `${n.toFixed(2)} ₽`;\n  return `${n.toFixed(2)} ${currency}`;\n}\n\nfunction thrFor(currency) {\n  return String(currency).toUpperCase() === 'RUB' ? thresholdUsd * usdRubRate : thresholdUsd;\n}\n\nfunction parseDeepseek(raw) {\n  if (!raw || raw.error) return { ok: false, error: (raw && (raw.error || raw.message)) || 'unavailable' };\n  const infos = raw.balance_infos || [];\n  const chosen = infos.find((i) => String(i.currency || '').toUpperCase() === 'USD') || infos[0];\n  if (!chosen) return { ok: false, error: 'no_balance_infos' };\n  const amount = Number(chosen.total_balance);\n  if (!Number.isFinite(amount)) return { ok: false, error: 'bad_amount' };\n  return { ok: true, amount, currency: chosen.currency || 'USD' };\n}\n\nfunction parsePolza(raw) {\n  if (!raw || raw.error) return { ok: false, error: (raw && (raw.error || raw.message)) || 'unavailable' };\n  const amount = Number(raw.amount);\n  if (!Number.isFinite(amount)) return { ok: false, error: 'bad_amount' };\n  return { ok: true, amount, currency: 'RUB' };\n}\n\nconst ds = parseDeepseek(deepseek);\nconst pz = parsePolza(polza);\n\nconst now = new Date();\nconst parts = new Intl.DateTimeFormat('en-CA', {\n  timeZone: 'Europe/Moscow',\n  year: 'numeric', month: '2-digit', day: '2-digit',\n  hour: '2-digit', minute: '2-digit', hour12: false,\n}).formatToParts(now);\nconst get = (t) => (parts.find((p) => p.type === t) || {}).value;\nconst stamp = `${get('year')}-${get('month')}-${get('day')} ${get('hour')}:${get('minute')}`;\n\nconst agents = [\n  { name: 'DeepSeek', ...ds },\n  { name: 'Polza (Judge)', ...pz },\n];\n\nconst lines = [`💰 Balances · ${stamp} MSK`, ''];\nconst low = [];\nfor (const a of agents) {\n  if (!a.ok) {\n    lines.push(`• ${a.name}: ⚠️ error (${a.error || 'unavailable'})`);\n    continue;\n  }\n  const thr = thrFor(a.currency);\n  const warn = a.amount < thr ? ' ⚠️' : '';\n  if (a.amount < thr) low.push(a.name);\n  lines.push(`• ${a.name}: ${money(a.amount, a.currency)}${warn}`);\n}\nlines.push('');\nconst usdLabel = Number.isInteger(thresholdUsd) ? String(thresholdUsd) : thresholdUsd.toFixed(2);\nconst rubThr = thrFor('RUB');\nconst rubLabel = Number.isInteger(rubThr) ? String(rubThr) : String(Math.round(rubThr));\nlines.push(`⚠️ Below $${usdLabel} / ${rubLabel} ₽: ${low.length ? low.join(', ') : '— none —'}`);\n\nreturn [{\n  json: {\n    telegram_chat_id: prep.telegram_chat_id,\n    message_text: lines.join('\\n'),\n    source: prep.source,\n    mode: 'balances',\n  },\n}];\n"
+      },
+      "id": "7c30cd79-b8fd-4b49-889c-337923a672c6",
+      "name": "Format Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2180,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $json.telegram_chat_id }}",
+        "text": "={{ $json.message_text }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "8524d951-d6e8-41bd-b133-671e5038e40e",
+      "name": "Send Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2400,
+        180
+      ],
+      "webhookId": "71080a1c-6f10-4db5-ad3a-634d80629768",
+      "credentials": {
+        "telegramApi": {
+          "id": "OJ0DzHtLgelXO1nz",
+          "name": "my_apis_balance_bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "List running",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily 09:00 MSK": {
+      "main": [
+        [
+          {
+            "node": "List running",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "List running",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List running": {
+      "main": [
+        [
+          {
+            "node": "List waiting",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List waiting": {
+      "main": [
+        [
+          {
+            "node": "List new",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List new": {
+      "main": [
+        [
+          {
+            "node": "Select stale",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select stale": {
+      "main": [
+        [
+          {
+            "node": "Has stale?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has stale?": {
+      "main": [
+        [
+          {
+            "node": "Stop execution",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stop execution": {
+      "main": [
+        [
+          {
+            "node": "Collapse stops",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collapse stops": {
+      "main": [
+        [
+          {
+            "node": "Prepare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare": {
+      "main": [
+        [
+          {
+            "node": "Is Balances?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Balances?": {
+      "main": [
+        [
+          {
+            "node": "HTTP DeepSeek",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Polza",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP DeepSeek": {
+      "main": [
+        [
+          {
+            "node": "Merge Balances",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Polza": {
+      "main": [
+        [
+          {
+            "node": "Merge Balances",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Balances": {
+      "main": [
+        [
+          {
+            "node": "Format Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Message": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
