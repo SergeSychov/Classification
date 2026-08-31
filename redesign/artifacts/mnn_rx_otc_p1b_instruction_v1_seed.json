@@ -1,0 +1,133 @@
+{
+  "task": "P1b official instruction / MAH probe",
+  "no_search_engines": true,
+  "no_pharmacy_p1": true,
+  "hosts": {
+    "termikon.ru": "Otisipharm/Pharmstandard brand site for Термикон",
+    "duspatalin.ru": "Abbott RU product site for Дюспаталин",
+    "obolensk.ru": "Оболенское ФП manufacturer site",
+    "alium.ru": "Alium (successor/holder related to Fluconazole-OBL)",
+    "vertex.spb.ru": "Vertex AO official site",
+    "vertex.ru": "Vertex AO official site",
+    "lekko.ru": "ЛЕККО manufacturer site (Термикон крем)",
+    "otcpharm.ru": "Otisipharm / OTC Pharm brand holder site",
+    "pharmstd.ru": "Pharmstandard official site",
+    "farmstd.ru": "Pharmstandard official site",
+    "irbit-hfz.ru": "Ирбитский ХФЗ official plant site",
+    "irbitpharm.ru": "Ирбитский ХФЗ alternate official host",
+    "tatpharm.ru": "Татхимфармпрепараты official site",
+    "tathimfarm.ru": "Татхимфармпрепараты alternate host",
+    "gippokrat.ru": "Гиппократ manufacturer site",
+    "sandoz.ru": "Sandoz RU, MAH/marketer for Экзоролфинлак",
+    "exorolfinlak.ru": "constructed brand host for Экзоролфинлак",
+    "sanovask.ru": "constructed brand host for Сановаск",
+    "binnopharmgroup.ru": "Binnopharm group (related holder)"
+  },
+  "seed": {
+    "3065": [
+      {
+        "url": "https://obolensk.ru/",
+        "origin": "mah_host_from_identity"
+      },
+      {
+        "url": "https://alium.ru/",
+        "origin": "holder_host_from_identity"
+      }
+    ],
+    "4922": [
+      {
+        "url": "https://termikon.ru/instrukcii/",
+        "origin": "existing_artifact_mnn_rx_otc_source_audit_v1"
+      },
+      {
+        "url": "https://termikon.ru/",
+        "origin": "brand_host"
+      },
+      {
+        "url": "https://otcpharm.ru/",
+        "origin": "holder_host"
+      }
+    ],
+    "4924": [
+      {
+        "url": "https://termikon.ru/instrukcii/",
+        "origin": "existing_artifact_mnn_rx_otc_source_audit_v1"
+      },
+      {
+        "url": "https://lekko.ru/",
+        "origin": "mah_host_from_identity"
+      }
+    ],
+    "19370": [
+      {
+        "url": "https://duspatalin.ru/instruktsiya/135/",
+        "origin": "existing_artifact_mnn_rx_otc_source_audit_v1"
+      },
+      {
+        "url": "https://duspatalin.ru/",
+        "origin": "brand_host"
+      }
+    ],
+    "26115": [
+      {
+        "url": "https://www.vertex.spb.ru/",
+        "origin": "mah_host_from_identity"
+      },
+      {
+        "url": "https://vertex.ru/",
+        "origin": "mah_host_from_identity"
+      }
+    ],
+    "10046": [
+      {
+        "url": "https://irbit-hfz.ru/",
+        "origin": "mah_host_from_identity"
+      },
+      {
+        "url": "https://irbitpharm.ru/",
+        "origin": "mah_host_alt"
+      }
+    ],
+    "7275": [
+      {
+        "url": "https://irbit-hfz.ru/",
+        "origin": "mah_host_from_identity"
+      },
+      {
+        "url": "https://sanovask.ru/",
+        "origin": "constructed_brand_host"
+      }
+    ],
+    "1053": [
+      {
+        "url": "https://www.sandoz.ru/",
+        "origin": "mah_host_from_identity"
+      },
+      {
+        "url": "https://exorolfinlak.ru/",
+        "origin": "constructed_brand_host"
+      }
+    ],
+    "2621": [
+      {
+        "url": "https://www.tatpharm.ru/",
+        "origin": "mah_host_from_identity"
+      },
+      {
+        "url": "https://tathimfarm.ru/",
+        "origin": "mah_host_alt"
+      }
+    ],
+    "18377": [
+      {
+        "url": "https://gippokrat.ru/",
+        "origin": "mah_host_from_identity"
+      },
+      {
+        "url": "https://www.gippokrat.ru/",
+        "origin": "mah_host_from_identity"
+      }
+    ]
+  },
+  "written_at": "2026-08-19T07:42:34.902500+00:00"
+}

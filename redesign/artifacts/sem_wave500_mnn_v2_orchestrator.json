@@ -1,0 +1,10 @@
+{
+  "started_at": "2026-08-12T18:27:42.497159+00:00",
+  "ids_file": "/Users/serge/Developer/categories/redesign/artifacts/sem_wave500_mnn_v2_allowlist.json",
+  "seed": "sem_wave500_mnn_v2_2026-08-12",
+  "rollback_before_mnn": true,
+  "sem_exit_code": 0,
+  "sem_finished_at": "2026-08-12T18:34:05.219119+00:00",
+  "rollback_at": "2026-08-12T18:34:12.122795+00:00",
+  "rollback_done": true
+}

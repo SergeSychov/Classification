@@ -1,0 +1,25 @@
+{
+  "wave_label": "sem_norm_attrs",
+  "seed": "sem_norm_attrs_2026-08-04",
+  "n": 15,
+  "product_ids": [
+    36,
+    91,
+    254,
+    1347,
+    1623,
+    2131,
+    4782,
+    6117,
+    6168,
+    6633,
+    9335,
+    10283,
+    11225,
+    16540,
+    25286
+  ],
+  "generated_at": "2026-08-04T18:50:52.561803+00:00",
+  "isolation_filter": "exclude prod Stage 2 log/runs activity last 24h",
+  "applied_via": "n8n_temp_postgres_workflow"
+}

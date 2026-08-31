@@ -1,0 +1,4850 @@
+[
+  {
+    "product_id": "1448",
+    "run_id_source": "398",
+    "mnn_enrichment_run_id": 405,
+    "normalized_text": "ШИПОВНИКА ПЛОДЫ 100Г ЗДОРОВЬЕ | ЗДОРОВЬЕ ФИРМА ООО | ЗДОРОВЬЕ ФИРМА ООО",
+    "product_kind": "drug",
+    "attr_mnn": "Шиповника плоды",
+    "attr_rx_otc": "otc",
+    "mnn_uteka": "",
+    "rx_uteka": "",
+    "mnn_asna": "Этилметилгидроксипиридина сукцинат",
+    "rx_asna": "rx",
+    "mnn_apteka": "",
+    "rx_apteka": "",
+    "mnn_vidal": "",
+    "rx_vidal": "otc",
+    "source_canonical_json": "[{\"source\": \"asna\", \"raw_mnn\": \"Этилметилгидроксипиридина сукцинат\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Этилметилгидроксипиридина сукцинат\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"vidal\", \"raw_mnn\": null, \"field_type\": \"unknown\", \"canonical_components\": [], \"url\": null, \"parse_warnings\": []}]",
+    "component_stats_json": "[]",
+    "resolved_mnn": "",
+    "resolved_mnn_components": "",
+    "mnn_resolution_status": "unresolved_catalog",
+    "resolution_reason": "single_source",
+    "resolved_rx_otc": "unknown",
+    "resolved_age_segment": "unknown",
+    "needs_mnn_enrichment": true,
+    "enrichment_called": true,
+    "mnn_enrichment_status": "ok",
+    "mnn_enriched": "Шиповника плоды",
+    "rx_otc_enriched": "otc",
+    "age_enriched": "универсальный",
+    "final_candidate_mnn": "Шиповника плоды",
+    "final_mnn_method": "enrichment",
+    "retry_count": 1,
+    "needs_human_review": false,
+    "evidence_urls": "https://pharmproduct.ru/drugs/sipovnika-plody | https://www.lsgeotar.ru/drugs/rosae-fructus-AFAn | https://www.lsgeotar.ru/drugs/rose-hips-BBP7 | https://www.medsovet.info/herb/17228 | https://www.vidal.ru/drugs/rosae_fructus__17274 | https://www.vidal.ru/drugs/rosae_fructus__20450 | https://medum.ru/plody-shipovnika | https://zdesapteka.ru/instructions/shipovnika-plody/ | https://medi.ru/instrukciya/shipovnika-plody_24817/ | https://health.mail.ru/drug/shipovnika-plody-1/ | https://drugs.medelement.com/drug/%D1%88%D0%B8%D0%BF%D0%BE%D0%B2%D0%BD%D0%B8%D0%BA%D0%B0-%D0%BF%D0%BB%D0%BE%D0%B4%D1%8B-%D0%B8%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%86%D0%B8%D1%8F/729749741477650935?instruction_lang=RU | https://www.lsgeotar.ru/ru/shipovnika-plodi-14524.html",
+    "idempotency_key": "bb61ab557174d7312d9ab292e6aba7be",
+    "resolved_payload": {
+      "mnn_resolution_status": "unresolved_catalog",
+      "resolved_mnn": null,
+      "resolved_mnn_components": [],
+      "resolved_mnn_component_stats": [],
+      "resolved_mnn_sources": [],
+      "source_raw_mnn": [
+        {
+          "source": "asna",
+          "raw_mnn": "Этилметилгидроксипиридина сукцинат",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Этилметилгидроксипиридина сукцинат"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "vidal",
+          "raw_mnn": null,
+          "field_type": "unknown",
+          "canonical_components": [],
+          "url": null,
+          "parse_warnings": []
+        }
+      ],
+      "resolved_rx_otc": "unknown",
+      "resolved_age_segment": "unknown",
+      "needs_mnn_enrichment": true,
+      "resolution_reason": "single_source",
+      "anchor_components": [],
+      "mnn_enriched": null,
+      "mnn_enrichment_status": null,
+      "mnn_evidence": []
+    },
+    "enrichment_map": {
+      "mnn_enriched": "Шиповника плоды",
+      "rx_otc_enriched": "otc",
+      "age_enriched": "универсальный",
+      "mnn_enrichment_status": "ok",
+      "mnn_evidence": [
+        {
+          "url": "https://pharmproduct.ru/drugs/sipovnika-plody",
+          "title": "Шиповника плоды — инструкция по применению, аналоги | PharmProduct",
+          "query": "Шиповника плоды МНН ГРЛС"
+        },
+        {
+          "url": "https://www.lsgeotar.ru/drugs/rosae-fructus-AFAn",
+          "title": "Шиповника плоды - Информация о препарате - ЛС ГЭОТАР",
+          "query": "Шиповника плоды МНН ГРЛС"
+        },
+        {
+          "url": "https://www.lsgeotar.ru/drugs/rose-hips-BBP7",
+          "title": "Шиповника плоды - Информация о препарате - ЛС ГЭОТАР",
+          "query": "Шиповника плоды МНН ГРЛС"
+        },
+        {
+          "url": "https://www.medsovet.info/herb/17228",
+          "title": "Действующее вещество (МНН) Шиповника плоды - инструкция по применению ...",
+          "query": "Шиповника плоды МНН ГРЛС"
+        },
+        {
+          "url": "https://www.vidal.ru/drugs/rosae_fructus__17274",
+          "title": "Шиповника плоды инструкция по применению: показания, противопоказания ...",
+          "query": "Шиповника плоды инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://www.vidal.ru/drugs/rosae_fructus__20450",
+          "title": "Шиповника плоды инструкция по применению: показания, противопоказания ...",
+          "query": "Шиповника плоды инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://medum.ru/plody-shipovnika",
+          "title": "Шиповника плоды — инструкция по применению | Medum.ru",
+          "query": "Шиповника плоды инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://zdesapteka.ru/instructions/shipovnika-plody/",
+          "title": "Инструкция по применению Шиповника плоды, показания, состав, аналоги",
+          "query": "Шиповника плоды инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://medi.ru/instrukciya/shipovnika-plody_24817/",
+          "title": "Шиповника плоды цельные - МФП СО Магнолия - официальная инструкция по ...",
+          "query": "Шиповника плоды инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://health.mail.ru/drug/shipovnika-plody-1/",
+          "title": "Шиповника плоды None - инструкция по применению, цена, дозировки ...",
+          "query": "Шиповника плоды инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://drugs.medelement.com/drug/%D1%88%D0%B8%D0%BF%D0%BE%D0%B2%D0%BD%D0%B8%D0%BA%D0%B0-%D0%BF%D0%BB%D0%BE%D0%B4%D1%8B-%D0%B8%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%86%D0%B8%D1%8F/729749741477650935?instruction_lang=RU",
+          "title": "Шиповника плоды: инструкция по применению, показания.",
+          "query": "Шиповника плоды инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://www.lsgeotar.ru/ru/shipovnika-plodi-14524.html",
+          "title": "Шиповника плоды - инструкция по применению, дозы, побочные действия ...",
+          "query": "Шиповника плоды инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://www.pharmcontrol.ru/reference/inn/7813/",
+          "title": "Рябины обыкновенной плоды+Шиповника плоды - МНН лекарственного средства ...",
+          "query": "Шиповника плоды МНН ГРЛС"
+        },
+        {
+          "url": "https://zdravmedinform.ru/grls/reg-lp-014485-rg-ru.html",
+          "title": "Шиповника Плоды | Лп-№ (014485)- (Рг-ru) | Грлс 2026",
+          "query": "Шиповника плоды МНН ГРЛС"
+        },
+        {
+          "url": "https://www.pharmcontrol.ru/reference/inn/12100/",
+          "title": "Шиповника плоды низковитаминные - МНН лекарственного средства ...",
+          "query": "Шиповника плоды МНН ГРЛС"
+        },
+        {
+          "url": "https://pharmacopoeia.regmed.ru/pharmacopoeia/izdanie-15/2/2-3/shipovnika-plody-/",
+          "title": "Шиповника плоды",
+          "query": "Шиповника плоды МНН ГРЛС"
+        }
+      ],
+      "needs_human_review": false,
+      "enrichment_accepted": true,
+      "enrichment_category": "Drug",
+      "enrichment_error": null
+    },
+    "research_context": {
+      "research_context": {
+        "search_queries": [
+          "Шиповника плоды МНН ГРЛС",
+          "Шиповника плоды рецептурный безрецептурный ГРЛС",
+          "Шиповника плоды инструкция применение возраст дети взрослые"
+        ],
+        "fallback_queries": [],
+        "search_count": 16,
+        "selected_evidence": [
+          {
+            "rank": 1,
+            "source": "pharmproduct.ru",
+            "url": "https://pharmproduct.ru/drugs/sipovnika-plody",
+            "title": "Шиповника плоды — инструкция по применению, аналоги | PharmProduct",
+            "query": "Шиповника плоды МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 2,
+            "source": "www.lsgeotar.ru",
+            "url": "https://www.lsgeotar.ru/drugs/rosae-fructus-AFAn",
+            "title": "Шиповника плоды - Информация о препарате - ЛС ГЭОТАР",
+            "query": "Шиповника плоды МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 3,
+            "source": "www.lsgeotar.ru",
+            "url": "https://www.lsgeotar.ru/drugs/rose-hips-BBP7",
+            "title": "Шиповника плоды - Информация о препарате - ЛС ГЭОТАР",
+            "query": "Шиповника плоды МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 4,
+            "source": "www.medsovet.info",
+            "url": "https://www.medsovet.info/herb/17228",
+            "title": "Действующее вещество (МНН) Шиповника плоды - инструкция по применению ...",
+            "query": "Шиповника плоды МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 5,
+            "source": "www.vidal.ru",
+            "url": "https://www.vidal.ru/drugs/rosae_fructus__17274",
+            "title": "Шиповника плоды инструкция по применению: показания, противопоказания ...",
+            "query": "Шиповника плоды инструкция применение возраст дети взрослые",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 6,
+            "source": "www.vidal.ru",
+            "url": "https://www.vidal.ru/drugs/rosae_fructus__20450",
+            "title": "Шиповника плоды инструкция по применению: показания, противопоказания ...",
+            "query": "Шиповника плоды инструкция применение возраст дети взрослые",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 7,
+            "source": "medum.ru",
+            "url": "https://medum.ru/plody-shipovnika",
+            "title": "Шиповника плоды — инструкция по применению | Medum.ru",
+            "query": "Шиповника плоды инструкция применение возраст дети взрослые",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 8,
+            "source": "zdesapteka.ru",
+            "url": "https://zdesapteka.ru/instructions/shipovnika-plody/",
+            "title": "Инструкция по применению Шиповника плоды, показания, состав, аналоги",
+            "query": "Шиповника плоды инструкция применение возраст дети взрослые",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 9,
+            "source": "medi.ru",
+            "url": "https://medi.ru/instrukciya/shipovnika-plody_24817/",
+            "title": "Шиповника плоды цельные - МФП СО Магнолия - официальная инструкция по ...",
+            "query": "Шиповника плоды инструкция применение возраст дети взрослые",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 10,
+            "source": "health.mail.ru",
+            "url": "https://health.mail.ru/drug/shipovnika-plody-1/",
+            "title": "Шиповника плоды None - инструкция по применению, цена, дозировки ...",
+            "query": "Шиповника плоды инструкция применение возраст дети взрослые",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 11,
+            "source": "drugs.medelement.com",
+            "url": "https://drugs.medelement.com/drug/%D1%88%D0%B8%D0%BF%D0%BE%D0%B2%D0%BD%D0%B8%D0%BA%D0%B0-%D0%BF%D0%BB%D0%BE%D0%B4%D1%8B-%D0%B8%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%86%D0%B8%D1%8F/729749741477650935?instruction_lang=RU",
+            "title": "Шиповника плоды: инструкция по применению, показания.",
+            "query": "Шиповника плоды инструкция применение возраст дети взрослые",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 12,
+            "source": "www.lsgeotar.ru",
+            "url": "https://www.lsgeotar.ru/ru/shipovnika-plodi-14524.html",
+            "title": "Шиповника плоды - инструкция по применению, дозы, побочные действия ...",
+            "query": "Шиповника плоды инструкция применение возраст дети взрослые",
+            "excerpt": "",
+            "field_used": "other"
+          }
+        ],
+        "raw_artifact_path": "redesign/artifacts/mnn_wave500_v2_searxng_raw.jsonl",
+        "idempotency_key": "bb61ab557174d7312d9ab292e6aba7be",
+        "attempt_count": 2
+      }
+    }
+  },
+  {
+    "product_id": "3020",
+    "run_id_source": "398",
+    "mnn_enrichment_run_id": 405,
+    "normalized_text": "ФЛУОМИЗИН ТАБЛ. ВАГ. 10МГ №6 | РОТТЕНДОРФ ФАРМА ГМБХ/МЕДИНОВА АГ | РОТТЕНДОРФ ФАРМА ГМБХ/МЕДИНОВА АГ",
+    "product_kind": "drug",
+    "attr_mnn": "декалиния хлорид",
+    "attr_rx_otc": "rx",
+    "mnn_uteka": "Деквалиния хлорид",
+    "rx_uteka": "otc",
+    "mnn_asna": "Деквалиния хлорид",
+    "rx_asna": "otc",
+    "mnn_apteka": "Деквалиния хлорид",
+    "rx_apteka": "",
+    "mnn_vidal": "Деквалиния хлорид",
+    "rx_vidal": "otc",
+    "source_canonical_json": "[{\"source\": \"uteka\", \"raw_mnn\": \"Деквалиния хлорид\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Деквалиния хлорид\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"apteka\", \"raw_mnn\": \"Деквалиния хлорид\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Деквалиния хлорид\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"asna\", \"raw_mnn\": \"Деквалиния хлорид\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Деквалиния хлорид\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"vidal\", \"raw_mnn\": \"Деквалиния хлорид\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Деквалиния хлорид\"], \"url\": null, \"parse_warnings\": []}]",
+    "component_stats_json": "[{\"component\": \"Деквалиния хлорид\", \"source_count\": 4, \"sources\": [\"uteka\", \"apteka\", \"asna\", \"vidal\"]}]",
+    "resolved_mnn": "Деквалиния хлорид",
+    "resolved_mnn_components": "Деквалиния хлорид",
+    "mnn_resolution_status": "resolved_catalog",
+    "resolution_reason": "consensus",
+    "resolved_rx_otc": "otc",
+    "resolved_age_segment": "unknown",
+    "needs_mnn_enrichment": false,
+    "enrichment_called": false,
+    "mnn_enrichment_status": "",
+    "mnn_enriched": "",
+    "rx_otc_enriched": "unknown",
+    "age_enriched": "unknown",
+    "final_candidate_mnn": "Деквалиния хлорид",
+    "final_mnn_method": "catalog_consensus",
+    "retry_count": 0,
+    "needs_human_review": false,
+    "evidence_urls": "",
+    "idempotency_key": "a4aa09e5ee6e8294baf44d630ea8a66e",
+    "resolved_payload": {
+      "mnn_resolution_status": "resolved_catalog",
+      "resolved_mnn": "Деквалиния хлорид",
+      "resolved_mnn_components": [
+        "Деквалиния хлорид"
+      ],
+      "resolved_mnn_component_stats": [
+        {
+          "component": "Деквалиния хлорид",
+          "source_count": 4,
+          "sources": [
+            "uteka",
+            "apteka",
+            "asna",
+            "vidal"
+          ]
+        }
+      ],
+      "resolved_mnn_sources": [
+        "uteka",
+        "vidal",
+        "asna",
+        "apteka"
+      ],
+      "source_raw_mnn": [
+        {
+          "source": "uteka",
+          "raw_mnn": "Деквалиния хлорид",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Деквалиния хлорид"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "apteka",
+          "raw_mnn": "Деквалиния хлорид",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Деквалиния хлорид"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "asna",
+          "raw_mnn": "Деквалиния хлорид",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Деквалиния хлорид"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "vidal",
+          "raw_mnn": "Деквалиния хлорид",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Деквалиния хлорид"
+          ],
+          "url": null,
+          "parse_warnings": []
+        }
+      ],
+      "resolved_rx_otc": "otc",
+      "resolved_age_segment": "unknown",
+      "needs_mnn_enrichment": false,
+      "resolution_reason": "consensus",
+      "anchor_components": [
+        "Деквалиния хлорид"
+      ],
+      "mnn_enriched": null,
+      "mnn_enrichment_status": null,
+      "mnn_evidence": []
+    },
+    "enrichment_map": {
+      "mnn_enriched": null,
+      "rx_otc_enriched": "unknown",
+      "age_enriched": "unknown",
+      "mnn_enrichment_status": null,
+      "mnn_evidence": [],
+      "needs_human_review": false,
+      "enrichment_accepted": false
+    },
+    "research_context": {
+      "research_context": {
+        "search_queries": [],
+        "fallback_queries": [],
+        "search_count": null,
+        "selected_evidence": [],
+        "raw_artifact_path": "redesign/artifacts/mnn_wave500_v2_searxng_raw.jsonl",
+        "idempotency_key": "a4aa09e5ee6e8294baf44d630ea8a66e",
+        "attempt_count": 0
+      }
+    }
+  },
+  {
+    "product_id": "3079",
+    "run_id_source": "398",
+    "mnn_enrichment_run_id": 405,
+    "normalized_text": "ФЛУИМУЦИЛ ГРАН. Д/Р-РА Д/ПРИЕМА ВНУТРЬ 200МГ ПАК. №20 | ЗАМБОН СВИТЦЕЛАНД ЛТД. | ЗАМБОН СВИТЦЕЛАНД ЛТД.",
+    "product_kind": "drug",
+    "attr_mnn": "Ацетилцистеин",
+    "attr_rx_otc": "rx",
+    "mnn_uteka": "Ацетилцистеин",
+    "rx_uteka": "otc",
+    "mnn_asna": "Ацетилцистеин",
+    "rx_asna": "rx",
+    "mnn_apteka": "",
+    "rx_apteka": "",
+    "mnn_vidal": "Ацетилцистеин",
+    "rx_vidal": "otc",
+    "source_canonical_json": "[{\"source\": \"uteka\", \"raw_mnn\": \"Ацетилцистеин\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Ацетилцистеин\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"asna\", \"raw_mnn\": \"Ацетилцистеин\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Ацетилцистеин\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"vidal\", \"raw_mnn\": \"Ацетилцистеин\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Ацетилцистеин\"], \"url\": null, \"parse_warnings\": []}]",
+    "component_stats_json": "[{\"component\": \"Ацетилцистеин\", \"source_count\": 3, \"sources\": [\"uteka\", \"asna\", \"vidal\"]}]",
+    "resolved_mnn": "Ацетилцистеин",
+    "resolved_mnn_components": "Ацетилцистеин",
+    "mnn_resolution_status": "resolved_catalog",
+    "resolution_reason": "consensus",
+    "resolved_rx_otc": "otc",
+    "resolved_age_segment": "unknown",
+    "needs_mnn_enrichment": false,
+    "enrichment_called": false,
+    "mnn_enrichment_status": "",
+    "mnn_enriched": "",
+    "rx_otc_enriched": "unknown",
+    "age_enriched": "unknown",
+    "final_candidate_mnn": "Ацетилцистеин",
+    "final_mnn_method": "catalog_consensus",
+    "retry_count": 0,
+    "needs_human_review": false,
+    "evidence_urls": "",
+    "idempotency_key": "d88b970fb87e971be2c7376356e4b055",
+    "resolved_payload": {
+      "mnn_resolution_status": "resolved_catalog",
+      "resolved_mnn": "Ацетилцистеин",
+      "resolved_mnn_components": [
+        "Ацетилцистеин"
+      ],
+      "resolved_mnn_component_stats": [
+        {
+          "component": "Ацетилцистеин",
+          "source_count": 3,
+          "sources": [
+            "uteka",
+            "asna",
+            "vidal"
+          ]
+        }
+      ],
+      "resolved_mnn_sources": [
+        "uteka",
+        "vidal",
+        "asna"
+      ],
+      "source_raw_mnn": [
+        {
+          "source": "uteka",
+          "raw_mnn": "Ацетилцистеин",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Ацетилцистеин"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "asna",
+          "raw_mnn": "Ацетилцистеин",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Ацетилцистеин"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "vidal",
+          "raw_mnn": "Ацетилцистеин",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Ацетилцистеин"
+          ],
+          "url": null,
+          "parse_warnings": []
+        }
+      ],
+      "resolved_rx_otc": "otc",
+      "resolved_age_segment": "unknown",
+      "needs_mnn_enrichment": false,
+      "resolution_reason": "consensus",
+      "anchor_components": [
+        "Ацетилцистеин"
+      ],
+      "mnn_enriched": null,
+      "mnn_enrichment_status": null,
+      "mnn_evidence": []
+    },
+    "enrichment_map": {
+      "mnn_enriched": null,
+      "rx_otc_enriched": "unknown",
+      "age_enriched": "unknown",
+      "mnn_enrichment_status": null,
+      "mnn_evidence": [],
+      "needs_human_review": false,
+      "enrichment_accepted": false
+    },
+    "research_context": {
+      "research_context": {
+        "search_queries": [],
+        "fallback_queries": [],
+        "search_count": null,
+        "selected_evidence": [],
+        "raw_artifact_path": "redesign/artifacts/mnn_wave500_v2_searxng_raw.jsonl",
+        "idempotency_key": "d88b970fb87e971be2c7376356e4b055",
+        "attempt_count": 0
+      }
+    }
+  },
+  {
+    "product_id": "4294",
+    "run_id_source": "398",
+    "mnn_enrichment_run_id": 405,
+    "normalized_text": "ТРОМБОСТЕН ТАБЛ. КИШ-РАСТ. П/ПЛЕН/ОБ. 50МГ №100 | ОЗОН ООО | ОЗОН ООО",
+    "product_kind": "drug",
+    "attr_mnn": "",
+    "attr_rx_otc": "rx",
+    "mnn_uteka": "Ацетилсалициловая кислота",
+    "rx_uteka": "otc",
+    "mnn_asna": "Ацетилсалициловая кислота",
+    "rx_asna": "otc",
+    "mnn_apteka": "Ацетилсалициловая кислота",
+    "rx_apteka": "",
+    "mnn_vidal": "Ацетилсалициловая кислота",
+    "rx_vidal": "otc",
+    "source_canonical_json": "[{\"source\": \"uteka\", \"raw_mnn\": \"Ацетилсалициловая кислота\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Ацетилсалициловая кислота\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"apteka\", \"raw_mnn\": \"Ацетилсалициловая кислота\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Ацетилсалициловая кислота\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"asna\", \"raw_mnn\": \"Ацетилсалициловая кислота\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Ацетилсалициловая кислота\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"vidal\", \"raw_mnn\": \"Ацетилсалициловая кислота\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Ацетилсалициловая кислота\"], \"url\": null, \"parse_warnings\": []}]",
+    "component_stats_json": "[{\"component\": \"Ацетилсалициловая кислота\", \"source_count\": 4, \"sources\": [\"uteka\", \"apteka\", \"asna\", \"vidal\"]}]",
+    "resolved_mnn": "Ацетилсалициловая кислота",
+    "resolved_mnn_components": "Ацетилсалициловая кислота",
+    "mnn_resolution_status": "resolved_catalog",
+    "resolution_reason": "consensus",
+    "resolved_rx_otc": "otc",
+    "resolved_age_segment": "unknown",
+    "needs_mnn_enrichment": false,
+    "enrichment_called": false,
+    "mnn_enrichment_status": "",
+    "mnn_enriched": "",
+    "rx_otc_enriched": "unknown",
+    "age_enriched": "unknown",
+    "final_candidate_mnn": "Ацетилсалициловая кислота",
+    "final_mnn_method": "catalog_consensus",
+    "retry_count": 0,
+    "needs_human_review": false,
+    "evidence_urls": "",
+    "idempotency_key": "e2b26d692127c27fa1b9b6be42b05e1d",
+    "resolved_payload": {
+      "mnn_resolution_status": "resolved_catalog",
+      "resolved_mnn": "Ацетилсалициловая кислота",
+      "resolved_mnn_components": [
+        "Ацетилсалициловая кислота"
+      ],
+      "resolved_mnn_component_stats": [
+        {
+          "component": "Ацетилсалициловая кислота",
+          "source_count": 4,
+          "sources": [
+            "uteka",
+            "apteka",
+            "asna",
+            "vidal"
+          ]
+        }
+      ],
+      "resolved_mnn_sources": [
+        "uteka",
+        "vidal",
+        "asna",
+        "apteka"
+      ],
+      "source_raw_mnn": [
+        {
+          "source": "uteka",
+          "raw_mnn": "Ацетилсалициловая кислота",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Ацетилсалициловая кислота"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "apteka",
+          "raw_mnn": "Ацетилсалициловая кислота",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Ацетилсалициловая кислота"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "asna",
+          "raw_mnn": "Ацетилсалициловая кислота",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Ацетилсалициловая кислота"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "vidal",
+          "raw_mnn": "Ацетилсалициловая кислота",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Ацетилсалициловая кислота"
+          ],
+          "url": null,
+          "parse_warnings": []
+        }
+      ],
+      "resolved_rx_otc": "otc",
+      "resolved_age_segment": "unknown",
+      "needs_mnn_enrichment": false,
+      "resolution_reason": "consensus",
+      "anchor_components": [
+        "Ацетилсалициловая кислота"
+      ],
+      "mnn_enriched": null,
+      "mnn_enrichment_status": null,
+      "mnn_evidence": []
+    },
+    "enrichment_map": {
+      "mnn_enriched": null,
+      "rx_otc_enriched": "unknown",
+      "age_enriched": "unknown",
+      "mnn_enrichment_status": null,
+      "mnn_evidence": [],
+      "needs_human_review": false,
+      "enrichment_accepted": false
+    },
+    "research_context": {
+      "research_context": {
+        "search_queries": [],
+        "fallback_queries": [],
+        "search_count": null,
+        "selected_evidence": [],
+        "raw_artifact_path": "redesign/artifacts/mnn_wave500_v2_searxng_raw.jsonl",
+        "idempotency_key": "e2b26d692127c27fa1b9b6be42b05e1d",
+        "attempt_count": 0
+      }
+    }
+  },
+  {
+    "product_id": "6122",
+    "run_id_source": "399",
+    "mnn_enrichment_run_id": 405,
+    "normalized_text": "СОЛУ-КОРТЕФ ЛИОФ. Д/Р-РА ДЛЯ В/В В/М ВВЕД. 100МГ ФЛ. №1 С Р-ЛЕМ 2МЛ | ПФАЙЗЕР МФГ. БЕЛЬГИЯ Н.В. | ПФАЙЗЕР МФГ. БЕЛЬГИЯ Н.В.",
+    "product_kind": "drug",
+    "attr_mnn": "Гидрокортизон",
+    "attr_rx_otc": "rx",
+    "mnn_uteka": "Гидрокортизон",
+    "rx_uteka": "rx",
+    "mnn_asna": "Гидрокортизон",
+    "rx_asna": "rx",
+    "mnn_apteka": "Гидрокортизон",
+    "rx_apteka": "rx",
+    "mnn_vidal": "Гидрокортизон",
+    "rx_vidal": "rx",
+    "source_canonical_json": "[{\"source\": \"uteka\", \"raw_mnn\": \"Гидрокортизон\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Гидрокортизон\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"apteka\", \"raw_mnn\": \"Гидрокортизон\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Гидрокортизон\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"asna\", \"raw_mnn\": \"Гидрокортизон\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Гидрокортизон\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"vidal\", \"raw_mnn\": \"Гидрокортизон\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Гидрокортизон\"], \"url\": null, \"parse_warnings\": []}]",
+    "component_stats_json": "[{\"component\": \"Гидрокортизон\", \"source_count\": 4, \"sources\": [\"uteka\", \"apteka\", \"asna\", \"vidal\"]}]",
+    "resolved_mnn": "Гидрокортизон",
+    "resolved_mnn_components": "Гидрокортизон",
+    "mnn_resolution_status": "resolved_catalog",
+    "resolution_reason": "consensus",
+    "resolved_rx_otc": "rx",
+    "resolved_age_segment": "unknown",
+    "needs_mnn_enrichment": false,
+    "enrichment_called": false,
+    "mnn_enrichment_status": "",
+    "mnn_enriched": "",
+    "rx_otc_enriched": "unknown",
+    "age_enriched": "unknown",
+    "final_candidate_mnn": "Гидрокортизон",
+    "final_mnn_method": "catalog_consensus",
+    "retry_count": 0,
+    "needs_human_review": false,
+    "evidence_urls": "",
+    "idempotency_key": "736ce81c54d145f6bdda021905c6f015",
+    "resolved_payload": {
+      "mnn_resolution_status": "resolved_catalog",
+      "resolved_mnn": "Гидрокортизон",
+      "resolved_mnn_components": [
+        "Гидрокортизон"
+      ],
+      "resolved_mnn_component_stats": [
+        {
+          "component": "Гидрокортизон",
+          "source_count": 4,
+          "sources": [
+            "uteka",
+            "apteka",
+            "asna",
+            "vidal"
+          ]
+        }
+      ],
+      "resolved_mnn_sources": [
+        "uteka",
+        "vidal",
+        "asna",
+        "apteka"
+      ],
+      "source_raw_mnn": [
+        {
+          "source": "uteka",
+          "raw_mnn": "Гидрокортизон",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Гидрокортизон"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "apteka",
+          "raw_mnn": "Гидрокортизон",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Гидрокортизон"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "asna",
+          "raw_mnn": "Гидрокортизон",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Гидрокортизон"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "vidal",
+          "raw_mnn": "Гидрокортизон",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Гидрокортизон"
+          ],
+          "url": null,
+          "parse_warnings": []
+        }
+      ],
+      "resolved_rx_otc": "rx",
+      "resolved_age_segment": "unknown",
+      "needs_mnn_enrichment": false,
+      "resolution_reason": "consensus",
+      "anchor_components": [
+        "Гидрокортизон"
+      ],
+      "mnn_enriched": null,
+      "mnn_enrichment_status": null,
+      "mnn_evidence": []
+    },
+    "enrichment_map": {
+      "mnn_enriched": null,
+      "rx_otc_enriched": "unknown",
+      "age_enriched": "unknown",
+      "mnn_enrichment_status": null,
+      "mnn_evidence": [],
+      "needs_human_review": false,
+      "enrichment_accepted": false
+    },
+    "research_context": {
+      "research_context": {
+        "search_queries": [],
+        "fallback_queries": [],
+        "search_count": null,
+        "selected_evidence": [],
+        "raw_artifact_path": "redesign/artifacts/mnn_wave500_v2_searxng_raw.jsonl",
+        "idempotency_key": "736ce81c54d145f6bdda021905c6f015",
+        "attempt_count": 0
+      }
+    }
+  },
+  {
+    "product_id": "7787",
+    "run_id_source": "399",
+    "mnn_enrichment_run_id": 405,
+    "normalized_text": "РОЗУЛИП ПЛЮС КАПС. 20МГ+10МГ №30 | ЭГИС ФАРМАЦЕВТИЧЕСКИЙ ЗАВОД ЗАО | ЭГИС ФАРМАЦЕВТИЧЕСКИЙ ЗАВОД ЗАО",
+    "product_kind": "drug",
+    "attr_mnn": "",
+    "attr_rx_otc": "rx",
+    "mnn_uteka": "",
+    "rx_uteka": "",
+    "mnn_asna": "Розувастатин+Эзетимиб",
+    "rx_asna": "rx",
+    "mnn_apteka": "Эзетимиб, Розувастатин",
+    "rx_apteka": "rx",
+    "mnn_vidal": "Эзетимиб",
+    "rx_vidal": "rx",
+    "source_canonical_json": "[{\"source\": \"apteka\", \"raw_mnn\": \"Эзетимиб, Розувастатин\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Эзетимиб\", \"Розувастатин\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"asna\", \"raw_mnn\": \"Розувастатин+Эзетимиб\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Розувастатин\", \"Эзетимиб\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"vidal\", \"raw_mnn\": \"Эзетимиб\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Эзетимиб\"], \"url\": null, \"parse_warnings\": []}]",
+    "component_stats_json": "[{\"component\": \"Эзетимиб\", \"source_count\": 3, \"sources\": [\"apteka\", \"asna\", \"vidal\"]}, {\"component\": \"Розувастатин\", \"source_count\": 2, \"sources\": [\"apteka\", \"asna\"]}]",
+    "resolved_mnn": "Эзетимиб, Розувастатин",
+    "resolved_mnn_components": "Эзетимиб, Розувастатин",
+    "mnn_resolution_status": "resolved_catalog",
+    "resolution_reason": "consensus",
+    "resolved_rx_otc": "rx",
+    "resolved_age_segment": "unknown",
+    "needs_mnn_enrichment": false,
+    "enrichment_called": false,
+    "mnn_enrichment_status": "",
+    "mnn_enriched": "",
+    "rx_otc_enriched": "unknown",
+    "age_enriched": "unknown",
+    "final_candidate_mnn": "Эзетимиб, Розувастатин",
+    "final_mnn_method": "catalog_consensus",
+    "retry_count": 0,
+    "needs_human_review": false,
+    "evidence_urls": "",
+    "idempotency_key": "70dd42a6cc3432770673d8023eb0fb9b",
+    "resolved_payload": {
+      "mnn_resolution_status": "resolved_catalog",
+      "resolved_mnn": "Эзетимиб, Розувастатин",
+      "resolved_mnn_components": [
+        "Эзетимиб",
+        "Розувастатин"
+      ],
+      "resolved_mnn_component_stats": [
+        {
+          "component": "Эзетимиб",
+          "source_count": 3,
+          "sources": [
+            "apteka",
+            "asna",
+            "vidal"
+          ]
+        },
+        {
+          "component": "Розувастатин",
+          "source_count": 2,
+          "sources": [
+            "apteka",
+            "asna"
+          ]
+        }
+      ],
+      "resolved_mnn_sources": [
+        "vidal",
+        "asna",
+        "apteka"
+      ],
+      "source_raw_mnn": [
+        {
+          "source": "apteka",
+          "raw_mnn": "Эзетимиб, Розувастатин",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Эзетимиб",
+            "Розувастатин"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "asna",
+          "raw_mnn": "Розувастатин+Эзетимиб",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Розувастатин",
+            "Эзетимиб"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "vidal",
+          "raw_mnn": "Эзетимиб",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Эзетимиб"
+          ],
+          "url": null,
+          "parse_warnings": []
+        }
+      ],
+      "resolved_rx_otc": "rx",
+      "resolved_age_segment": "unknown",
+      "needs_mnn_enrichment": false,
+      "resolution_reason": "consensus",
+      "anchor_components": [
+        "Эзетимиб",
+        "Розувастатин"
+      ],
+      "mnn_enriched": null,
+      "mnn_enrichment_status": null,
+      "mnn_evidence": []
+    },
+    "enrichment_map": {
+      "mnn_enriched": null,
+      "rx_otc_enriched": "unknown",
+      "age_enriched": "unknown",
+      "mnn_enrichment_status": null,
+      "mnn_evidence": [],
+      "needs_human_review": false,
+      "enrichment_accepted": false
+    },
+    "research_context": {
+      "research_context": {
+        "search_queries": [],
+        "fallback_queries": [],
+        "search_count": null,
+        "selected_evidence": [],
+        "raw_artifact_path": "redesign/artifacts/mnn_wave500_v2_searxng_raw.jsonl",
+        "idempotency_key": "70dd42a6cc3432770673d8023eb0fb9b",
+        "attempt_count": 0
+      }
+    }
+  },
+  {
+    "product_id": "8122",
+    "run_id_source": "399",
+    "mnn_enrichment_run_id": 405,
+    "normalized_text": "РИБОКСИН Р-Р ДЛЯ В/В ВВЕД. 20МГ/МЛ АМП. 5МЛ №10 ДАЛЬХИМФАРМ | ДАЛЬХИМФАРМ ОАО | ДАЛЬХИМФАРМ ОАО",
+    "product_kind": "drug",
+    "attr_mnn": "Инозин",
+    "attr_rx_otc": "rx",
+    "mnn_uteka": "Инозин",
+    "rx_uteka": "rx",
+    "mnn_asna": "Инозин",
+    "rx_asna": "rx",
+    "mnn_apteka": "Инозин",
+    "rx_apteka": "rx",
+    "mnn_vidal": "Инозин",
+    "rx_vidal": "rx",
+    "source_canonical_json": "[{\"source\": \"uteka\", \"raw_mnn\": \"Инозин\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Инозин\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"apteka\", \"raw_mnn\": \"Инозин\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Инозин\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"asna\", \"raw_mnn\": \"Инозин\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Инозин\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"vidal\", \"raw_mnn\": \"Инозин\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Инозин\"], \"url\": null, \"parse_warnings\": []}]",
+    "component_stats_json": "[{\"component\": \"Инозин\", \"source_count\": 4, \"sources\": [\"uteka\", \"apteka\", \"asna\", \"vidal\"]}]",
+    "resolved_mnn": "Инозин",
+    "resolved_mnn_components": "Инозин",
+    "mnn_resolution_status": "resolved_catalog",
+    "resolution_reason": "consensus",
+    "resolved_rx_otc": "rx",
+    "resolved_age_segment": "unknown",
+    "needs_mnn_enrichment": false,
+    "enrichment_called": false,
+    "mnn_enrichment_status": "",
+    "mnn_enriched": "",
+    "rx_otc_enriched": "unknown",
+    "age_enriched": "unknown",
+    "final_candidate_mnn": "Инозин",
+    "final_mnn_method": "catalog_consensus",
+    "retry_count": 0,
+    "needs_human_review": false,
+    "evidence_urls": "",
+    "idempotency_key": "fa227b30d089735c17512f1ee7e51634",
+    "resolved_payload": {
+      "mnn_resolution_status": "resolved_catalog",
+      "resolved_mnn": "Инозин",
+      "resolved_mnn_components": [
+        "Инозин"
+      ],
+      "resolved_mnn_component_stats": [
+        {
+          "component": "Инозин",
+          "source_count": 4,
+          "sources": [
+            "uteka",
+            "apteka",
+            "asna",
+            "vidal"
+          ]
+        }
+      ],
+      "resolved_mnn_sources": [
+        "uteka",
+        "vidal",
+        "asna",
+        "apteka"
+      ],
+      "source_raw_mnn": [
+        {
+          "source": "uteka",
+          "raw_mnn": "Инозин",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Инозин"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "apteka",
+          "raw_mnn": "Инозин",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Инозин"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "asna",
+          "raw_mnn": "Инозин",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Инозин"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "vidal",
+          "raw_mnn": "Инозин",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Инозин"
+          ],
+          "url": null,
+          "parse_warnings": []
+        }
+      ],
+      "resolved_rx_otc": "rx",
+      "resolved_age_segment": "unknown",
+      "needs_mnn_enrichment": false,
+      "resolution_reason": "consensus",
+      "anchor_components": [
+        "Инозин"
+      ],
+      "mnn_enriched": null,
+      "mnn_enrichment_status": null,
+      "mnn_evidence": []
+    },
+    "enrichment_map": {
+      "mnn_enriched": null,
+      "rx_otc_enriched": "unknown",
+      "age_enriched": "unknown",
+      "mnn_enrichment_status": null,
+      "mnn_evidence": [],
+      "needs_human_review": false,
+      "enrichment_accepted": false
+    },
+    "research_context": {
+      "research_context": {
+        "search_queries": [],
+        "fallback_queries": [],
+        "search_count": null,
+        "selected_evidence": [],
+        "raw_artifact_path": "redesign/artifacts/mnn_wave500_v2_searxng_raw.jsonl",
+        "idempotency_key": "fa227b30d089735c17512f1ee7e51634",
+        "attempt_count": 0
+      }
+    }
+  },
+  {
+    "product_id": "8428",
+    "run_id_source": "399",
+    "mnn_enrichment_run_id": 405,
+    "normalized_text": "РЕАФЕРОН-ЕС-ЛИПИНТ ЛИОФ. Д/СУСП. Д/ПРИЕМА ВНУТРЬ 500ТЫС.МЕ ФЛ. №5 | ВЕКТОР-МЕДИКА АО | ВЕКТОР-МЕДИКА АО",
+    "product_kind": "drug",
+    "attr_mnn": "Интерферон альфа-2b",
+    "attr_rx_otc": "rx",
+    "mnn_uteka": "Интерферон альфа-2b",
+    "rx_uteka": "otc",
+    "mnn_asna": "Интерферон альфа-2b",
+    "rx_asna": "rx",
+    "mnn_apteka": "Интерферон альфа-2b",
+    "rx_apteka": "rx",
+    "mnn_vidal": "1-(4-бромфенил)виолуровая кислота",
+    "rx_vidal": "rx",
+    "source_canonical_json": "[{\"source\": \"uteka\", \"raw_mnn\": \"Интерферон альфа-2b\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Интерферон альфа-2b\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"apteka\", \"raw_mnn\": \"Интерферон альфа-2b\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Интерферон альфа-2b\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"asna\", \"raw_mnn\": \"Интерферон альфа-2b\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Интерферон альфа-2b\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"vidal\", \"raw_mnn\": \"1-(4-бромфенил)виолуровая кислота\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"1-(4-бромфенил)виолуровая Кислота\"], \"url\": null, \"parse_warnings\": []}]",
+    "component_stats_json": "[{\"component\": \"Интерферон альфа-2b\", \"source_count\": 3, \"sources\": [\"uteka\", \"apteka\", \"asna\"]}]",
+    "resolved_mnn": "Интерферон альфа-2b",
+    "resolved_mnn_components": "Интерферон альфа-2b",
+    "mnn_resolution_status": "resolved_catalog",
+    "resolution_reason": "consensus",
+    "resolved_rx_otc": "rx",
+    "resolved_age_segment": "unknown",
+    "needs_mnn_enrichment": false,
+    "enrichment_called": false,
+    "mnn_enrichment_status": "",
+    "mnn_enriched": "",
+    "rx_otc_enriched": "unknown",
+    "age_enriched": "unknown",
+    "final_candidate_mnn": "Интерферон альфа-2b",
+    "final_mnn_method": "catalog_consensus",
+    "retry_count": 0,
+    "needs_human_review": false,
+    "evidence_urls": "",
+    "idempotency_key": "5e3d9d288d928ce16e2474d84860cb9c",
+    "resolved_payload": {
+      "mnn_resolution_status": "resolved_catalog",
+      "resolved_mnn": "Интерферон альфа-2b",
+      "resolved_mnn_components": [
+        "Интерферон альфа-2b"
+      ],
+      "resolved_mnn_component_stats": [
+        {
+          "component": "Интерферон альфа-2b",
+          "source_count": 3,
+          "sources": [
+            "uteka",
+            "apteka",
+            "asna"
+          ]
+        }
+      ],
+      "resolved_mnn_sources": [
+        "uteka",
+        "asna",
+        "apteka"
+      ],
+      "source_raw_mnn": [
+        {
+          "source": "uteka",
+          "raw_mnn": "Интерферон альфа-2b",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Интерферон альфа-2b"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "apteka",
+          "raw_mnn": "Интерферон альфа-2b",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Интерферон альфа-2b"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "asna",
+          "raw_mnn": "Интерферон альфа-2b",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Интерферон альфа-2b"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "vidal",
+          "raw_mnn": "1-(4-бромфенил)виолуровая кислота",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "1-(4-бромфенил)виолуровая Кислота"
+          ],
+          "url": null,
+          "parse_warnings": []
+        }
+      ],
+      "resolved_rx_otc": "rx",
+      "resolved_age_segment": "unknown",
+      "needs_mnn_enrichment": false,
+      "resolution_reason": "consensus",
+      "anchor_components": [
+        "Интерферон альфа-2b"
+      ],
+      "mnn_enriched": null,
+      "mnn_enrichment_status": null,
+      "mnn_evidence": []
+    },
+    "enrichment_map": {
+      "mnn_enriched": null,
+      "rx_otc_enriched": "unknown",
+      "age_enriched": "unknown",
+      "mnn_enrichment_status": null,
+      "mnn_evidence": [],
+      "needs_human_review": false,
+      "enrichment_accepted": false
+    },
+    "research_context": {
+      "research_context": {
+        "search_queries": [],
+        "fallback_queries": [],
+        "search_count": null,
+        "selected_evidence": [],
+        "raw_artifact_path": "redesign/artifacts/mnn_wave500_v2_searxng_raw.jsonl",
+        "idempotency_key": "5e3d9d288d928ce16e2474d84860cb9c",
+        "attempt_count": 0
+      }
+    }
+  },
+  {
+    "product_id": "9303",
+    "run_id_source": "399",
+    "mnn_enrichment_run_id": 405,
+    "normalized_text": "ПОЛЫНИ ГОРЬКОЙ ТРАВА 50Г КРАСНОГОРСКЛЕКСРЕДСТВА | КРАСНОГОРСКЛЕКСРЕДСТВА | КРАСНОГОРСКЛЕКСРЕДСТВА",
+    "product_kind": "drug",
+    "attr_mnn": "Полыни горькой трава",
+    "attr_rx_otc": "otc",
+    "mnn_uteka": "",
+    "rx_uteka": "",
+    "mnn_asna": "Ромашки аптечной цветки",
+    "rx_asna": "otc",
+    "mnn_apteka": "",
+    "rx_apteka": "",
+    "mnn_vidal": "",
+    "rx_vidal": "",
+    "source_canonical_json": "[{\"source\": \"asna\", \"raw_mnn\": \"Ромашки аптечной цветки\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Ромашки аптечной цветки\"], \"url\": null, \"parse_warnings\": []}]",
+    "component_stats_json": "[]",
+    "resolved_mnn": "",
+    "resolved_mnn_components": "",
+    "mnn_resolution_status": "unresolved_catalog",
+    "resolution_reason": "single_source",
+    "resolved_rx_otc": "unknown",
+    "resolved_age_segment": "unknown",
+    "needs_mnn_enrichment": true,
+    "enrichment_called": true,
+    "mnn_enrichment_status": "ok",
+    "mnn_enriched": "Полыни горькой трава",
+    "rx_otc_enriched": "otc",
+    "age_enriched": "универсальный",
+    "final_candidate_mnn": "Полыни горькой трава",
+    "final_mnn_method": "enrichment",
+    "retry_count": 0,
+    "needs_human_review": false,
+    "evidence_urls": "https://pharmproduct.ru/drugs/polyni-gorkoi-trava | https://www.lsgeotar.ru/drugs/bitter-wormwood-herb-BA8e | https://allmed.pro/ru/drugs/polyni-gorkoj-trava | https://health.mail.ru/drug/polyni-gorkoy-trava-1/ | https://apteka.ru/product/polyni-gorkoj-trava-50-gr-5e3274b1ca7bdc00019329ea/instructions/ | https://pharmproduct.ru/drugs/polyni-gorkoi-trava | https://pharmznanie.ru/drugs/polyni-gorkoj-trava-50-g | https://health.mail.ru/drug/polyni-gorkoy-trava/ | https://medi.ru/instrukciya/polyni-gorkoj-trava_12705/ | https://health.mail.ru/drug/polyni-gorkoy-trava-1/ | https://www.rlsnet.ru/drugs/polyni-gorkoi-trava-4783 | https://medi.ru/instrukciya/polyni-gorkoy-trava_22517/",
+    "idempotency_key": "f0102cff4321be28d988cc282cdfc826",
+    "resolved_payload": {
+      "mnn_resolution_status": "unresolved_catalog",
+      "resolved_mnn": null,
+      "resolved_mnn_components": [],
+      "resolved_mnn_component_stats": [],
+      "resolved_mnn_sources": [],
+      "source_raw_mnn": [
+        {
+          "source": "asna",
+          "raw_mnn": "Ромашки аптечной цветки",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Ромашки аптечной цветки"
+          ],
+          "url": null,
+          "parse_warnings": []
+        }
+      ],
+      "resolved_rx_otc": "unknown",
+      "resolved_age_segment": "unknown",
+      "needs_mnn_enrichment": true,
+      "resolution_reason": "single_source",
+      "anchor_components": [],
+      "mnn_enriched": null,
+      "mnn_enrichment_status": null,
+      "mnn_evidence": []
+    },
+    "enrichment_map": {
+      "mnn_enriched": "Полыни горькой трава",
+      "rx_otc_enriched": "otc",
+      "age_enriched": "универсальный",
+      "mnn_enrichment_status": "ok",
+      "mnn_evidence": [
+        {
+          "url": "https://pharmproduct.ru/drugs/polyni-gorkoi-trava",
+          "title": "Полыни горькой трава — инструкция по применению, аналоги | PharmProduct",
+          "query": "Полыни горькой трава МНН ГРЛС"
+        },
+        {
+          "url": "https://www.lsgeotar.ru/drugs/bitter-wormwood-herb-BA8e",
+          "title": "Полыни горькой трава - Информация о препарате - ЛС ГЭОТАР",
+          "query": "Полыни горькой трава МНН ГРЛС"
+        },
+        {
+          "url": "https://allmed.pro/ru/drugs/polyni-gorkoj-trava",
+          "title": "Полыни горькой трава рецепт, инструкция по применению, показания ...",
+          "query": "Полыни горькой трава рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://health.mail.ru/drug/polyni-gorkoy-trava-1/",
+          "title": "Полыни горькой трава None - инструкция по применению, цена, дозировки ...",
+          "query": "Полыни горькой трава рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://apteka.ru/product/polyni-gorkoj-trava-50-gr-5e3274b1ca7bdc00019329ea/instructions/",
+          "title": "Инструкция по применению Полыни горькой трава 50 гр",
+          "query": "Полыни горькой трава рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://pharmproduct.ru/drugs/polyni-gorkoi-trava",
+          "title": "Полыни горькой трава — инструкция по применению, аналоги | PharmProduct",
+          "query": "Полыни горькой трава рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://pharmznanie.ru/drugs/polyni-gorkoj-trava-50-g",
+          "title": "Полыни горькой трава 50 г: инструкция по применению",
+          "query": "Полыни горькой трава рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://health.mail.ru/drug/polyni-gorkoy-trava/",
+          "title": "Полыни горькой трава порошок - инструкция по применению, цена ...",
+          "query": "Полыни горькой трава инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://medi.ru/instrukciya/polyni-gorkoj-trava_12705/",
+          "title": "Полыни горькой трава - инструкция по применению",
+          "query": "Полыни горькой трава инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://health.mail.ru/drug/polyni-gorkoy-trava-1/",
+          "title": "Полыни горькой трава None - инструкция по применению, цена, дозировки ...",
+          "query": "Полыни горькой трава инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://www.rlsnet.ru/drugs/polyni-gorkoi-trava-4783",
+          "title": "Полыни горькой трава — инструкция по применению, дозы, побочные ...",
+          "query": "Полыни горькой трава инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://medi.ru/instrukciya/polyni-gorkoy-trava_22517/",
+          "title": "Полыни горькой трава порошок - Ст.-Медифарм - официальная инструкция по ...",
+          "query": "Полыни горькой трава инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://apteka.103.by/63285-polyni-gorkoy-trava-instruktsiya/",
+          "title": "Полыни горькой трава: инструкция по применению",
+          "query": "Полыни горькой трава инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://medum.ru/polyni-gorkoj-trava",
+          "title": "Полыни горькой трава — инструкция по применению | справочник ...",
+          "query": "Полыни горькой трава инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://www.vidal.ru/drugs/artemisiae_absinthii_herba__23293",
+          "title": "Полыни горькой трава инструкция по применению: показания ...",
+          "query": "Полыни горькой трава инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://grls.pharm-portal.ru/grls/3380476e-321e-4a25-ac63-0da1b943e6a3",
+          "title": "Полыни горькой трава - ГРЛС: Справочник РУ - Государственный реестр ...",
+          "query": "Полыни горькой трава МНН ГРЛС"
+        }
+      ],
+      "needs_human_review": false,
+      "enrichment_accepted": true,
+      "enrichment_category": "Drug",
+      "enrichment_error": null
+    },
+    "research_context": {
+      "research_context": {
+        "search_queries": [
+          "Полыни горькой трава МНН ГРЛС",
+          "Полыни горькой трава рецептурный безрецептурный ГРЛС",
+          "Полыни горькой трава инструкция применение возраст дети взрослые"
+        ],
+        "fallback_queries": [],
+        "search_count": 16,
+        "selected_evidence": [
+          {
+            "rank": 1,
+            "source": "pharmproduct.ru",
+            "url": "https://pharmproduct.ru/drugs/polyni-gorkoi-trava",
+            "title": "Полыни горькой трава — инструкция по применению, аналоги | PharmProduct",
+            "query": "Полыни горькой трава МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 2,
+            "source": "www.lsgeotar.ru",
+            "url": "https://www.lsgeotar.ru/drugs/bitter-wormwood-herb-BA8e",
+            "title": "Полыни горькой трава - Информация о препарате - ЛС ГЭОТАР",
+            "query": "Полыни горькой трава МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 3,
+            "source": "allmed.pro",
+            "url": "https://allmed.pro/ru/drugs/polyni-gorkoj-trava",
+            "title": "Полыни горькой трава рецепт, инструкция по применению, показания ...",
+            "query": "Полыни горькой трава рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 4,
+            "source": "health.mail.ru",
+            "url": "https://health.mail.ru/drug/polyni-gorkoy-trava-1/",
+            "title": "Полыни горькой трава None - инструкция по применению, цена, дозировки ...",
+            "query": "Полыни горькой трава рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 5,
+            "source": "apteka.ru",
+            "url": "https://apteka.ru/product/polyni-gorkoj-trava-50-gr-5e3274b1ca7bdc00019329ea/instructions/",
+            "title": "Инструкция по применению Полыни горькой трава 50 гр",
+            "query": "Полыни горькой трава рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 6,
+            "source": "pharmproduct.ru",
+            "url": "https://pharmproduct.ru/drugs/polyni-gorkoi-trava",
+            "title": "Полыни горькой трава — инструкция по применению, аналоги | PharmProduct",
+            "query": "Полыни горькой трава рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 7,
+            "source": "pharmznanie.ru",
+            "url": "https://pharmznanie.ru/drugs/polyni-gorkoj-trava-50-g",
+            "title": "Полыни горькой трава 50 г: инструкция по применению",
+            "query": "Полыни горькой трава рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 8,
+            "source": "health.mail.ru",
+            "url": "https://health.mail.ru/drug/polyni-gorkoy-trava/",
+            "title": "Полыни горькой трава порошок - инструкция по применению, цена ...",
+            "query": "Полыни горькой трава инструкция применение возраст дети взрослые",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 9,
+            "source": "medi.ru",
+            "url": "https://medi.ru/instrukciya/polyni-gorkoj-trava_12705/",
+            "title": "Полыни горькой трава - инструкция по применению",
+            "query": "Полыни горькой трава инструкция применение возраст дети взрослые",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 10,
+            "source": "health.mail.ru",
+            "url": "https://health.mail.ru/drug/polyni-gorkoy-trava-1/",
+            "title": "Полыни горькой трава None - инструкция по применению, цена, дозировки ...",
+            "query": "Полыни горькой трава инструкция применение возраст дети взрослые",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 11,
+            "source": "www.rlsnet.ru",
+            "url": "https://www.rlsnet.ru/drugs/polyni-gorkoi-trava-4783",
+            "title": "Полыни горькой трава — инструкция по применению, дозы, побочные ...",
+            "query": "Полыни горькой трава инструкция применение возраст дети взрослые",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 12,
+            "source": "medi.ru",
+            "url": "https://medi.ru/instrukciya/polyni-gorkoy-trava_22517/",
+            "title": "Полыни горькой трава порошок - Ст.-Медифарм - официальная инструкция по ...",
+            "query": "Полыни горькой трава инструкция применение возраст дети взрослые",
+            "excerpt": "",
+            "field_used": "other"
+          }
+        ],
+        "raw_artifact_path": "redesign/artifacts/mnn_wave500_v2_searxng_raw.jsonl",
+        "idempotency_key": "f0102cff4321be28d988cc282cdfc826",
+        "attempt_count": 1
+      }
+    }
+  },
+  {
+    "product_id": "10366",
+    "run_id_source": "399",
+    "mnn_enrichment_run_id": 405,
+    "normalized_text": "ОРНИДАЗОЛ-OBL ТАБЛ. П/ПЛЕН/ОБ. 500МГ №10 | ОБОЛЕНСКОЕ ФП АО | ОБОЛЕНСКОЕ ФП АО",
+    "product_kind": "drug",
+    "attr_mnn": "Орнидазол",
+    "attr_rx_otc": "rx",
+    "mnn_uteka": "Орнидазол",
+    "rx_uteka": "rx",
+    "mnn_asna": "",
+    "rx_asna": "",
+    "mnn_apteka": "Орнидазол",
+    "rx_apteka": "rx",
+    "mnn_vidal": "Орнидазол",
+    "rx_vidal": "rx",
+    "source_canonical_json": "[{\"source\": \"uteka\", \"raw_mnn\": \"Орнидазол\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Орнидазол\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"apteka\", \"raw_mnn\": \"Орнидазол\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Орнидазол\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"vidal\", \"raw_mnn\": \"Орнидазол\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Орнидазол\"], \"url\": null, \"parse_warnings\": []}]",
+    "component_stats_json": "[{\"component\": \"Орнидазол\", \"source_count\": 3, \"sources\": [\"uteka\", \"apteka\", \"vidal\"]}]",
+    "resolved_mnn": "Орнидазол",
+    "resolved_mnn_components": "Орнидазол",
+    "mnn_resolution_status": "resolved_catalog",
+    "resolution_reason": "consensus",
+    "resolved_rx_otc": "rx",
+    "resolved_age_segment": "unknown",
+    "needs_mnn_enrichment": false,
+    "enrichment_called": false,
+    "mnn_enrichment_status": "",
+    "mnn_enriched": "",
+    "rx_otc_enriched": "unknown",
+    "age_enriched": "unknown",
+    "final_candidate_mnn": "Орнидазол",
+    "final_mnn_method": "catalog_consensus",
+    "retry_count": 0,
+    "needs_human_review": false,
+    "evidence_urls": "",
+    "idempotency_key": "a1d1bd18e3e6a99117bb535c6f94de24",
+    "resolved_payload": {
+      "mnn_resolution_status": "resolved_catalog",
+      "resolved_mnn": "Орнидазол",
+      "resolved_mnn_components": [
+        "Орнидазол"
+      ],
+      "resolved_mnn_component_stats": [
+        {
+          "component": "Орнидазол",
+          "source_count": 3,
+          "sources": [
+            "uteka",
+            "apteka",
+            "vidal"
+          ]
+        }
+      ],
+      "resolved_mnn_sources": [
+        "uteka",
+        "vidal",
+        "apteka"
+      ],
+      "source_raw_mnn": [
+        {
+          "source": "uteka",
+          "raw_mnn": "Орнидазол",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Орнидазол"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "apteka",
+          "raw_mnn": "Орнидазол",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Орнидазол"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "vidal",
+          "raw_mnn": "Орнидазол",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Орнидазол"
+          ],
+          "url": null,
+          "parse_warnings": []
+        }
+      ],
+      "resolved_rx_otc": "rx",
+      "resolved_age_segment": "unknown",
+      "needs_mnn_enrichment": false,
+      "resolution_reason": "consensus",
+      "anchor_components": [
+        "Орнидазол"
+      ],
+      "mnn_enriched": null,
+      "mnn_enrichment_status": null,
+      "mnn_evidence": []
+    },
+    "enrichment_map": {
+      "mnn_enriched": null,
+      "rx_otc_enriched": "unknown",
+      "age_enriched": "unknown",
+      "mnn_enrichment_status": null,
+      "mnn_evidence": [],
+      "needs_human_review": false,
+      "enrichment_accepted": false
+    },
+    "research_context": {
+      "research_context": {
+        "search_queries": [],
+        "fallback_queries": [],
+        "search_count": null,
+        "selected_evidence": [],
+        "raw_artifact_path": "redesign/artifacts/mnn_wave500_v2_searxng_raw.jsonl",
+        "idempotency_key": "a1d1bd18e3e6a99117bb535c6f94de24",
+        "attempt_count": 0
+      }
+    }
+  },
+  {
+    "product_id": "11817",
+    "run_id_source": "400",
+    "mnn_enrichment_run_id": 405,
+    "normalized_text": "НЕМОЗОЛ СУСП. Д/ПРИЕМА ВНУТРЬ 100МГ/5МЛ ФЛ. 20МЛ | ИПКА ЛАБОРАТОРИЗ ЛИМИТЕД | ИПКА ЛАБОРАТОРИЗ ЛИМИТЕД",
+    "product_kind": "drug",
+    "attr_mnn": "Албендазол",
+    "attr_rx_otc": "rx",
+    "mnn_uteka": "",
+    "rx_uteka": "",
+    "mnn_asna": "Албендазол",
+    "rx_asna": "rx",
+    "mnn_apteka": "",
+    "rx_apteka": "",
+    "mnn_vidal": "Албендазол",
+    "rx_vidal": "rx",
+    "source_canonical_json": "[{\"source\": \"asna\", \"raw_mnn\": \"Албендазол\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Албендазол\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"vidal\", \"raw_mnn\": \"Албендазол\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Албендазол\"], \"url\": null, \"parse_warnings\": []}]",
+    "component_stats_json": "[{\"component\": \"Албендазол\", \"source_count\": 2, \"sources\": [\"asna\", \"vidal\"]}]",
+    "resolved_mnn": "Албендазол",
+    "resolved_mnn_components": "Албендазол",
+    "mnn_resolution_status": "resolved_catalog",
+    "resolution_reason": "consensus",
+    "resolved_rx_otc": "rx",
+    "resolved_age_segment": "unknown",
+    "needs_mnn_enrichment": false,
+    "enrichment_called": false,
+    "mnn_enrichment_status": "",
+    "mnn_enriched": "",
+    "rx_otc_enriched": "unknown",
+    "age_enriched": "unknown",
+    "final_candidate_mnn": "Албендазол",
+    "final_mnn_method": "catalog_consensus",
+    "retry_count": 0,
+    "needs_human_review": false,
+    "evidence_urls": "",
+    "idempotency_key": "aa261bf4e7eeef194eaa3c532dcf9a62",
+    "resolved_payload": {
+      "mnn_resolution_status": "resolved_catalog",
+      "resolved_mnn": "Албендазол",
+      "resolved_mnn_components": [
+        "Албендазол"
+      ],
+      "resolved_mnn_component_stats": [
+        {
+          "component": "Албендазол",
+          "source_count": 2,
+          "sources": [
+            "asna",
+            "vidal"
+          ]
+        }
+      ],
+      "resolved_mnn_sources": [
+        "vidal",
+        "asna"
+      ],
+      "source_raw_mnn": [
+        {
+          "source": "asna",
+          "raw_mnn": "Албендазол",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Албендазол"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "vidal",
+          "raw_mnn": "Албендазол",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Албендазол"
+          ],
+          "url": null,
+          "parse_warnings": []
+        }
+      ],
+      "resolved_rx_otc": "rx",
+      "resolved_age_segment": "unknown",
+      "needs_mnn_enrichment": false,
+      "resolution_reason": "consensus",
+      "anchor_components": [
+        "Албендазол"
+      ],
+      "mnn_enriched": null,
+      "mnn_enrichment_status": null,
+      "mnn_evidence": []
+    },
+    "enrichment_map": {
+      "mnn_enriched": null,
+      "rx_otc_enriched": "unknown",
+      "age_enriched": "unknown",
+      "mnn_enrichment_status": null,
+      "mnn_evidence": [],
+      "needs_human_review": false,
+      "enrichment_accepted": false
+    },
+    "research_context": {
+      "research_context": {
+        "search_queries": [],
+        "fallback_queries": [],
+        "search_count": null,
+        "selected_evidence": [],
+        "raw_artifact_path": "redesign/artifacts/mnn_wave500_v2_searxng_raw.jsonl",
+        "idempotency_key": "aa261bf4e7eeef194eaa3c532dcf9a62",
+        "attempt_count": 0
+      }
+    }
+  },
+  {
+    "product_id": "12237",
+    "run_id_source": "400",
+    "mnn_enrichment_run_id": 405,
+    "normalized_text": "НАТЕКАЛЬ 1000 ТАБЛ. ДИСПЕРГ. 600МГ+1000МЕ №30 | ИТАЛФАРМАКО С.П.А. | ИТАЛФАРМАКО С.П.А.",
+    "product_kind": "drug",
+    "attr_mnn": "Кальция карбонат+Колекальциферол",
+    "attr_rx_otc": "Без рецепта",
+    "mnn_uteka": "Кальция карбонат + Колекальциферол",
+    "rx_uteka": "rx",
+    "mnn_asna": "Кальция карбонат + Колекальциферол",
+    "rx_asna": "rx",
+    "mnn_apteka": "Кальция карбонат, Колекальциферол",
+    "rx_apteka": "rx",
+    "mnn_vidal": "Кальция карбонат",
+    "rx_vidal": "otc",
+    "source_canonical_json": "[{\"source\": \"uteka\", \"raw_mnn\": \"Кальция карбонат + Колекальциферол\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Кальция карбонат\", \"Колекальциферол\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"apteka\", \"raw_mnn\": \"Кальция карбонат, Колекальциферол\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Кальция карбонат\", \"Колекальциферол\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"asna\", \"raw_mnn\": \"Кальция карбонат + Колекальциферол\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Кальция карбонат\", \"Колекальциферол\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"vidal\", \"raw_mnn\": \"Кальция карбонат\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Кальция карбонат\"], \"url\": null, \"parse_warnings\": []}]",
+    "component_stats_json": "[{\"component\": \"Кальция карбонат\", \"source_count\": 4, \"sources\": [\"uteka\", \"apteka\", \"asna\", \"vidal\"]}, {\"component\": \"Колекальциферол\", \"source_count\": 3, \"sources\": [\"uteka\", \"apteka\", \"asna\"]}]",
+    "resolved_mnn": "Кальция карбонат, Колекальциферол",
+    "resolved_mnn_components": "Кальция карбонат, Колекальциферол",
+    "mnn_resolution_status": "resolved_catalog",
+    "resolution_reason": "consensus",
+    "resolved_rx_otc": "rx",
+    "resolved_age_segment": "unknown",
+    "needs_mnn_enrichment": false,
+    "enrichment_called": false,
+    "mnn_enrichment_status": "",
+    "mnn_enriched": "",
+    "rx_otc_enriched": "unknown",
+    "age_enriched": "unknown",
+    "final_candidate_mnn": "Кальция карбонат, Колекальциферол",
+    "final_mnn_method": "catalog_consensus",
+    "retry_count": 0,
+    "needs_human_review": false,
+    "evidence_urls": "",
+    "idempotency_key": "936890bf88e42216f13394fc4a49046b",
+    "resolved_payload": {
+      "mnn_resolution_status": "resolved_catalog",
+      "resolved_mnn": "Кальция карбонат, Колекальциферол",
+      "resolved_mnn_components": [
+        "Кальция карбонат",
+        "Колекальциферол"
+      ],
+      "resolved_mnn_component_stats": [
+        {
+          "component": "Кальция карбонат",
+          "source_count": 4,
+          "sources": [
+            "uteka",
+            "apteka",
+            "asna",
+            "vidal"
+          ]
+        },
+        {
+          "component": "Колекальциферол",
+          "source_count": 3,
+          "sources": [
+            "uteka",
+            "apteka",
+            "asna"
+          ]
+        }
+      ],
+      "resolved_mnn_sources": [
+        "uteka",
+        "vidal",
+        "asna",
+        "apteka"
+      ],
+      "source_raw_mnn": [
+        {
+          "source": "uteka",
+          "raw_mnn": "Кальция карбонат + Колекальциферол",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Кальция карбонат",
+            "Колекальциферол"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "apteka",
+          "raw_mnn": "Кальция карбонат, Колекальциферол",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Кальция карбонат",
+            "Колекальциферол"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "asna",
+          "raw_mnn": "Кальция карбонат + Колекальциферол",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Кальция карбонат",
+            "Колекальциферол"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "vidal",
+          "raw_mnn": "Кальция карбонат",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Кальция карбонат"
+          ],
+          "url": null,
+          "parse_warnings": []
+        }
+      ],
+      "resolved_rx_otc": "rx",
+      "resolved_age_segment": "unknown",
+      "needs_mnn_enrichment": false,
+      "resolution_reason": "consensus",
+      "anchor_components": [
+        "Кальция карбонат",
+        "Колекальциферол"
+      ],
+      "mnn_enriched": null,
+      "mnn_enrichment_status": null,
+      "mnn_evidence": []
+    },
+    "enrichment_map": {
+      "mnn_enriched": null,
+      "rx_otc_enriched": "unknown",
+      "age_enriched": "unknown",
+      "mnn_enrichment_status": null,
+      "mnn_evidence": [],
+      "needs_human_review": false,
+      "enrichment_accepted": false
+    },
+    "research_context": {
+      "research_context": {
+        "search_queries": [],
+        "fallback_queries": [],
+        "search_count": null,
+        "selected_evidence": [],
+        "raw_artifact_path": "redesign/artifacts/mnn_wave500_v2_searxng_raw.jsonl",
+        "idempotency_key": "936890bf88e42216f13394fc4a49046b",
+        "attempt_count": 0
+      }
+    }
+  },
+  {
+    "product_id": "12570",
+    "run_id_source": "400",
+    "mnn_enrichment_run_id": 405,
+    "normalized_text": "МОТИЛАК ТАБЛ. П/ПЛЕН/ОБ. 10МГ №30 | ВЕРОФАРМ ООО | ВЕРОФАРМ ООО",
+    "product_kind": "drug",
+    "attr_mnn": "домперидон",
+    "attr_rx_otc": "rx",
+    "mnn_uteka": "Домперидон",
+    "rx_uteka": "rx",
+    "mnn_asna": "Домперидон",
+    "rx_asna": "rx",
+    "mnn_apteka": "Домперидон",
+    "rx_apteka": "rx",
+    "mnn_vidal": "Домперидон",
+    "rx_vidal": "rx",
+    "source_canonical_json": "[{\"source\": \"uteka\", \"raw_mnn\": \"Домперидон\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Домперидон\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"apteka\", \"raw_mnn\": \"Домперидон\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Домперидон\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"asna\", \"raw_mnn\": \"Домперидон\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Домперидон\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"vidal\", \"raw_mnn\": \"Домперидон\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Домперидон\"], \"url\": null, \"parse_warnings\": []}]",
+    "component_stats_json": "[{\"component\": \"Домперидон\", \"source_count\": 4, \"sources\": [\"uteka\", \"apteka\", \"asna\", \"vidal\"]}]",
+    "resolved_mnn": "Домперидон",
+    "resolved_mnn_components": "Домперидон",
+    "mnn_resolution_status": "resolved_catalog",
+    "resolution_reason": "consensus",
+    "resolved_rx_otc": "rx",
+    "resolved_age_segment": "unknown",
+    "needs_mnn_enrichment": false,
+    "enrichment_called": false,
+    "mnn_enrichment_status": "",
+    "mnn_enriched": "",
+    "rx_otc_enriched": "unknown",
+    "age_enriched": "unknown",
+    "final_candidate_mnn": "Домперидон",
+    "final_mnn_method": "catalog_consensus",
+    "retry_count": 0,
+    "needs_human_review": false,
+    "evidence_urls": "",
+    "idempotency_key": "844beee2ffd57d91cfeab59425694ad1",
+    "resolved_payload": {
+      "mnn_resolution_status": "resolved_catalog",
+      "resolved_mnn": "Домперидон",
+      "resolved_mnn_components": [
+        "Домперидон"
+      ],
+      "resolved_mnn_component_stats": [
+        {
+          "component": "Домперидон",
+          "source_count": 4,
+          "sources": [
+            "uteka",
+            "apteka",
+            "asna",
+            "vidal"
+          ]
+        }
+      ],
+      "resolved_mnn_sources": [
+        "uteka",
+        "vidal",
+        "asna",
+        "apteka"
+      ],
+      "source_raw_mnn": [
+        {
+          "source": "uteka",
+          "raw_mnn": "Домперидон",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Домперидон"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "apteka",
+          "raw_mnn": "Домперидон",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Домперидон"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "asna",
+          "raw_mnn": "Домперидон",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Домперидон"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "vidal",
+          "raw_mnn": "Домперидон",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Домперидон"
+          ],
+          "url": null,
+          "parse_warnings": []
+        }
+      ],
+      "resolved_rx_otc": "rx",
+      "resolved_age_segment": "unknown",
+      "needs_mnn_enrichment": false,
+      "resolution_reason": "consensus",
+      "anchor_components": [
+        "Домперидон"
+      ],
+      "mnn_enriched": null,
+      "mnn_enrichment_status": null,
+      "mnn_evidence": []
+    },
+    "enrichment_map": {
+      "mnn_enriched": null,
+      "rx_otc_enriched": "unknown",
+      "age_enriched": "unknown",
+      "mnn_enrichment_status": null,
+      "mnn_evidence": [],
+      "needs_human_review": false,
+      "enrichment_accepted": false
+    },
+    "research_context": {
+      "research_context": {
+        "search_queries": [],
+        "fallback_queries": [],
+        "search_count": null,
+        "selected_evidence": [],
+        "raw_artifact_path": "redesign/artifacts/mnn_wave500_v2_searxng_raw.jsonl",
+        "idempotency_key": "844beee2ffd57d91cfeab59425694ad1",
+        "attempt_count": 0
+      }
+    }
+  },
+  {
+    "product_id": "12728",
+    "run_id_source": "400",
+    "mnn_enrichment_run_id": 405,
+    "normalized_text": "МОКСОНИДИН-АЛСИ ТАБЛ. П/ПЛЕН/ОБ. 0,4МГ №30 | АЛСИ ФАРМА | АЛСИ ФАРМА",
+    "product_kind": "drug",
+    "attr_mnn": "Моксонидин",
+    "attr_rx_otc": "rx",
+    "mnn_uteka": "Моксонидин",
+    "rx_uteka": "rx",
+    "mnn_asna": "Моксонидин",
+    "rx_asna": "rx",
+    "mnn_apteka": "Моксонидин",
+    "rx_apteka": "rx",
+    "mnn_vidal": "Моксонидин",
+    "rx_vidal": "rx",
+    "source_canonical_json": "[{\"source\": \"uteka\", \"raw_mnn\": \"Моксонидин\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Моксонидин\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"apteka\", \"raw_mnn\": \"Моксонидин\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Моксонидин\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"asna\", \"raw_mnn\": \"Моксонидин\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Моксонидин\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"vidal\", \"raw_mnn\": \"Моксонидин\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Моксонидин\"], \"url\": null, \"parse_warnings\": []}]",
+    "component_stats_json": "[{\"component\": \"Моксонидин\", \"source_count\": 4, \"sources\": [\"uteka\", \"apteka\", \"asna\", \"vidal\"]}]",
+    "resolved_mnn": "Моксонидин",
+    "resolved_mnn_components": "Моксонидин",
+    "mnn_resolution_status": "resolved_catalog",
+    "resolution_reason": "consensus",
+    "resolved_rx_otc": "rx",
+    "resolved_age_segment": "unknown",
+    "needs_mnn_enrichment": false,
+    "enrichment_called": false,
+    "mnn_enrichment_status": "",
+    "mnn_enriched": "",
+    "rx_otc_enriched": "unknown",
+    "age_enriched": "unknown",
+    "final_candidate_mnn": "Моксонидин",
+    "final_mnn_method": "catalog_consensus",
+    "retry_count": 0,
+    "needs_human_review": false,
+    "evidence_urls": "",
+    "idempotency_key": "d3c995116fb7e965f214f3994a5d6455",
+    "resolved_payload": {
+      "mnn_resolution_status": "resolved_catalog",
+      "resolved_mnn": "Моксонидин",
+      "resolved_mnn_components": [
+        "Моксонидин"
+      ],
+      "resolved_mnn_component_stats": [
+        {
+          "component": "Моксонидин",
+          "source_count": 4,
+          "sources": [
+            "uteka",
+            "apteka",
+            "asna",
+            "vidal"
+          ]
+        }
+      ],
+      "resolved_mnn_sources": [
+        "uteka",
+        "vidal",
+        "asna",
+        "apteka"
+      ],
+      "source_raw_mnn": [
+        {
+          "source": "uteka",
+          "raw_mnn": "Моксонидин",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Моксонидин"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "apteka",
+          "raw_mnn": "Моксонидин",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Моксонидин"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "asna",
+          "raw_mnn": "Моксонидин",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Моксонидин"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "vidal",
+          "raw_mnn": "Моксонидин",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Моксонидин"
+          ],
+          "url": null,
+          "parse_warnings": []
+        }
+      ],
+      "resolved_rx_otc": "rx",
+      "resolved_age_segment": "unknown",
+      "needs_mnn_enrichment": false,
+      "resolution_reason": "consensus",
+      "anchor_components": [
+        "Моксонидин"
+      ],
+      "mnn_enriched": null,
+      "mnn_enrichment_status": null,
+      "mnn_evidence": []
+    },
+    "enrichment_map": {
+      "mnn_enriched": null,
+      "rx_otc_enriched": "unknown",
+      "age_enriched": "unknown",
+      "mnn_enrichment_status": null,
+      "mnn_evidence": [],
+      "needs_human_review": false,
+      "enrichment_accepted": false
+    },
+    "research_context": {
+      "research_context": {
+        "search_queries": [],
+        "fallback_queries": [],
+        "search_count": null,
+        "selected_evidence": [],
+        "raw_artifact_path": "redesign/artifacts/mnn_wave500_v2_searxng_raw.jsonl",
+        "idempotency_key": "d3c995116fb7e965f214f3994a5d6455",
+        "attempt_count": 0
+      }
+    }
+  },
+  {
+    "product_id": "13084",
+    "run_id_source": "400",
+    "mnn_enrichment_run_id": 405,
+    "normalized_text": "МИЛУРИТ ТАБЛ. 300МГ №30 | ЭГИС ФАРМАЦЕВТИЧЕСКИЙ ЗАВОД ЗАО | ЭГИС ФАРМАЦЕВТИЧЕСКИЙ ЗАВОД ЗАО",
+    "product_kind": "drug",
+    "attr_mnn": "Аллопуринол",
+    "attr_rx_otc": "rx",
+    "mnn_uteka": "Аллопуринол",
+    "rx_uteka": "rx",
+    "mnn_asna": "Аллопуринол",
+    "rx_asna": "rx",
+    "mnn_apteka": "Аллопуринол",
+    "rx_apteka": "rx",
+    "mnn_vidal": "Аллопуринол",
+    "rx_vidal": "rx",
+    "source_canonical_json": "[{\"source\": \"uteka\", \"raw_mnn\": \"Аллопуринол\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Аллопуринол\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"apteka\", \"raw_mnn\": \"Аллопуринол\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Аллопуринол\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"asna\", \"raw_mnn\": \"Аллопуринол\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Аллопуринол\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"vidal\", \"raw_mnn\": \"Аллопуринол\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Аллопуринол\"], \"url\": null, \"parse_warnings\": []}]",
+    "component_stats_json": "[{\"component\": \"Аллопуринол\", \"source_count\": 4, \"sources\": [\"uteka\", \"apteka\", \"asna\", \"vidal\"]}]",
+    "resolved_mnn": "Аллопуринол",
+    "resolved_mnn_components": "Аллопуринол",
+    "mnn_resolution_status": "resolved_catalog",
+    "resolution_reason": "consensus",
+    "resolved_rx_otc": "rx",
+    "resolved_age_segment": "unknown",
+    "needs_mnn_enrichment": false,
+    "enrichment_called": false,
+    "mnn_enrichment_status": "",
+    "mnn_enriched": "",
+    "rx_otc_enriched": "unknown",
+    "age_enriched": "unknown",
+    "final_candidate_mnn": "Аллопуринол",
+    "final_mnn_method": "catalog_consensus",
+    "retry_count": 0,
+    "needs_human_review": false,
+    "evidence_urls": "",
+    "idempotency_key": "8a42e39c50a5090817781186fdaa631b",
+    "resolved_payload": {
+      "mnn_resolution_status": "resolved_catalog",
+      "resolved_mnn": "Аллопуринол",
+      "resolved_mnn_components": [
+        "Аллопуринол"
+      ],
+      "resolved_mnn_component_stats": [
+        {
+          "component": "Аллопуринол",
+          "source_count": 4,
+          "sources": [
+            "uteka",
+            "apteka",
+            "asna",
+            "vidal"
+          ]
+        }
+      ],
+      "resolved_mnn_sources": [
+        "uteka",
+        "vidal",
+        "asna",
+        "apteka"
+      ],
+      "source_raw_mnn": [
+        {
+          "source": "uteka",
+          "raw_mnn": "Аллопуринол",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Аллопуринол"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "apteka",
+          "raw_mnn": "Аллопуринол",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Аллопуринол"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "asna",
+          "raw_mnn": "Аллопуринол",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Аллопуринол"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "vidal",
+          "raw_mnn": "Аллопуринол",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Аллопуринол"
+          ],
+          "url": null,
+          "parse_warnings": []
+        }
+      ],
+      "resolved_rx_otc": "rx",
+      "resolved_age_segment": "unknown",
+      "needs_mnn_enrichment": false,
+      "resolution_reason": "consensus",
+      "anchor_components": [
+        "Аллопуринол"
+      ],
+      "mnn_enriched": null,
+      "mnn_enrichment_status": null,
+      "mnn_evidence": []
+    },
+    "enrichment_map": {
+      "mnn_enriched": null,
+      "rx_otc_enriched": "unknown",
+      "age_enriched": "unknown",
+      "mnn_enrichment_status": null,
+      "mnn_evidence": [],
+      "needs_human_review": false,
+      "enrichment_accepted": false
+    },
+    "research_context": {
+      "research_context": {
+        "search_queries": [],
+        "fallback_queries": [],
+        "search_count": null,
+        "selected_evidence": [],
+        "raw_artifact_path": "redesign/artifacts/mnn_wave500_v2_searxng_raw.jsonl",
+        "idempotency_key": "8a42e39c50a5090817781186fdaa631b",
+        "attempt_count": 0
+      }
+    }
+  },
+  {
+    "product_id": "15920",
+    "run_id_source": "400",
+    "mnn_enrichment_run_id": 405,
+    "normalized_text": "ЛАРИГАМА Р-Р ДЛЯ В/М ВВЕД. АМП. 2МЛ №5 | ГРОТЕКС ООО | ГРОТЕКС ООО",
+    "product_kind": "drug",
+    "attr_mnn": "",
+    "attr_rx_otc": "rx",
+    "mnn_uteka": "Кромоглициевая кислота",
+    "rx_uteka": "otc",
+    "mnn_asna": "Натрия хлорид",
+    "rx_asna": "rx",
+    "mnn_apteka": "",
+    "rx_apteka": "",
+    "mnn_vidal": "",
+    "rx_vidal": "",
+    "source_canonical_json": "[{\"source\": \"uteka\", \"raw_mnn\": \"Кромоглициевая кислота\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Кромоглициевая кислота\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"asna\", \"raw_mnn\": \"Натрия хлорид\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Натрия хлорид\"], \"url\": null, \"parse_warnings\": []}]",
+    "component_stats_json": "[]",
+    "resolved_mnn": "",
+    "resolved_mnn_components": "",
+    "mnn_resolution_status": "unresolved_catalog",
+    "resolution_reason": "equal_conflict",
+    "resolved_rx_otc": "unknown",
+    "resolved_age_segment": "unknown",
+    "needs_mnn_enrichment": true,
+    "enrichment_called": true,
+    "mnn_enrichment_status": "ok",
+    "mnn_enriched": "Пиридоксин, Тиамин, Цианокобаламин, Лидокаин",
+    "rx_otc_enriched": "rx",
+    "age_enriched": "взрослые",
+    "final_candidate_mnn": "Пиридоксин, Тиамин, Цианокобаламин, Лидокаин",
+    "final_mnn_method": "enrichment",
+    "retry_count": 0,
+    "needs_human_review": false,
+    "evidence_urls": "https://www.vidal.ru/drugs/larigama | https://www.rlsnet.ru/drugs/larigama-79924 | https://www.lsgeotar.ru/drugs/larigama-AAL- | https://medvestnik.ru/ls/a0e40756-d0f6-4b77-9dca-4e4ad516df91.html | https://www.vidal.ru/drugs/larigama | https://medi.ru/instrukciya/larigama_15315/ | https://www.rlsnet.ru/drugs/larigama-79924 | https://www.asna.ru/product/larigama/instruction/ | https://allmed.pro/ru/drugs/larigama | https://www.rlsnet.ru/drugs/larigama-79924 | https://medi.ru/instrukciya/larigama_15315/ | https://www.vidal.ru/drugs/larigama",
+    "idempotency_key": "4b7ec9e0df616752b19cd6c745da463a",
+    "resolved_payload": {
+      "mnn_resolution_status": "unresolved_catalog",
+      "resolved_mnn": null,
+      "resolved_mnn_components": [],
+      "resolved_mnn_component_stats": [],
+      "resolved_mnn_sources": [],
+      "source_raw_mnn": [
+        {
+          "source": "uteka",
+          "raw_mnn": "Кромоглициевая кислота",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Кромоглициевая кислота"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "asna",
+          "raw_mnn": "Натрия хлорид",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Натрия хлорид"
+          ],
+          "url": null,
+          "parse_warnings": []
+        }
+      ],
+      "resolved_rx_otc": "unknown",
+      "resolved_age_segment": "unknown",
+      "needs_mnn_enrichment": true,
+      "resolution_reason": "equal_conflict",
+      "anchor_components": [],
+      "mnn_enriched": null,
+      "mnn_enrichment_status": null,
+      "mnn_evidence": []
+    },
+    "enrichment_map": {
+      "mnn_enriched": "Пиридоксин, Тиамин, Цианокобаламин, Лидокаин",
+      "rx_otc_enriched": "rx",
+      "age_enriched": "взрослые",
+      "mnn_enrichment_status": "ok",
+      "mnn_evidence": [
+        {
+          "url": "https://www.vidal.ru/drugs/larigama",
+          "title": "Ларигама инструкция по применению: показания, противопоказания ...",
+          "query": "ЛАРИГАМА МНН ГРЛС"
+        },
+        {
+          "url": "https://www.rlsnet.ru/drugs/larigama-79924",
+          "title": "Ларигама — инструкция по применению, дозы, побочные действия, аналоги ...",
+          "query": "ЛАРИГАМА МНН ГРЛС"
+        },
+        {
+          "url": "https://www.lsgeotar.ru/drugs/larigama-AAL-",
+          "title": "Ларигама® - Информация о препарате - ЛС ГЭОТАР",
+          "query": "ЛАРИГАМА МНН ГРЛС"
+        },
+        {
+          "url": "https://medvestnik.ru/ls/a0e40756-d0f6-4b77-9dca-4e4ad516df91.html",
+          "title": "Ларигама®: инструкция по применению, классификация",
+          "query": "ЛАРИГАМА МНН ГРЛС"
+        },
+        {
+          "url": "https://www.vidal.ru/drugs/larigama",
+          "title": "Ларигама инструкция по применению: показания, противопоказания ...",
+          "query": "ЛАРИГАМА рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://medi.ru/instrukciya/larigama_15315/",
+          "title": "Ларигама - инструкция по применению",
+          "query": "ЛАРИГАМА рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://www.rlsnet.ru/drugs/larigama-79924",
+          "title": "Ларигама — инструкция по применению, дозы, побочные действия, аналоги ...",
+          "query": "ЛАРИГАМА рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://www.asna.ru/product/larigama/instruction/",
+          "title": "Ларигама инструкция по применению, состав, побочные эффекты, показания ...",
+          "query": "ЛАРИГАМА рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://allmed.pro/ru/drugs/larigama",
+          "title": "Ларигама рецепт, инструкция по применению, показания, аналоги, состав",
+          "query": "ЛАРИГАМА рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://www.rlsnet.ru/drugs/larigama-79924",
+          "title": "Ларигама — инструкция по применению, дозы, побочные действия, аналоги ...",
+          "query": "ЛАРИГАМА инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://medi.ru/instrukciya/larigama_15315/",
+          "title": "Ларигама - официальная инструкция по применению, аналоги, цена, наличие ...",
+          "query": "ЛАРИГАМА инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://www.vidal.ru/drugs/larigama",
+          "title": "Ларигама инструкция по применению: показания, противопоказания ...",
+          "query": "ЛАРИГАМА инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://health.mail.ru/drug/larigama/",
+          "title": "ЛАРИГАМА раствор - инструкция по применению, цена, дозировки, аналоги ...",
+          "query": "ЛАРИГАМА инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://medum.ru/larigama",
+          "title": "Ларигама — инструкция по применению | справочник лекарственных ...",
+          "query": "ЛАРИГАМА инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://www.asna.ru/product/larigama/instruction/",
+          "title": "Ларигама инструкция по применению, состав, побочные эффекты, показания ...",
+          "query": "ЛАРИГАМА инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://zdesapteka.ru/instructions/larigama/",
+          "title": "Инструкция по применению Ларигама®, показания, состав, аналоги",
+          "query": "ЛАРИГАМА инструкция применение возраст дети взрослые"
+        }
+      ],
+      "needs_human_review": false,
+      "enrichment_accepted": true,
+      "enrichment_category": "Drug",
+      "enrichment_error": null
+    },
+    "research_context": {
+      "research_context": {
+        "search_queries": [
+          "ЛАРИГАМА МНН ГРЛС",
+          "ЛАРИГАМА рецептурный безрецептурный ГРЛС",
+          "ЛАРИГАМА инструкция применение возраст дети взрослые"
+        ],
+        "fallback_queries": [],
+        "search_count": 16,
+        "selected_evidence": [
+          {
+            "rank": 1,
+            "source": "www.vidal.ru",
+            "url": "https://www.vidal.ru/drugs/larigama",
+            "title": "Ларигама инструкция по применению: показания, противопоказания ...",
+            "query": "ЛАРИГАМА МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 2,
+            "source": "www.rlsnet.ru",
+            "url": "https://www.rlsnet.ru/drugs/larigama-79924",
+            "title": "Ларигама — инструкция по применению, дозы, побочные действия, аналоги ...",
+            "query": "ЛАРИГАМА МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 3,
+            "source": "www.lsgeotar.ru",
+            "url": "https://www.lsgeotar.ru/drugs/larigama-AAL-",
+            "title": "Ларигама® - Информация о препарате - ЛС ГЭОТАР",
+            "query": "ЛАРИГАМА МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 4,
+            "source": "medvestnik.ru",
+            "url": "https://medvestnik.ru/ls/a0e40756-d0f6-4b77-9dca-4e4ad516df91.html",
+            "title": "Ларигама®: инструкция по применению, классификация",
+            "query": "ЛАРИГАМА МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 5,
+            "source": "www.vidal.ru",
+            "url": "https://www.vidal.ru/drugs/larigama",
+            "title": "Ларигама инструкция по применению: показания, противопоказания ...",
+            "query": "ЛАРИГАМА рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 6,
+            "source": "medi.ru",
+            "url": "https://medi.ru/instrukciya/larigama_15315/",
+            "title": "Ларигама - инструкция по применению",
+            "query": "ЛАРИГАМА рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 7,
+            "source": "www.rlsnet.ru",
+            "url": "https://www.rlsnet.ru/drugs/larigama-79924",
+            "title": "Ларигама — инструкция по применению, дозы, побочные действия, аналоги ...",
+            "query": "ЛАРИГАМА рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 8,
+            "source": "www.asna.ru",
+            "url": "https://www.asna.ru/product/larigama/instruction/",
+            "title": "Ларигама инструкция по применению, состав, побочные эффекты, показания ...",
+            "query": "ЛАРИГАМА рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 9,
+            "source": "allmed.pro",
+            "url": "https://allmed.pro/ru/drugs/larigama",
+            "title": "Ларигама рецепт, инструкция по применению, показания, аналоги, состав",
+            "query": "ЛАРИГАМА рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 10,
+            "source": "www.rlsnet.ru",
+            "url": "https://www.rlsnet.ru/drugs/larigama-79924",
+            "title": "Ларигама — инструкция по применению, дозы, побочные действия, аналоги ...",
+            "query": "ЛАРИГАМА инструкция применение возраст дети взрослые",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 11,
+            "source": "medi.ru",
+            "url": "https://medi.ru/instrukciya/larigama_15315/",
+            "title": "Ларигама - официальная инструкция по применению, аналоги, цена, наличие ...",
+            "query": "ЛАРИГАМА инструкция применение возраст дети взрослые",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 12,
+            "source": "www.vidal.ru",
+            "url": "https://www.vidal.ru/drugs/larigama",
+            "title": "Ларигама инструкция по применению: показания, противопоказания ...",
+            "query": "ЛАРИГАМА инструкция применение возраст дети взрослые",
+            "excerpt": "",
+            "field_used": "other"
+          }
+        ],
+        "raw_artifact_path": "redesign/artifacts/mnn_wave500_v2_searxng_raw.jsonl",
+        "idempotency_key": "4b7ec9e0df616752b19cd6c745da463a",
+        "attempt_count": 1
+      }
+    }
+  },
+  {
+    "product_id": "17898",
+    "run_id_source": "401",
+    "mnn_enrichment_run_id": 405,
+    "normalized_text": "КАРДИКЕТ ТАБЛ. ПРОЛОНГ. 40МГ №50 | ЭЙСИКА ФАРМАСЬЮТИКАЛЗ С.Р.Л. | ЭЙСИКА ФАРМАСЬЮТИКАЛЗ С.Р.Л.",
+    "product_kind": "drug",
+    "attr_mnn": "Изосорбида динитрат",
+    "attr_rx_otc": "rx",
+    "mnn_uteka": "Изосорбида динитрат",
+    "rx_uteka": "rx",
+    "mnn_asna": "",
+    "rx_asna": "",
+    "mnn_apteka": "",
+    "rx_apteka": "",
+    "mnn_vidal": "Изосорбида динитрат",
+    "rx_vidal": "rx",
+    "source_canonical_json": "[{\"source\": \"uteka\", \"raw_mnn\": \"Изосорбида динитрат\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Изосорбида динитрат\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"vidal\", \"raw_mnn\": \"Изосорбида динитрат\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Изосорбида динитрат\"], \"url\": null, \"parse_warnings\": []}]",
+    "component_stats_json": "[{\"component\": \"Изосорбида динитрат\", \"source_count\": 2, \"sources\": [\"uteka\", \"vidal\"]}]",
+    "resolved_mnn": "Изосорбида динитрат",
+    "resolved_mnn_components": "Изосорбида динитрат",
+    "mnn_resolution_status": "resolved_catalog",
+    "resolution_reason": "consensus",
+    "resolved_rx_otc": "rx",
+    "resolved_age_segment": "unknown",
+    "needs_mnn_enrichment": false,
+    "enrichment_called": false,
+    "mnn_enrichment_status": "",
+    "mnn_enriched": "",
+    "rx_otc_enriched": "unknown",
+    "age_enriched": "unknown",
+    "final_candidate_mnn": "Изосорбида динитрат",
+    "final_mnn_method": "catalog_consensus",
+    "retry_count": 0,
+    "needs_human_review": false,
+    "evidence_urls": "",
+    "idempotency_key": "b575bdcb23b5c0e9e398c01ee05c0cb1",
+    "resolved_payload": {
+      "mnn_resolution_status": "resolved_catalog",
+      "resolved_mnn": "Изосорбида динитрат",
+      "resolved_mnn_components": [
+        "Изосорбида динитрат"
+      ],
+      "resolved_mnn_component_stats": [
+        {
+          "component": "Изосорбида динитрат",
+          "source_count": 2,
+          "sources": [
+            "uteka",
+            "vidal"
+          ]
+        }
+      ],
+      "resolved_mnn_sources": [
+        "uteka",
+        "vidal"
+      ],
+      "source_raw_mnn": [
+        {
+          "source": "uteka",
+          "raw_mnn": "Изосорбида динитрат",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Изосорбида динитрат"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "vidal",
+          "raw_mnn": "Изосорбида динитрат",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Изосорбида динитрат"
+          ],
+          "url": null,
+          "parse_warnings": []
+        }
+      ],
+      "resolved_rx_otc": "rx",
+      "resolved_age_segment": "unknown",
+      "needs_mnn_enrichment": false,
+      "resolution_reason": "consensus",
+      "anchor_components": [
+        "Изосорбида динитрат"
+      ],
+      "mnn_enriched": null,
+      "mnn_enrichment_status": null,
+      "mnn_evidence": []
+    },
+    "enrichment_map": {
+      "mnn_enriched": null,
+      "rx_otc_enriched": "unknown",
+      "age_enriched": "unknown",
+      "mnn_enrichment_status": null,
+      "mnn_evidence": [],
+      "needs_human_review": false,
+      "enrichment_accepted": false
+    },
+    "research_context": {
+      "research_context": {
+        "search_queries": [],
+        "fallback_queries": [],
+        "search_count": null,
+        "selected_evidence": [],
+        "raw_artifact_path": "redesign/artifacts/mnn_wave500_v2_searxng_raw.jsonl",
+        "idempotency_key": "b575bdcb23b5c0e9e398c01ee05c0cb1",
+        "attempt_count": 0
+      }
+    }
+  },
+  {
+    "product_id": "19320",
+    "run_id_source": "401",
+    "mnn_enrichment_run_id": 405,
+    "normalized_text": "ЖЕЛЧЕГОННЫЙ СБОР №2 50Г ИВАН-ЧАЙ | ИВАН-ЧАЙ ЗАО | ИВАН-ЧАЙ ЗАО",
+    "product_kind": "drug",
+    "attr_mnn": "",
+    "attr_rx_otc": "otc",
+    "mnn_uteka": "",
+    "rx_uteka": "",
+    "mnn_asna": "",
+    "rx_asna": "otc",
+    "mnn_apteka": "Иван-чай (Кипрей), Кипрей",
+    "rx_apteka": "",
+    "mnn_vidal": "",
+    "rx_vidal": "",
+    "source_canonical_json": "[{\"source\": \"apteka\", \"raw_mnn\": \"Иван-чай (Кипрей), Кипрей\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Иван-чай (Кипрей)\", \"Кипрей\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"asna\", \"raw_mnn\": null, \"field_type\": \"unknown\", \"canonical_components\": [], \"url\": null, \"parse_warnings\": []}]",
+    "component_stats_json": "[]",
+    "resolved_mnn": "",
+    "resolved_mnn_components": "",
+    "mnn_resolution_status": "unresolved_catalog",
+    "resolution_reason": "single_source",
+    "resolved_rx_otc": "unknown",
+    "resolved_age_segment": "unknown",
+    "needs_mnn_enrichment": true,
+    "enrichment_called": true,
+    "mnn_enrichment_status": "ok",
+    "mnn_enriched": "Бессмертника Песчаного Цветки, Тысячелистника Обыкновенного Трава, Мяты Перечной Листья, Кориандра Плоды",
+    "rx_otc_enriched": "otc",
+    "age_enriched": "универсальный",
+    "final_candidate_mnn": "Бессмертника Песчаного Цветки, Тысячелистника Обыкновенного Трава, Мяты Перечной Листья, Кориандра Плоды",
+    "final_mnn_method": "enrichment",
+    "retry_count": 2,
+    "needs_human_review": false,
+    "evidence_urls": "https://aptekamos.ru/tovary/lekarstva/bessmertnika-peschanogo-cvetki-tysyachelistnika-obyknovennogo-trava-myaty-perechnoyo-listya-koriandra-plody-3179/zhelchegonnyyo-sbor-2-sbor-50g-14619/instrukciya | https://www.rlsnet.ru/drugs/zelcegonnyi-sbor-2-6673 | https://health.mail.ru/drug/zhelchegonnyy_sbor_2/ | https://www.vidal.ru/drugs/cholagogae_species_2__28294 | https://www.rlsnet.ru/tn_index_id_6988.htm | https://www.vidal.ru/drugs/cholagogae_species_2__28288 | https://pharmproduct.ru/drugs/zelcegonnyi-sbor-2 | https://health.mail.ru/drug/zhelchegonnyy-sbor-2/ | https://www.rlsnet.ru/drugs/zelcegonnyi-sbor-2-6673 | https://www.vidal.ru/drugs/cholagogae_species_2__28288 | https://medum.ru/sbor-zhelchegonnyj-2 | https://www.vidal.ru/drugs/cholagogae_species_2__30238",
+    "idempotency_key": "b8018fa1078b0d4dfd605737cb40ccf3",
+    "resolved_payload": {
+      "mnn_resolution_status": "unresolved_catalog",
+      "resolved_mnn": null,
+      "resolved_mnn_components": [],
+      "resolved_mnn_component_stats": [],
+      "resolved_mnn_sources": [],
+      "source_raw_mnn": [
+        {
+          "source": "apteka",
+          "raw_mnn": "Иван-чай (Кипрей), Кипрей",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Иван-чай (Кипрей)",
+            "Кипрей"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "asna",
+          "raw_mnn": null,
+          "field_type": "unknown",
+          "canonical_components": [],
+          "url": null,
+          "parse_warnings": []
+        }
+      ],
+      "resolved_rx_otc": "unknown",
+      "resolved_age_segment": "unknown",
+      "needs_mnn_enrichment": true,
+      "resolution_reason": "single_source",
+      "anchor_components": [],
+      "mnn_enriched": null,
+      "mnn_enrichment_status": null,
+      "mnn_evidence": []
+    },
+    "enrichment_map": {
+      "mnn_enriched": "Бессмертника Песчаного Цветки, Тысячелистника Обыкновенного Трава, Мяты Перечной Листья, Кориандра Плоды",
+      "rx_otc_enriched": "otc",
+      "age_enriched": "универсальный",
+      "mnn_enrichment_status": "ok",
+      "mnn_evidence": [
+        {
+          "url": "https://aptekamos.ru/tovary/lekarstva/bessmertnika-peschanogo-cvetki-tysyachelistnika-obyknovennogo-trava-myaty-perechnoyo-listya-koriandra-plody-3179/zhelchegonnyyo-sbor-2-sbor-50g-14619/instrukciya",
+          "title": "Инструкция по применению Желчегонный сбор №2 сбор 50г: показания и противопоказания, состав и дозировка – АптекаМос",
+          "query": "ЖЕЛЧЕГОННЫЙ СБОР №2 МНН ГРЛС"
+        },
+        {
+          "url": "https://www.rlsnet.ru/drugs/zelcegonnyi-sbor-2-6673",
+          "title": "Желчегонный сбор №2 — инструкция по применению, дозы, побочные действия, аналоги, описание препарата: сбор измельченный",
+          "query": "ЖЕЛЧЕГОННЫЙ СБОР №2 МНН ГРЛС"
+        },
+        {
+          "url": "https://health.mail.ru/drug/zhelchegonnyy_sbor_2/",
+          "title": "ЖЕЛЧЕГОННЫЙ СБОР №2 сбор - инструкция по применению, описание, аналоги, форма выпуска, побочные эффекты, противопоказания - Mail.ru Здоровье",
+          "query": "ЖЕЛЧЕГОННЫЙ СБОР №2 МНН ГРЛС"
+        },
+        {
+          "url": "https://www.vidal.ru/drugs/cholagogae_species_2__28294",
+          "title": "Желчегонный сбор №2 инструкция по применению: показания ...",
+          "query": "ЖЕЛЧЕГОННЫЙ СБОР №2 МНН ГРЛС"
+        },
+        {
+          "url": "https://www.rlsnet.ru/tn_index_id_6988.htm",
+          "title": "Желчегонный сбор №2 (Cholagogae species №2), инструкция, сбор измельченный — Энциклопедия лекарств РЛС",
+          "query": "ЖЕЛЧЕГОННЫЙ СБОР №2 МНН ГРЛС"
+        },
+        {
+          "url": "https://www.vidal.ru/drugs/cholagogae_species_2__28288",
+          "title": "Желчегонный сбор №2 инструкция по применению: показания ...",
+          "query": "ЖЕЛЧЕГОННЫЙ СБОР №2 МНН ГРЛС"
+        },
+        {
+          "url": "https://pharmproduct.ru/drugs/zelcegonnyi-sbor-2",
+          "title": "Желчегонный сбор №2 — инструкция по применению, аналоги | PharmProduct",
+          "query": "ЖЕЛЧЕГОННЫЙ СБОР №2 МНН ГРЛС"
+        },
+        {
+          "url": "https://health.mail.ru/drug/zhelchegonnyy-sbor-2/",
+          "title": "Желчегонный сбор №2 сбор - инструкция по применению, цена, дозировки ...",
+          "query": "ЖЕЛЧЕГОННЫЙ СБОР №2 рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://www.rlsnet.ru/drugs/zelcegonnyi-sbor-2-6673",
+          "title": "Желчегонный сбор №2 — инструкция по применению, дозы, побочные действия ...",
+          "query": "ЖЕЛЧЕГОННЫЙ СБОР №2 рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://www.vidal.ru/drugs/cholagogae_species_2__28288",
+          "title": "Желчегонный сбор №2 инструкция по применению: показания ...",
+          "query": "ЖЕЛЧЕГОННЫЙ СБОР №2 рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://medum.ru/sbor-zhelchegonnyj-2",
+          "title": "Сбор желчегонный №2 — инструкция по применению, цена, отзывы ...",
+          "query": "ЖЕЛЧЕГОННЫЙ СБОР №2 рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://www.vidal.ru/drugs/cholagogae_species_2__30238",
+          "title": "Желчегонный сбор №2 инструкция по применению: показания ...",
+          "query": "ЖЕЛЧЕГОННЫЙ СБОР №2 рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://pharmproduct.ru/drugs/zelcegonnyi-sbor-2",
+          "title": "Желчегонный сбор №2 — инструкция по применению, аналоги | PharmProduct",
+          "query": "ЖЕЛЧЕГОННЫЙ СБОР №2 рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://medum.ru/zhelchegonnyj-sbor-2-pri-gepatite",
+          "title": "Желчегонный сбор №2 при гепатите — инструкция по применению, цена ...",
+          "query": "ЖЕЛЧЕГОННЫЙ СБОР №2 рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://www.rlsnet.ru/drugs/zelcegonnyi-sbor-2-6673",
+          "title": "Желчегонный сбор №2 — инструкция по применению, дозы, побочные действия ...",
+          "query": "ЖЕЛЧЕГОННЫЙ СБОР №2 инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://health.mail.ru/drug/zhelchegonnyy-sbor-2/",
+          "title": "Желчегонный сбор №2 сбор - инструкция по применению, цена, дозировки ...",
+          "query": "ЖЕЛЧЕГОННЫЙ СБОР №2 инструкция применение возраст дети взрослые"
+        }
+      ],
+      "needs_human_review": false,
+      "enrichment_accepted": true,
+      "enrichment_category": "Drug",
+      "enrichment_error": null
+    },
+    "research_context": {
+      "research_context": {
+        "search_queries": [
+          "ЖЕЛЧЕГОННЫЙ СБОР №2 МНН ГРЛС",
+          "ЖЕЛЧЕГОННЫЙ СБОР №2 рецептурный безрецептурный ГРЛС",
+          "ЖЕЛЧЕГОННЫЙ СБОР №2 инструкция применение возраст дети взрослые"
+        ],
+        "fallback_queries": [],
+        "search_count": 16,
+        "selected_evidence": [
+          {
+            "rank": 1,
+            "source": "aptekamos.ru",
+            "url": "https://aptekamos.ru/tovary/lekarstva/bessmertnika-peschanogo-cvetki-tysyachelistnika-obyknovennogo-trava-myaty-perechnoyo-listya-koriandra-plody-3179/zhelchegonnyyo-sbor-2-sbor-50g-14619/instrukciya",
+            "title": "Инструкция по применению Желчегонный сбор №2 сбор 50г: показания и противопоказания, состав и дозировка – АптекаМос",
+            "query": "ЖЕЛЧЕГОННЫЙ СБОР №2 МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 2,
+            "source": "www.rlsnet.ru",
+            "url": "https://www.rlsnet.ru/drugs/zelcegonnyi-sbor-2-6673",
+            "title": "Желчегонный сбор №2 — инструкция по применению, дозы, побочные действия, аналоги, описание препарата: сбор измельченный",
+            "query": "ЖЕЛЧЕГОННЫЙ СБОР №2 МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 3,
+            "source": "health.mail.ru",
+            "url": "https://health.mail.ru/drug/zhelchegonnyy_sbor_2/",
+            "title": "ЖЕЛЧЕГОННЫЙ СБОР №2 сбор - инструкция по применению, описание, аналоги, форма выпуска, побочные эффекты, противопоказания - Mail.ru Здоровье",
+            "query": "ЖЕЛЧЕГОННЫЙ СБОР №2 МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 4,
+            "source": "www.vidal.ru",
+            "url": "https://www.vidal.ru/drugs/cholagogae_species_2__28294",
+            "title": "Желчегонный сбор №2 инструкция по применению: показания ...",
+            "query": "ЖЕЛЧЕГОННЫЙ СБОР №2 МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 5,
+            "source": "www.rlsnet.ru",
+            "url": "https://www.rlsnet.ru/tn_index_id_6988.htm",
+            "title": "Желчегонный сбор №2 (Cholagogae species №2), инструкция, сбор измельченный — Энциклопедия лекарств РЛС",
+            "query": "ЖЕЛЧЕГОННЫЙ СБОР №2 МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 6,
+            "source": "www.vidal.ru",
+            "url": "https://www.vidal.ru/drugs/cholagogae_species_2__28288",
+            "title": "Желчегонный сбор №2 инструкция по применению: показания ...",
+            "query": "ЖЕЛЧЕГОННЫЙ СБОР №2 МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 7,
+            "source": "pharmproduct.ru",
+            "url": "https://pharmproduct.ru/drugs/zelcegonnyi-sbor-2",
+            "title": "Желчегонный сбор №2 — инструкция по применению, аналоги | PharmProduct",
+            "query": "ЖЕЛЧЕГОННЫЙ СБОР №2 МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 8,
+            "source": "health.mail.ru",
+            "url": "https://health.mail.ru/drug/zhelchegonnyy-sbor-2/",
+            "title": "Желчегонный сбор №2 сбор - инструкция по применению, цена, дозировки ...",
+            "query": "ЖЕЛЧЕГОННЫЙ СБОР №2 рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 9,
+            "source": "www.rlsnet.ru",
+            "url": "https://www.rlsnet.ru/drugs/zelcegonnyi-sbor-2-6673",
+            "title": "Желчегонный сбор №2 — инструкция по применению, дозы, побочные действия ...",
+            "query": "ЖЕЛЧЕГОННЫЙ СБОР №2 рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 10,
+            "source": "www.vidal.ru",
+            "url": "https://www.vidal.ru/drugs/cholagogae_species_2__28288",
+            "title": "Желчегонный сбор №2 инструкция по применению: показания ...",
+            "query": "ЖЕЛЧЕГОННЫЙ СБОР №2 рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 11,
+            "source": "medum.ru",
+            "url": "https://medum.ru/sbor-zhelchegonnyj-2",
+            "title": "Сбор желчегонный №2 — инструкция по применению, цена, отзывы ...",
+            "query": "ЖЕЛЧЕГОННЫЙ СБОР №2 рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 12,
+            "source": "www.vidal.ru",
+            "url": "https://www.vidal.ru/drugs/cholagogae_species_2__30238",
+            "title": "Желчегонный сбор №2 инструкция по применению: показания ...",
+            "query": "ЖЕЛЧЕГОННЫЙ СБОР №2 рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          }
+        ],
+        "raw_artifact_path": "redesign/artifacts/mnn_wave500_v2_searxng_raw.jsonl",
+        "idempotency_key": "b8018fa1078b0d4dfd605737cb40ccf3",
+        "attempt_count": 3
+      }
+    }
+  },
+  {
+    "product_id": "20199",
+    "run_id_source": "401",
+    "mnn_enrichment_run_id": 405,
+    "normalized_text": "ДИЛАКСА КАПС. 200МГ №30 | КРКА, Д.Д., НОВО МЕСТО АО | КРКА, Д.Д., НОВО МЕСТО АО",
+    "product_kind": "drug",
+    "attr_mnn": "",
+    "attr_rx_otc": "",
+    "mnn_uteka": "Целекоксиб",
+    "rx_uteka": "rx",
+    "mnn_asna": "Целекоксиб",
+    "rx_asna": "rx",
+    "mnn_apteka": "Целекоксиб",
+    "rx_apteka": "rx",
+    "mnn_vidal": "Целекоксиб",
+    "rx_vidal": "rx",
+    "source_canonical_json": "[{\"source\": \"uteka\", \"raw_mnn\": \"Целекоксиб\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Целекоксиб\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"apteka\", \"raw_mnn\": \"Целекоксиб\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Целекоксиб\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"asna\", \"raw_mnn\": \"Целекоксиб\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Целекоксиб\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"vidal\", \"raw_mnn\": \"Целекоксиб\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Целекоксиб\"], \"url\": null, \"parse_warnings\": []}]",
+    "component_stats_json": "[{\"component\": \"Целекоксиб\", \"source_count\": 4, \"sources\": [\"uteka\", \"apteka\", \"asna\", \"vidal\"]}]",
+    "resolved_mnn": "Целекоксиб",
+    "resolved_mnn_components": "Целекоксиб",
+    "mnn_resolution_status": "resolved_catalog",
+    "resolution_reason": "consensus",
+    "resolved_rx_otc": "rx",
+    "resolved_age_segment": "unknown",
+    "needs_mnn_enrichment": false,
+    "enrichment_called": false,
+    "mnn_enrichment_status": "",
+    "mnn_enriched": "",
+    "rx_otc_enriched": "unknown",
+    "age_enriched": "unknown",
+    "final_candidate_mnn": "Целекоксиб",
+    "final_mnn_method": "catalog_consensus",
+    "retry_count": 0,
+    "needs_human_review": false,
+    "evidence_urls": "",
+    "idempotency_key": "987403be47e9e6d6cf98e1d4479833c6",
+    "resolved_payload": {
+      "mnn_resolution_status": "resolved_catalog",
+      "resolved_mnn": "Целекоксиб",
+      "resolved_mnn_components": [
+        "Целекоксиб"
+      ],
+      "resolved_mnn_component_stats": [
+        {
+          "component": "Целекоксиб",
+          "source_count": 4,
+          "sources": [
+            "uteka",
+            "apteka",
+            "asna",
+            "vidal"
+          ]
+        }
+      ],
+      "resolved_mnn_sources": [
+        "uteka",
+        "vidal",
+        "asna",
+        "apteka"
+      ],
+      "source_raw_mnn": [
+        {
+          "source": "uteka",
+          "raw_mnn": "Целекоксиб",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Целекоксиб"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "apteka",
+          "raw_mnn": "Целекоксиб",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Целекоксиб"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "asna",
+          "raw_mnn": "Целекоксиб",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Целекоксиб"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "vidal",
+          "raw_mnn": "Целекоксиб",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Целекоксиб"
+          ],
+          "url": null,
+          "parse_warnings": []
+        }
+      ],
+      "resolved_rx_otc": "rx",
+      "resolved_age_segment": "unknown",
+      "needs_mnn_enrichment": false,
+      "resolution_reason": "consensus",
+      "anchor_components": [
+        "Целекоксиб"
+      ],
+      "mnn_enriched": null,
+      "mnn_enrichment_status": null,
+      "mnn_evidence": []
+    },
+    "enrichment_map": {
+      "mnn_enriched": null,
+      "rx_otc_enriched": "unknown",
+      "age_enriched": "unknown",
+      "mnn_enrichment_status": null,
+      "mnn_evidence": [],
+      "needs_human_review": false,
+      "enrichment_accepted": false
+    },
+    "research_context": {
+      "research_context": {
+        "search_queries": [],
+        "fallback_queries": [],
+        "search_count": null,
+        "selected_evidence": [],
+        "raw_artifact_path": "redesign/artifacts/mnn_wave500_v2_searxng_raw.jsonl",
+        "idempotency_key": "987403be47e9e6d6cf98e1d4479833c6",
+        "attempt_count": 0
+      }
+    }
+  },
+  {
+    "product_id": "20693",
+    "run_id_source": "401",
+    "mnn_enrichment_run_id": 405,
+    "normalized_text": "ДАЛАЦИН КРЕМ ВАГ. 2% ТУБА 40Г С АППЛИКАТ. №7 | ФАРМАЦИЯ И АПДЖОН КАМПАНИ ЭЛ ЭЛ СИ | ФАРМАЦИЯ И АПДЖОН КАМПАНИ ЭЛ ЭЛ СИ",
+    "product_kind": "drug",
+    "attr_mnn": "Клиндамицин",
+    "attr_rx_otc": "rx",
+    "mnn_uteka": "Клиндамицин",
+    "rx_uteka": "rx",
+    "mnn_asna": "",
+    "rx_asna": "",
+    "mnn_apteka": "",
+    "rx_apteka": "",
+    "mnn_vidal": "Клиндамицин",
+    "rx_vidal": "rx",
+    "source_canonical_json": "[{\"source\": \"uteka\", \"raw_mnn\": \"Клиндамицин\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Клиндамицин\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"vidal\", \"raw_mnn\": \"Клиндамицин\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Клиндамицин\"], \"url\": null, \"parse_warnings\": []}]",
+    "component_stats_json": "[{\"component\": \"Клиндамицин\", \"source_count\": 2, \"sources\": [\"uteka\", \"vidal\"]}]",
+    "resolved_mnn": "Клиндамицин",
+    "resolved_mnn_components": "Клиндамицин",
+    "mnn_resolution_status": "resolved_catalog",
+    "resolution_reason": "consensus",
+    "resolved_rx_otc": "rx",
+    "resolved_age_segment": "unknown",
+    "needs_mnn_enrichment": false,
+    "enrichment_called": false,
+    "mnn_enrichment_status": "",
+    "mnn_enriched": "",
+    "rx_otc_enriched": "unknown",
+    "age_enriched": "unknown",
+    "final_candidate_mnn": "Клиндамицин",
+    "final_mnn_method": "catalog_consensus",
+    "retry_count": 0,
+    "needs_human_review": false,
+    "evidence_urls": "",
+    "idempotency_key": "b895647a7b67ae98489228df06e0d0fe",
+    "resolved_payload": {
+      "mnn_resolution_status": "resolved_catalog",
+      "resolved_mnn": "Клиндамицин",
+      "resolved_mnn_components": [
+        "Клиндамицин"
+      ],
+      "resolved_mnn_component_stats": [
+        {
+          "component": "Клиндамицин",
+          "source_count": 2,
+          "sources": [
+            "uteka",
+            "vidal"
+          ]
+        }
+      ],
+      "resolved_mnn_sources": [
+        "uteka",
+        "vidal"
+      ],
+      "source_raw_mnn": [
+        {
+          "source": "uteka",
+          "raw_mnn": "Клиндамицин",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Клиндамицин"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "vidal",
+          "raw_mnn": "Клиндамицин",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Клиндамицин"
+          ],
+          "url": null,
+          "parse_warnings": []
+        }
+      ],
+      "resolved_rx_otc": "rx",
+      "resolved_age_segment": "unknown",
+      "needs_mnn_enrichment": false,
+      "resolution_reason": "consensus",
+      "anchor_components": [
+        "Клиндамицин"
+      ],
+      "mnn_enriched": null,
+      "mnn_enrichment_status": null,
+      "mnn_evidence": []
+    },
+    "enrichment_map": {
+      "mnn_enriched": null,
+      "rx_otc_enriched": "unknown",
+      "age_enriched": "unknown",
+      "mnn_enrichment_status": null,
+      "mnn_evidence": [],
+      "needs_human_review": false,
+      "enrichment_accepted": false
+    },
+    "research_context": {
+      "research_context": {
+        "search_queries": [],
+        "fallback_queries": [],
+        "search_count": null,
+        "selected_evidence": [],
+        "raw_artifact_path": "redesign/artifacts/mnn_wave500_v2_searxng_raw.jsonl",
+        "idempotency_key": "b895647a7b67ae98489228df06e0d0fe",
+        "attempt_count": 0
+      }
+    }
+  },
+  {
+    "product_id": "21260",
+    "run_id_source": "401",
+    "mnn_enrichment_run_id": 405,
+    "normalized_text": "ГИДРОХЛОРТИАЗИД ТАБЛ. 100МГ №20 ПРАНАФАРМ | ПРАНАФАРМ ООО | ПРАНАФАРМ ООО",
+    "product_kind": "drug",
+    "attr_mnn": "Гидрохлоротиазид",
+    "attr_rx_otc": "rx",
+    "mnn_uteka": "Спиронолактон",
+    "rx_uteka": "rx",
+    "mnn_asna": "Метопролол",
+    "rx_asna": "rx",
+    "mnn_apteka": "Атенолол",
+    "rx_apteka": "rx",
+    "mnn_vidal": "",
+    "rx_vidal": "",
+    "source_canonical_json": "[{\"source\": \"uteka\", \"raw_mnn\": \"Спиронолактон\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Спиронолактон\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"apteka\", \"raw_mnn\": \"Атенолол\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Атенолол\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"asna\", \"raw_mnn\": \"Метопролол\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Метопролол\"], \"url\": null, \"parse_warnings\": []}]",
+    "component_stats_json": "[]",
+    "resolved_mnn": "",
+    "resolved_mnn_components": "",
+    "mnn_resolution_status": "unresolved_catalog",
+    "resolution_reason": "equal_conflict",
+    "resolved_rx_otc": "rx",
+    "resolved_age_segment": "unknown",
+    "needs_mnn_enrichment": true,
+    "enrichment_called": true,
+    "mnn_enrichment_status": "ok",
+    "mnn_enriched": "Гидрохлоротиазид",
+    "rx_otc_enriched": "rx",
+    "age_enriched": "универсальный",
+    "final_candidate_mnn": "Гидрохлоротиазид",
+    "final_mnn_method": "enrichment",
+    "retry_count": 0,
+    "needs_human_review": false,
+    "evidence_urls": "https://www.vidal.ru/drugs/hydrochlorothiazide__4403 | https://aptekamos.ru/tovary/lekarstva/gidroxlorotiazid-209/gidroxlortiazid-tabletki-25mg-2194/instrukciya | https://www.rlsnet.ru/drugs/gidroxlortiazid-941 | https://www.rlsnet.ru/drugs/gidroxlortiazid-941 | https://allmed.pro/ru/drugs/gidrohlortiazid | https://www.vidal.ru/drugs/hydrochlorothiazide__4403 | https://www.neboleem.net/gidrokhlortiazid.php | https://medi.ru/instrukciya/gidrohlortiazid_18984/ | https://www.vidal.ru/drugs/hydrochlorothiazide | https://drugs.medelement.com/drug/%D0%B3%D0%B8%D0%B4%D1%80%D0%BE%D1%85%D0%BB%D0%BE%D1%80%D1%82%D0%B8%D0%B0%D0%B7%D0%B8%D0%B4-%D0%B8%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%86%D0%B8%D1%8F/386199111477650948?instruction_lang=RU | https://www.vidal.ru/drugs/hydrochlorothiazide-3 | https://aptekamos.ru/tovary/lekarstva/gidroxlorotiazid-209/gidroxlortiazid-tabletki-25mg-2194/instrukciya",
+    "idempotency_key": "5ec62f0aee0c1af62845ae6cdbc7ed8b",
+    "resolved_payload": {
+      "mnn_resolution_status": "unresolved_catalog",
+      "resolved_mnn": null,
+      "resolved_mnn_components": [],
+      "resolved_mnn_component_stats": [],
+      "resolved_mnn_sources": [],
+      "source_raw_mnn": [
+        {
+          "source": "uteka",
+          "raw_mnn": "Спиронолактон",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Спиронолактон"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "apteka",
+          "raw_mnn": "Атенолол",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Атенолол"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "asna",
+          "raw_mnn": "Метопролол",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Метопролол"
+          ],
+          "url": null,
+          "parse_warnings": []
+        }
+      ],
+      "resolved_rx_otc": "rx",
+      "resolved_age_segment": "unknown",
+      "needs_mnn_enrichment": true,
+      "resolution_reason": "equal_conflict",
+      "anchor_components": [],
+      "mnn_enriched": null,
+      "mnn_enrichment_status": null,
+      "mnn_evidence": []
+    },
+    "enrichment_map": {
+      "mnn_enriched": "Гидрохлоротиазид",
+      "rx_otc_enriched": "rx",
+      "age_enriched": "универсальный",
+      "mnn_enrichment_status": "ok",
+      "mnn_evidence": [
+        {
+          "url": "https://www.vidal.ru/drugs/hydrochlorothiazide__4403",
+          "title": "Гидрохлортиазид инструкция по применению: показания, противопоказания ...",
+          "query": "ГИДРОХЛОРТИАЗИД МНН ГРЛС"
+        },
+        {
+          "url": "https://aptekamos.ru/tovary/lekarstva/gidroxlorotiazid-209/gidroxlortiazid-tabletki-25mg-2194/instrukciya",
+          "title": "Инструкция Гидрохлортиазид таблетки 25мг: показания и противопоказания ...",
+          "query": "ГИДРОХЛОРТИАЗИД МНН ГРЛС"
+        },
+        {
+          "url": "https://www.rlsnet.ru/drugs/gidroxlortiazid-941",
+          "title": "Гидрохлортиазид — инструкция по применению, дозы, побочные действия ...",
+          "query": "ГИДРОХЛОРТИАЗИД МНН ГРЛС"
+        },
+        {
+          "url": "https://www.rlsnet.ru/drugs/gidroxlortiazid-941",
+          "title": "Гидрохлортиазид — инструкция по применению, дозы, побочные действия ...",
+          "query": "ГИДРОХЛОРТИАЗИД рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://allmed.pro/ru/drugs/gidrohlortiazid",
+          "title": "Гидрохлортиазид рецепт, инструкция по применению, показания, аналоги ...",
+          "query": "ГИДРОХЛОРТИАЗИД рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://www.vidal.ru/drugs/hydrochlorothiazide__4403",
+          "title": "Гидрохлортиазид инструкция по применению: показания, противопоказания ...",
+          "query": "ГИДРОХЛОРТИАЗИД рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://www.neboleem.net/gidrokhlortiazid.php",
+          "title": "Гидрохлортиазид - инструкция по применению, показания, дозы, аналоги",
+          "query": "ГИДРОХЛОРТИАЗИД рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://medi.ru/instrukciya/gidrohlortiazid_18984/",
+          "title": "Гидрохлортиазид - инструкция по применению",
+          "query": "ГИДРОХЛОРТИАЗИД рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://www.vidal.ru/drugs/hydrochlorothiazide",
+          "title": "Гидрохлортиазид инструкция по применению: показания, противопоказания ...",
+          "query": "ГИДРОХЛОРТИАЗИД инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://drugs.medelement.com/drug/%D0%B3%D0%B8%D0%B4%D1%80%D0%BE%D1%85%D0%BB%D0%BE%D1%80%D1%82%D0%B8%D0%B0%D0%B7%D0%B8%D0%B4-%D0%B8%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%86%D0%B8%D1%8F/386199111477650948?instruction_lang=RU",
+          "title": "Гидрохлортиазид: инструкция по применению, показания. (Другие названия ...",
+          "query": "ГИДРОХЛОРТИАЗИД инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://www.vidal.ru/drugs/hydrochlorothiazide-3",
+          "title": "Гидрохлортиазид инструкция по применению: показания, противопоказания ...",
+          "query": "ГИДРОХЛОРТИАЗИД инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://aptekamos.ru/tovary/lekarstva/gidroxlorotiazid-209/gidroxlortiazid-tabletki-25mg-2194/instrukciya",
+          "title": "Инструкция Гидрохлортиазид таблетки 25мг: показания и противопоказания ...",
+          "query": "ГИДРОХЛОРТИАЗИД инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://www.neboleem.net/gidrokhlortiazid.php",
+          "title": "Гидрохлортиазид - инструкция по применению, показания, дозы, аналоги",
+          "query": "ГИДРОХЛОРТИАЗИД инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://medi.ru/instrukciya/gidrokhlortiazid_9823/",
+          "title": "Гидрохлортиазид - инструкция по применению",
+          "query": "ГИДРОХЛОРТИАЗИД инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://health.mail.ru/drug/gidrohlortiazid/",
+          "title": "Гидрохлортиазид таблетки - инструкция по применению, цена, дозировки ...",
+          "query": "ГИДРОХЛОРТИАЗИД инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://www.rlsnet.ru/drugs/gidroxlortiazid-941",
+          "title": "Гидрохлортиазид — инструкция по применению, дозы, побочные действия ...",
+          "query": "ГИДРОХЛОРТИАЗИД инструкция применение возраст дети взрослые"
+        }
+      ],
+      "needs_human_review": false,
+      "enrichment_accepted": true,
+      "enrichment_category": "Drug",
+      "enrichment_error": null
+    },
+    "research_context": {
+      "research_context": {
+        "search_queries": [
+          "ГИДРОХЛОРТИАЗИД МНН ГРЛС",
+          "ГИДРОХЛОРТИАЗИД рецептурный безрецептурный ГРЛС",
+          "ГИДРОХЛОРТИАЗИД инструкция применение возраст дети взрослые"
+        ],
+        "fallback_queries": [],
+        "search_count": 16,
+        "selected_evidence": [
+          {
+            "rank": 1,
+            "source": "www.vidal.ru",
+            "url": "https://www.vidal.ru/drugs/hydrochlorothiazide__4403",
+            "title": "Гидрохлортиазид инструкция по применению: показания, противопоказания ...",
+            "query": "ГИДРОХЛОРТИАЗИД МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 2,
+            "source": "aptekamos.ru",
+            "url": "https://aptekamos.ru/tovary/lekarstva/gidroxlorotiazid-209/gidroxlortiazid-tabletki-25mg-2194/instrukciya",
+            "title": "Инструкция Гидрохлортиазид таблетки 25мг: показания и противопоказания ...",
+            "query": "ГИДРОХЛОРТИАЗИД МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 3,
+            "source": "www.rlsnet.ru",
+            "url": "https://www.rlsnet.ru/drugs/gidroxlortiazid-941",
+            "title": "Гидрохлортиазид — инструкция по применению, дозы, побочные действия ...",
+            "query": "ГИДРОХЛОРТИАЗИД МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 4,
+            "source": "www.rlsnet.ru",
+            "url": "https://www.rlsnet.ru/drugs/gidroxlortiazid-941",
+            "title": "Гидрохлортиазид — инструкция по применению, дозы, побочные действия ...",
+            "query": "ГИДРОХЛОРТИАЗИД рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 5,
+            "source": "allmed.pro",
+            "url": "https://allmed.pro/ru/drugs/gidrohlortiazid",
+            "title": "Гидрохлортиазид рецепт, инструкция по применению, показания, аналоги ...",
+            "query": "ГИДРОХЛОРТИАЗИД рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 6,
+            "source": "www.vidal.ru",
+            "url": "https://www.vidal.ru/drugs/hydrochlorothiazide__4403",
+            "title": "Гидрохлортиазид инструкция по применению: показания, противопоказания ...",
+            "query": "ГИДРОХЛОРТИАЗИД рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 7,
+            "source": "www.neboleem.net",
+            "url": "https://www.neboleem.net/gidrokhlortiazid.php",
+            "title": "Гидрохлортиазид - инструкция по применению, показания, дозы, аналоги",
+            "query": "ГИДРОХЛОРТИАЗИД рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 8,
+            "source": "medi.ru",
+            "url": "https://medi.ru/instrukciya/gidrohlortiazid_18984/",
+            "title": "Гидрохлортиазид - инструкция по применению",
+            "query": "ГИДРОХЛОРТИАЗИД рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 9,
+            "source": "www.vidal.ru",
+            "url": "https://www.vidal.ru/drugs/hydrochlorothiazide",
+            "title": "Гидрохлортиазид инструкция по применению: показания, противопоказания ...",
+            "query": "ГИДРОХЛОРТИАЗИД инструкция применение возраст дети взрослые",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 10,
+            "source": "drugs.medelement.com",
+            "url": "https://drugs.medelement.com/drug/%D0%B3%D0%B8%D0%B4%D1%80%D0%BE%D1%85%D0%BB%D0%BE%D1%80%D1%82%D0%B8%D0%B0%D0%B7%D0%B8%D0%B4-%D0%B8%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%86%D0%B8%D1%8F/386199111477650948?instruction_lang=RU",
+            "title": "Гидрохлортиазид: инструкция по применению, показания. (Другие названия ...",
+            "query": "ГИДРОХЛОРТИАЗИД инструкция применение возраст дети взрослые",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 11,
+            "source": "www.vidal.ru",
+            "url": "https://www.vidal.ru/drugs/hydrochlorothiazide-3",
+            "title": "Гидрохлортиазид инструкция по применению: показания, противопоказания ...",
+            "query": "ГИДРОХЛОРТИАЗИД инструкция применение возраст дети взрослые",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 12,
+            "source": "aptekamos.ru",
+            "url": "https://aptekamos.ru/tovary/lekarstva/gidroxlorotiazid-209/gidroxlortiazid-tabletki-25mg-2194/instrukciya",
+            "title": "Инструкция Гидрохлортиазид таблетки 25мг: показания и противопоказания ...",
+            "query": "ГИДРОХЛОРТИАЗИД инструкция применение возраст дети взрослые",
+            "excerpt": "",
+            "field_used": "other"
+          }
+        ],
+        "raw_artifact_path": "redesign/artifacts/mnn_wave500_v2_searxng_raw.jsonl",
+        "idempotency_key": "5ec62f0aee0c1af62845ae6cdbc7ed8b",
+        "attempt_count": 1
+      }
+    }
+  },
+  {
+    "product_id": "21479",
+    "run_id_source": "401",
+    "mnn_enrichment_run_id": 405,
+    "normalized_text": "ГЕМАЗА ПОР. ЛИОФ. Д/Р-РА Д/ИН. АМП. 5000ЕД №5 | ФГБУ НМИЦ КАРДИОЛОГИИ МЗ РФ | ФГБУ НМИЦ КАРДИОЛОГИИ МЗ РФ",
+    "product_kind": "drug",
+    "attr_mnn": "",
+    "attr_rx_otc": "rx",
+    "mnn_uteka": "",
+    "rx_uteka": "",
+    "mnn_asna": "",
+    "rx_asna": "",
+    "mnn_apteka": "",
+    "rx_apteka": "",
+    "mnn_vidal": "",
+    "rx_vidal": "",
+    "source_canonical_json": "[]",
+    "component_stats_json": "[]",
+    "resolved_mnn": "",
+    "resolved_mnn_components": "",
+    "mnn_resolution_status": "unresolved_catalog",
+    "resolution_reason": "empty",
+    "resolved_rx_otc": "unknown",
+    "resolved_age_segment": "unknown",
+    "needs_mnn_enrichment": true,
+    "enrichment_called": true,
+    "mnn_enrichment_status": "ok",
+    "mnn_enriched": "Проурокиназа",
+    "rx_otc_enriched": "rx",
+    "age_enriched": "взрослые",
+    "final_candidate_mnn": "Проурокиназа",
+    "final_mnn_method": "enrichment",
+    "retry_count": 0,
+    "needs_human_review": false,
+    "evidence_urls": "https://www.rlsnet.ru/drugs/gemaza-21568 | https://grls.rosminzdrav.ru/ | https://www.lsgeotar.ru/drugs/gemase-AAl8 | https://www.vidal.ru/drugs/gemase__20950 | https://zdesapteka.ru/instructions/gemaza/ | https://medi.ru/instrukciya/gemaza_8216/ | https://www.vidal.ru/drugs/gemase__20950 | https://medvisor.ru/medicine/drug/gemaza_32178/ | https://grls.rosminzdrav.ru/ | https://puls-clinic.com/blog/gemaza | https://www.rlsnet.ru/drugs/gemaza-21568 | https://medi.ru/instrukciya/gemaza_8216/",
+    "idempotency_key": "43eb303217efd7d5d826b65552973408",
+    "resolved_payload": {
+      "mnn_resolution_status": "unresolved_catalog",
+      "resolved_mnn": null,
+      "resolved_mnn_components": [],
+      "resolved_mnn_component_stats": [],
+      "resolved_mnn_sources": [],
+      "source_raw_mnn": [],
+      "resolved_rx_otc": "unknown",
+      "resolved_age_segment": "unknown",
+      "needs_mnn_enrichment": true,
+      "resolution_reason": "empty",
+      "anchor_components": [],
+      "mnn_enriched": null,
+      "mnn_enrichment_status": null,
+      "mnn_evidence": []
+    },
+    "enrichment_map": {
+      "mnn_enriched": "Проурокиназа",
+      "rx_otc_enriched": "rx",
+      "age_enriched": "взрослые",
+      "mnn_enrichment_status": "ok",
+      "mnn_evidence": [
+        {
+          "url": "https://www.rlsnet.ru/drugs/gemaza-21568",
+          "title": "Гемаза — инструкция по применению, дозы, побочные действия, аналоги ...",
+          "query": "ГЕМАЗА МНН ГРЛС"
+        },
+        {
+          "url": "https://grls.rosminzdrav.ru/",
+          "title": "rosminzdrav.ru",
+          "query": "ГЕМАЗА МНН ГРЛС"
+        },
+        {
+          "url": "https://www.lsgeotar.ru/drugs/gemase-AAl8",
+          "title": "Гемаза® - Информация о препарате - ЛС ГЭОТАР",
+          "query": "ГЕМАЗА МНН ГРЛС"
+        },
+        {
+          "url": "https://www.vidal.ru/drugs/gemase__20950",
+          "title": "Гемаза инструкция по применению: показания, противопоказания, побочное ...",
+          "query": "ГЕМАЗА МНН ГРЛС"
+        },
+        {
+          "url": "https://zdesapteka.ru/instructions/gemaza/",
+          "title": "Инструкция по применению Гемаза®, показания, состав, аналоги",
+          "query": "ГЕМАЗА рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://medi.ru/instrukciya/gemaza_8216/",
+          "title": "Гемаза - инструкция по применению",
+          "query": "ГЕМАЗА рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://www.vidal.ru/drugs/gemase__20950",
+          "title": "Гемаза инструкция по применению: показания, противопоказания, побочное ...",
+          "query": "ГЕМАЗА рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://medvisor.ru/medicine/drug/gemaza_32178/",
+          "title": "Гемаза®: инструкция по применению, аналоги | МедВизор",
+          "query": "ГЕМАЗА рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://grls.rosminzdrav.ru/",
+          "title": "rosminzdrav.ru",
+          "query": "ГЕМАЗА рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://puls-clinic.com/blog/gemaza",
+          "title": "Гемаза - инструкция по применению, дозы, аналоги",
+          "query": "ГЕМАЗА рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://www.rlsnet.ru/drugs/gemaza-21568",
+          "title": "Гемаза — инструкция по применению, дозы, побочные действия, аналоги ...",
+          "query": "ГЕМАЗА инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://medi.ru/instrukciya/gemaza_8216/",
+          "title": "Гемаза - инструкция по применению",
+          "query": "ГЕМАЗА инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://www.vidal.ru/drugs/gemase__20950",
+          "title": "Гемаза инструкция по применению: показания, противопоказания, побочное ...",
+          "query": "ГЕМАЗА инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://www.gemaza.ru/instrukciya/",
+          "title": "Инструкция - Гемаза",
+          "query": "ГЕМАЗА инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://medlib.net/gemaza.html",
+          "title": "Гемаза - инструкция по применению, аналоги, показания",
+          "query": "ГЕМАЗА инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://yandex.ru/medicine/medicaments/gemaza",
+          "title": "Гемаза — инструкция по применению, противопоказания, побочные эффекты",
+          "query": "ГЕМАЗА инструкция применение возраст дети взрослые"
+        }
+      ],
+      "needs_human_review": false,
+      "enrichment_accepted": true,
+      "enrichment_category": "Drug",
+      "enrichment_error": null
+    },
+    "research_context": {
+      "research_context": {
+        "search_queries": [
+          "ГЕМАЗА МНН ГРЛС",
+          "ГЕМАЗА рецептурный безрецептурный ГРЛС",
+          "ГЕМАЗА инструкция применение возраст дети взрослые"
+        ],
+        "fallback_queries": [],
+        "search_count": 16,
+        "selected_evidence": [
+          {
+            "rank": 1,
+            "source": "www.rlsnet.ru",
+            "url": "https://www.rlsnet.ru/drugs/gemaza-21568",
+            "title": "Гемаза — инструкция по применению, дозы, побочные действия, аналоги ...",
+            "query": "ГЕМАЗА МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 2,
+            "source": "grls.rosminzdrav.ru",
+            "url": "https://grls.rosminzdrav.ru/",
+            "title": "rosminzdrav.ru",
+            "query": "ГЕМАЗА МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 3,
+            "source": "www.lsgeotar.ru",
+            "url": "https://www.lsgeotar.ru/drugs/gemase-AAl8",
+            "title": "Гемаза® - Информация о препарате - ЛС ГЭОТАР",
+            "query": "ГЕМАЗА МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 4,
+            "source": "www.vidal.ru",
+            "url": "https://www.vidal.ru/drugs/gemase__20950",
+            "title": "Гемаза инструкция по применению: показания, противопоказания, побочное ...",
+            "query": "ГЕМАЗА МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 5,
+            "source": "zdesapteka.ru",
+            "url": "https://zdesapteka.ru/instructions/gemaza/",
+            "title": "Инструкция по применению Гемаза®, показания, состав, аналоги",
+            "query": "ГЕМАЗА рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 6,
+            "source": "medi.ru",
+            "url": "https://medi.ru/instrukciya/gemaza_8216/",
+            "title": "Гемаза - инструкция по применению",
+            "query": "ГЕМАЗА рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 7,
+            "source": "www.vidal.ru",
+            "url": "https://www.vidal.ru/drugs/gemase__20950",
+            "title": "Гемаза инструкция по применению: показания, противопоказания, побочное ...",
+            "query": "ГЕМАЗА рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 8,
+            "source": "medvisor.ru",
+            "url": "https://medvisor.ru/medicine/drug/gemaza_32178/",
+            "title": "Гемаза®: инструкция по применению, аналоги | МедВизор",
+            "query": "ГЕМАЗА рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 9,
+            "source": "grls.rosminzdrav.ru",
+            "url": "https://grls.rosminzdrav.ru/",
+            "title": "rosminzdrav.ru",
+            "query": "ГЕМАЗА рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 10,
+            "source": "puls-clinic.com",
+            "url": "https://puls-clinic.com/blog/gemaza",
+            "title": "Гемаза - инструкция по применению, дозы, аналоги",
+            "query": "ГЕМАЗА рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 11,
+            "source": "www.rlsnet.ru",
+            "url": "https://www.rlsnet.ru/drugs/gemaza-21568",
+            "title": "Гемаза — инструкция по применению, дозы, побочные действия, аналоги ...",
+            "query": "ГЕМАЗА инструкция применение возраст дети взрослые",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 12,
+            "source": "medi.ru",
+            "url": "https://medi.ru/instrukciya/gemaza_8216/",
+            "title": "Гемаза - инструкция по применению",
+            "query": "ГЕМАЗА инструкция применение возраст дети взрослые",
+            "excerpt": "",
+            "field_used": "other"
+          }
+        ],
+        "raw_artifact_path": "redesign/artifacts/mnn_wave500_v2_searxng_raw.jsonl",
+        "idempotency_key": "43eb303217efd7d5d826b65552973408",
+        "attempt_count": 1
+      }
+    }
+  },
+  {
+    "product_id": "23662",
+    "run_id_source": "402",
+    "mnn_enrichment_run_id": 405,
+    "normalized_text": "БИСАКОДИЛ СУПП. РЕКТ. 10МГ №10 ТУЛЬСКАЯ ФФ | ТУЛЬСКАЯ ФАРМАЦЕВТИЧЕСКАЯ ФАБРИКА ООО | ТУЛЬСКАЯ ФАРМАЦЕВТИЧЕСКАЯ ФАБРИКА ООО",
+    "product_kind": "drug",
+    "attr_mnn": "Бисакодил",
+    "attr_rx_otc": "otc",
+    "mnn_uteka": "",
+    "rx_uteka": "",
+    "mnn_asna": "",
+    "rx_asna": "",
+    "mnn_apteka": "Бисакодил",
+    "rx_apteka": "",
+    "mnn_vidal": "",
+    "rx_vidal": "",
+    "source_canonical_json": "[{\"source\": \"apteka\", \"raw_mnn\": \"Бисакодил\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Бисакодил\"], \"url\": null, \"parse_warnings\": []}]",
+    "component_stats_json": "[]",
+    "resolved_mnn": "",
+    "resolved_mnn_components": "",
+    "mnn_resolution_status": "unresolved_catalog",
+    "resolution_reason": "single_source",
+    "resolved_rx_otc": "unknown",
+    "resolved_age_segment": "unknown",
+    "needs_mnn_enrichment": true,
+    "enrichment_called": true,
+    "mnn_enrichment_status": "ok",
+    "mnn_enriched": "Бисакодил",
+    "rx_otc_enriched": "otc",
+    "age_enriched": "универсальный",
+    "final_candidate_mnn": "Бисакодил",
+    "final_mnn_method": "enrichment",
+    "retry_count": 0,
+    "needs_human_review": false,
+    "evidence_urls": "https://www.vidal.ru/drugs/bisacodyl__6714 | https://www.vidal.ru/drugs/bisacodyl__12995 | https://aptekamos.ru/tovary/lekarstva/bisakodil-133/bisakodil-tabletki-5mg-1386/instrukciya | https://aptekamos.ru/tovary/lekarstva/bisakodil-133/bisakodil-suppozitorii-10mg-1388/instrukciya | https://allmed.pro/ru/drugs/bisakodil | https://www.vidal.ru/drugs/bisacodyl__6714 | https://medspravochnik.com/drugs/slabitelnye/bisakodil/ | https://www.rlsnet.ru/drugs/bisakodil-575 | https://www.webapteka.ru/drugbase/name1020.html | https://www.vidal.ru/drugs/bisacodyl__6714 | https://www.vidal.ru/drugs/bisacodyl__8519 | https://tabletka.ru/selection/bisakodil/instruction/",
+    "idempotency_key": "ed9b7e514f3bcd8baa94efbd2339b68a",
+    "resolved_payload": {
+      "mnn_resolution_status": "unresolved_catalog",
+      "resolved_mnn": null,
+      "resolved_mnn_components": [],
+      "resolved_mnn_component_stats": [],
+      "resolved_mnn_sources": [],
+      "source_raw_mnn": [
+        {
+          "source": "apteka",
+          "raw_mnn": "Бисакодил",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Бисакодил"
+          ],
+          "url": null,
+          "parse_warnings": []
+        }
+      ],
+      "resolved_rx_otc": "unknown",
+      "resolved_age_segment": "unknown",
+      "needs_mnn_enrichment": true,
+      "resolution_reason": "single_source",
+      "anchor_components": [],
+      "mnn_enriched": null,
+      "mnn_enrichment_status": null,
+      "mnn_evidence": []
+    },
+    "enrichment_map": {
+      "mnn_enriched": "Бисакодил",
+      "rx_otc_enriched": "otc",
+      "age_enriched": "универсальный",
+      "mnn_enrichment_status": "ok",
+      "mnn_evidence": [
+        {
+          "url": "https://www.vidal.ru/drugs/bisacodyl__6714",
+          "title": "Бисакодил инструкция по применению: показания, противопоказания ...",
+          "query": "БИСАКОДИЛ МНН ГРЛС"
+        },
+        {
+          "url": "https://www.vidal.ru/drugs/bisacodyl__12995",
+          "title": "Бисакодил Гриндекс инструкция по применению: показания ...",
+          "query": "БИСАКОДИЛ МНН ГРЛС"
+        },
+        {
+          "url": "https://aptekamos.ru/tovary/lekarstva/bisakodil-133/bisakodil-tabletki-5mg-1386/instrukciya",
+          "title": "Инструкция Бисакодил таблетки 5мг: показания и противопоказания, состав ...",
+          "query": "БИСАКОДИЛ МНН ГРЛС"
+        },
+        {
+          "url": "https://aptekamos.ru/tovary/lekarstva/bisakodil-133/bisakodil-suppozitorii-10mg-1388/instrukciya",
+          "title": "Инструкция Бисакодил суппозитории 10мг: показания и противопоказания ...",
+          "query": "БИСАКОДИЛ МНН ГРЛС"
+        },
+        {
+          "url": "https://allmed.pro/ru/drugs/bisakodil",
+          "title": "Бисакодил рецепт, инструкция по применению, показания, аналоги, состав",
+          "query": "БИСАКОДИЛ рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://www.vidal.ru/drugs/bisacodyl__6714",
+          "title": "Бисакодил инструкция по применению: показания, противопоказания ...",
+          "query": "БИСАКОДИЛ рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://medspravochnik.com/drugs/slabitelnye/bisakodil/",
+          "title": "Бисакодил — инструкция по применению, показания, дозировки и побочные ...",
+          "query": "БИСАКОДИЛ рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://www.rlsnet.ru/drugs/bisakodil-575",
+          "title": "Бисакодил — инструкция по применению, дозы, побочные действия, аналоги ...",
+          "query": "БИСАКОДИЛ рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://www.webapteka.ru/drugbase/name1020.html",
+          "title": "Бисакодил — инструкция по применению, описание, вопросы по препарату",
+          "query": "БИСАКОДИЛ рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://www.vidal.ru/drugs/bisacodyl__6714",
+          "title": "Бисакодил инструкция по применению: показания, противопоказания ...",
+          "query": "БИСАКОДИЛ инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://www.vidal.ru/drugs/bisacodyl__8519",
+          "title": "Бисакодил инструкция по применению: показания, противопоказания ...",
+          "query": "БИСАКОДИЛ инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://tabletka.ru/selection/bisakodil/instruction/",
+          "title": "Бисакодил инструкция по применению",
+          "query": "БИСАКОДИЛ инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://www.webapteka.ru/drugbase/name1020.html",
+          "title": "Бисакодил — инструкция по применению, описание, вопросы по препарату",
+          "query": "БИСАКОДИЛ инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://health.mail.ru/drug/bisakodil-1/",
+          "title": "Бисакодил таблетки - инструкция по применению, цена, дозировки, аналоги ...",
+          "query": "БИСАКОДИЛ инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://aptekamos.ru/tovary/lekarstva/bisakodil-133/bisakodil-xemofarm-tabletki-5mg-51364/instrukciya",
+          "title": "Инструкция Бисакодил-Хемофарм таблетки 5мг: показания и ...",
+          "query": "БИСАКОДИЛ инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://medi.ru/instrukciya/bisakodil_18171/",
+          "title": "Бисакодил таблетки - Биоком - инструкция по применению",
+          "query": "БИСАКОДИЛ инструкция применение возраст дети взрослые"
+        }
+      ],
+      "needs_human_review": false,
+      "enrichment_accepted": true,
+      "enrichment_category": "Drug",
+      "enrichment_error": null
+    },
+    "research_context": {
+      "research_context": {
+        "search_queries": [
+          "БИСАКОДИЛ МНН ГРЛС",
+          "БИСАКОДИЛ рецептурный безрецептурный ГРЛС",
+          "БИСАКОДИЛ инструкция применение возраст дети взрослые"
+        ],
+        "fallback_queries": [],
+        "search_count": 16,
+        "selected_evidence": [
+          {
+            "rank": 1,
+            "source": "www.vidal.ru",
+            "url": "https://www.vidal.ru/drugs/bisacodyl__6714",
+            "title": "Бисакодил инструкция по применению: показания, противопоказания ...",
+            "query": "БИСАКОДИЛ МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 2,
+            "source": "www.vidal.ru",
+            "url": "https://www.vidal.ru/drugs/bisacodyl__12995",
+            "title": "Бисакодил Гриндекс инструкция по применению: показания ...",
+            "query": "БИСАКОДИЛ МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 3,
+            "source": "aptekamos.ru",
+            "url": "https://aptekamos.ru/tovary/lekarstva/bisakodil-133/bisakodil-tabletki-5mg-1386/instrukciya",
+            "title": "Инструкция Бисакодил таблетки 5мг: показания и противопоказания, состав ...",
+            "query": "БИСАКОДИЛ МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 4,
+            "source": "aptekamos.ru",
+            "url": "https://aptekamos.ru/tovary/lekarstva/bisakodil-133/bisakodil-suppozitorii-10mg-1388/instrukciya",
+            "title": "Инструкция Бисакодил суппозитории 10мг: показания и противопоказания ...",
+            "query": "БИСАКОДИЛ МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 5,
+            "source": "allmed.pro",
+            "url": "https://allmed.pro/ru/drugs/bisakodil",
+            "title": "Бисакодил рецепт, инструкция по применению, показания, аналоги, состав",
+            "query": "БИСАКОДИЛ рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 6,
+            "source": "www.vidal.ru",
+            "url": "https://www.vidal.ru/drugs/bisacodyl__6714",
+            "title": "Бисакодил инструкция по применению: показания, противопоказания ...",
+            "query": "БИСАКОДИЛ рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 7,
+            "source": "medspravochnik.com",
+            "url": "https://medspravochnik.com/drugs/slabitelnye/bisakodil/",
+            "title": "Бисакодил — инструкция по применению, показания, дозировки и побочные ...",
+            "query": "БИСАКОДИЛ рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 8,
+            "source": "www.rlsnet.ru",
+            "url": "https://www.rlsnet.ru/drugs/bisakodil-575",
+            "title": "Бисакодил — инструкция по применению, дозы, побочные действия, аналоги ...",
+            "query": "БИСАКОДИЛ рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 9,
+            "source": "www.webapteka.ru",
+            "url": "https://www.webapteka.ru/drugbase/name1020.html",
+            "title": "Бисакодил — инструкция по применению, описание, вопросы по препарату",
+            "query": "БИСАКОДИЛ рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 10,
+            "source": "www.vidal.ru",
+            "url": "https://www.vidal.ru/drugs/bisacodyl__6714",
+            "title": "Бисакодил инструкция по применению: показания, противопоказания ...",
+            "query": "БИСАКОДИЛ инструкция применение возраст дети взрослые",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 11,
+            "source": "www.vidal.ru",
+            "url": "https://www.vidal.ru/drugs/bisacodyl__8519",
+            "title": "Бисакодил инструкция по применению: показания, противопоказания ...",
+            "query": "БИСАКОДИЛ инструкция применение возраст дети взрослые",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 12,
+            "source": "tabletka.ru",
+            "url": "https://tabletka.ru/selection/bisakodil/instruction/",
+            "title": "Бисакодил инструкция по применению",
+            "query": "БИСАКОДИЛ инструкция применение возраст дети взрослые",
+            "excerpt": "",
+            "field_used": "other"
+          }
+        ],
+        "raw_artifact_path": "redesign/artifacts/mnn_wave500_v2_searxng_raw.jsonl",
+        "idempotency_key": "ed9b7e514f3bcd8baa94efbd2339b68a",
+        "attempt_count": 1
+      }
+    }
+  },
+  {
+    "product_id": "24821",
+    "run_id_source": "402",
+    "mnn_enrichment_run_id": 405,
+    "normalized_text": "АФОБАЗОЛ ТАБЛ. 10МГ №60 ОТИСИФАРМ | ОТИСИФАРМ ПРО АО | ОТИСИФАРМ ПРО АО",
+    "product_kind": "drug",
+    "attr_mnn": "фабомотизол",
+    "attr_rx_otc": "rx",
+    "mnn_uteka": "Фабомотизол",
+    "rx_uteka": "otc",
+    "mnn_asna": "Фабомотизол",
+    "rx_asna": "otc",
+    "mnn_apteka": "Фабомотизол",
+    "rx_apteka": "",
+    "mnn_vidal": "Фабомотизол",
+    "rx_vidal": "otc",
+    "source_canonical_json": "[{\"source\": \"uteka\", \"raw_mnn\": \"Фабомотизол\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Фабомотизол\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"apteka\", \"raw_mnn\": \"Фабомотизол\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Фабомотизол\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"asna\", \"raw_mnn\": \"Фабомотизол\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Фабомотизол\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"vidal\", \"raw_mnn\": \"Фабомотизол\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Фабомотизол\"], \"url\": null, \"parse_warnings\": []}]",
+    "component_stats_json": "[{\"component\": \"Фабомотизол\", \"source_count\": 4, \"sources\": [\"uteka\", \"apteka\", \"asna\", \"vidal\"]}]",
+    "resolved_mnn": "Фабомотизол",
+    "resolved_mnn_components": "Фабомотизол",
+    "mnn_resolution_status": "resolved_catalog",
+    "resolution_reason": "consensus",
+    "resolved_rx_otc": "otc",
+    "resolved_age_segment": "unknown",
+    "needs_mnn_enrichment": false,
+    "enrichment_called": false,
+    "mnn_enrichment_status": "",
+    "mnn_enriched": "",
+    "rx_otc_enriched": "unknown",
+    "age_enriched": "unknown",
+    "final_candidate_mnn": "Фабомотизол",
+    "final_mnn_method": "catalog_consensus",
+    "retry_count": 0,
+    "needs_human_review": false,
+    "evidence_urls": "",
+    "idempotency_key": "e059e4fc48a44596e340f5edd72e061e",
+    "resolved_payload": {
+      "mnn_resolution_status": "resolved_catalog",
+      "resolved_mnn": "Фабомотизол",
+      "resolved_mnn_components": [
+        "Фабомотизол"
+      ],
+      "resolved_mnn_component_stats": [
+        {
+          "component": "Фабомотизол",
+          "source_count": 4,
+          "sources": [
+            "uteka",
+            "apteka",
+            "asna",
+            "vidal"
+          ]
+        }
+      ],
+      "resolved_mnn_sources": [
+        "uteka",
+        "vidal",
+        "asna",
+        "apteka"
+      ],
+      "source_raw_mnn": [
+        {
+          "source": "uteka",
+          "raw_mnn": "Фабомотизол",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Фабомотизол"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "apteka",
+          "raw_mnn": "Фабомотизол",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Фабомотизол"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "asna",
+          "raw_mnn": "Фабомотизол",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Фабомотизол"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "vidal",
+          "raw_mnn": "Фабомотизол",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Фабомотизол"
+          ],
+          "url": null,
+          "parse_warnings": []
+        }
+      ],
+      "resolved_rx_otc": "otc",
+      "resolved_age_segment": "unknown",
+      "needs_mnn_enrichment": false,
+      "resolution_reason": "consensus",
+      "anchor_components": [
+        "Фабомотизол"
+      ],
+      "mnn_enriched": null,
+      "mnn_enrichment_status": null,
+      "mnn_evidence": []
+    },
+    "enrichment_map": {
+      "mnn_enriched": null,
+      "rx_otc_enriched": "unknown",
+      "age_enriched": "unknown",
+      "mnn_enrichment_status": null,
+      "mnn_evidence": [],
+      "needs_human_review": false,
+      "enrichment_accepted": false
+    },
+    "research_context": {
+      "research_context": {
+        "search_queries": [],
+        "fallback_queries": [],
+        "search_count": null,
+        "selected_evidence": [],
+        "raw_artifact_path": "redesign/artifacts/mnn_wave500_v2_searxng_raw.jsonl",
+        "idempotency_key": "e059e4fc48a44596e340f5edd72e061e",
+        "attempt_count": 0
+      }
+    }
+  },
+  {
+    "product_id": "25794",
+    "run_id_source": "402",
+    "mnn_enrichment_run_id": 405,
+    "normalized_text": "АНАЛЬГИН ТАБЛ. 500МГ №20 БИОХИМИК | БИОХИМИК АО | БИОХИМИК АО",
+    "product_kind": "drug",
+    "attr_mnn": "Метамизол натрия",
+    "attr_rx_otc": "rx",
+    "mnn_uteka": "Метамизол натрия",
+    "rx_uteka": "rx",
+    "mnn_asna": "Метамизол натрия",
+    "rx_asna": "otc",
+    "mnn_apteka": "Метамизол натрия",
+    "rx_apteka": "",
+    "mnn_vidal": "Метамизол натрия",
+    "rx_vidal": "otc",
+    "source_canonical_json": "[{\"source\": \"uteka\", \"raw_mnn\": \"Метамизол натрия\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Метамизол натрия\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"apteka\", \"raw_mnn\": \"Метамизол натрия\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Метамизол натрия\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"asna\", \"raw_mnn\": \"Метамизол натрия\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Метамизол натрия\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"vidal\", \"raw_mnn\": \"Метамизол натрия\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Метамизол натрия\"], \"url\": null, \"parse_warnings\": []}]",
+    "component_stats_json": "[{\"component\": \"Метамизол натрия\", \"source_count\": 4, \"sources\": [\"uteka\", \"apteka\", \"asna\", \"vidal\"]}]",
+    "resolved_mnn": "Метамизол натрия",
+    "resolved_mnn_components": "Метамизол натрия",
+    "mnn_resolution_status": "resolved_catalog",
+    "resolution_reason": "consensus",
+    "resolved_rx_otc": "otc",
+    "resolved_age_segment": "unknown",
+    "needs_mnn_enrichment": false,
+    "enrichment_called": false,
+    "mnn_enrichment_status": "",
+    "mnn_enriched": "",
+    "rx_otc_enriched": "unknown",
+    "age_enriched": "unknown",
+    "final_candidate_mnn": "Метамизол натрия",
+    "final_mnn_method": "catalog_consensus",
+    "retry_count": 0,
+    "needs_human_review": false,
+    "evidence_urls": "",
+    "idempotency_key": "89143ca48f8d336fcc5eb2e1ec817eba",
+    "resolved_payload": {
+      "mnn_resolution_status": "resolved_catalog",
+      "resolved_mnn": "Метамизол натрия",
+      "resolved_mnn_components": [
+        "Метамизол натрия"
+      ],
+      "resolved_mnn_component_stats": [
+        {
+          "component": "Метамизол натрия",
+          "source_count": 4,
+          "sources": [
+            "uteka",
+            "apteka",
+            "asna",
+            "vidal"
+          ]
+        }
+      ],
+      "resolved_mnn_sources": [
+        "uteka",
+        "vidal",
+        "asna",
+        "apteka"
+      ],
+      "source_raw_mnn": [
+        {
+          "source": "uteka",
+          "raw_mnn": "Метамизол натрия",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Метамизол натрия"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "apteka",
+          "raw_mnn": "Метамизол натрия",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Метамизол натрия"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "asna",
+          "raw_mnn": "Метамизол натрия",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Метамизол натрия"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "vidal",
+          "raw_mnn": "Метамизол натрия",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Метамизол натрия"
+          ],
+          "url": null,
+          "parse_warnings": []
+        }
+      ],
+      "resolved_rx_otc": "otc",
+      "resolved_age_segment": "unknown",
+      "needs_mnn_enrichment": false,
+      "resolution_reason": "consensus",
+      "anchor_components": [
+        "Метамизол натрия"
+      ],
+      "mnn_enriched": null,
+      "mnn_enrichment_status": null,
+      "mnn_evidence": []
+    },
+    "enrichment_map": {
+      "mnn_enriched": null,
+      "rx_otc_enriched": "unknown",
+      "age_enriched": "unknown",
+      "mnn_enrichment_status": null,
+      "mnn_evidence": [],
+      "needs_human_review": false,
+      "enrichment_accepted": false
+    },
+    "research_context": {
+      "research_context": {
+        "search_queries": [],
+        "fallback_queries": [],
+        "search_count": null,
+        "selected_evidence": [],
+        "raw_artifact_path": "redesign/artifacts/mnn_wave500_v2_searxng_raw.jsonl",
+        "idempotency_key": "89143ca48f8d336fcc5eb2e1ec817eba",
+        "attempt_count": 0
+      }
+    }
+  },
+  {
+    "product_id": "25878",
+    "run_id_source": "402",
+    "mnn_enrichment_run_id": 405,
+    "normalized_text": "АМОСИН ТАБЛ. 500МГ №10 | СИНТЕЗ | СИНТЕЗ",
+    "product_kind": "drug",
+    "attr_mnn": "Амоксициллин",
+    "attr_rx_otc": "rx",
+    "mnn_uteka": "Амоксициллин",
+    "rx_uteka": "rx",
+    "mnn_asna": "Амоксициллин",
+    "rx_asna": "rx",
+    "mnn_apteka": "Амоксициллин",
+    "rx_apteka": "rx",
+    "mnn_vidal": "Амоксициллин",
+    "rx_vidal": "rx",
+    "source_canonical_json": "[{\"source\": \"uteka\", \"raw_mnn\": \"Амоксициллин\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Амоксициллин\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"apteka\", \"raw_mnn\": \"Амоксициллин\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Амоксициллин\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"asna\", \"raw_mnn\": \"Амоксициллин\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Амоксициллин\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"vidal\", \"raw_mnn\": \"Амоксициллин\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Амоксициллин\"], \"url\": null, \"parse_warnings\": []}]",
+    "component_stats_json": "[{\"component\": \"Амоксициллин\", \"source_count\": 4, \"sources\": [\"uteka\", \"apteka\", \"asna\", \"vidal\"]}]",
+    "resolved_mnn": "Амоксициллин",
+    "resolved_mnn_components": "Амоксициллин",
+    "mnn_resolution_status": "resolved_catalog",
+    "resolution_reason": "consensus",
+    "resolved_rx_otc": "rx",
+    "resolved_age_segment": "unknown",
+    "needs_mnn_enrichment": false,
+    "enrichment_called": false,
+    "mnn_enrichment_status": "",
+    "mnn_enriched": "",
+    "rx_otc_enriched": "unknown",
+    "age_enriched": "unknown",
+    "final_candidate_mnn": "Амоксициллин",
+    "final_mnn_method": "catalog_consensus",
+    "retry_count": 0,
+    "needs_human_review": false,
+    "evidence_urls": "",
+    "idempotency_key": "0a0fe0b5e9a6e53ca62cf356c313f124",
+    "resolved_payload": {
+      "mnn_resolution_status": "resolved_catalog",
+      "resolved_mnn": "Амоксициллин",
+      "resolved_mnn_components": [
+        "Амоксициллин"
+      ],
+      "resolved_mnn_component_stats": [
+        {
+          "component": "Амоксициллин",
+          "source_count": 4,
+          "sources": [
+            "uteka",
+            "apteka",
+            "asna",
+            "vidal"
+          ]
+        }
+      ],
+      "resolved_mnn_sources": [
+        "uteka",
+        "vidal",
+        "asna",
+        "apteka"
+      ],
+      "source_raw_mnn": [
+        {
+          "source": "uteka",
+          "raw_mnn": "Амоксициллин",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Амоксициллин"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "apteka",
+          "raw_mnn": "Амоксициллин",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Амоксициллин"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "asna",
+          "raw_mnn": "Амоксициллин",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Амоксициллин"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "vidal",
+          "raw_mnn": "Амоксициллин",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Амоксициллин"
+          ],
+          "url": null,
+          "parse_warnings": []
+        }
+      ],
+      "resolved_rx_otc": "rx",
+      "resolved_age_segment": "unknown",
+      "needs_mnn_enrichment": false,
+      "resolution_reason": "consensus",
+      "anchor_components": [
+        "Амоксициллин"
+      ],
+      "mnn_enriched": null,
+      "mnn_enrichment_status": null,
+      "mnn_evidence": []
+    },
+    "enrichment_map": {
+      "mnn_enriched": null,
+      "rx_otc_enriched": "unknown",
+      "age_enriched": "unknown",
+      "mnn_enrichment_status": null,
+      "mnn_evidence": [],
+      "needs_human_review": false,
+      "enrichment_accepted": false
+    },
+    "research_context": {
+      "research_context": {
+        "search_queries": [],
+        "fallback_queries": [],
+        "search_count": null,
+        "selected_evidence": [],
+        "raw_artifact_path": "redesign/artifacts/mnn_wave500_v2_searxng_raw.jsonl",
+        "idempotency_key": "0a0fe0b5e9a6e53ca62cf356c313f124",
+        "attempt_count": 0
+      }
+    }
+  },
+  {
+    "product_id": "26539",
+    "run_id_source": "402",
+    "mnn_enrichment_run_id": 405,
+    "normalized_text": "АЛГЕЗИР УЛЬТРА ТАБЛ. П/ПЛЕН/ОБ. 275МГ №10 АЛИУМ | АЛИУМ АО | АЛИУМ АО",
+    "product_kind": "drug",
+    "attr_mnn": "",
+    "attr_rx_otc": "rx",
+    "mnn_uteka": "Напроксен",
+    "rx_uteka": "otc",
+    "mnn_asna": "",
+    "rx_asna": "",
+    "mnn_apteka": "",
+    "rx_apteka": "",
+    "mnn_vidal": "Напроксен",
+    "rx_vidal": "otc",
+    "source_canonical_json": "[{\"source\": \"uteka\", \"raw_mnn\": \"Напроксен\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Напроксен\"], \"url\": null, \"parse_warnings\": []}, {\"source\": \"vidal\", \"raw_mnn\": \"Напроксен\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Напроксен\"], \"url\": null, \"parse_warnings\": []}]",
+    "component_stats_json": "[{\"component\": \"Напроксен\", \"source_count\": 2, \"sources\": [\"uteka\", \"vidal\"]}]",
+    "resolved_mnn": "Напроксен",
+    "resolved_mnn_components": "Напроксен",
+    "mnn_resolution_status": "resolved_catalog",
+    "resolution_reason": "consensus",
+    "resolved_rx_otc": "otc",
+    "resolved_age_segment": "unknown",
+    "needs_mnn_enrichment": false,
+    "enrichment_called": false,
+    "mnn_enrichment_status": "",
+    "mnn_enriched": "",
+    "rx_otc_enriched": "unknown",
+    "age_enriched": "unknown",
+    "final_candidate_mnn": "Напроксен",
+    "final_mnn_method": "catalog_consensus",
+    "retry_count": 0,
+    "needs_human_review": false,
+    "evidence_urls": "",
+    "idempotency_key": "1538810ae923bf84d8303fdd4a18395d",
+    "resolved_payload": {
+      "mnn_resolution_status": "resolved_catalog",
+      "resolved_mnn": "Напроксен",
+      "resolved_mnn_components": [
+        "Напроксен"
+      ],
+      "resolved_mnn_component_stats": [
+        {
+          "component": "Напроксен",
+          "source_count": 2,
+          "sources": [
+            "uteka",
+            "vidal"
+          ]
+        }
+      ],
+      "resolved_mnn_sources": [
+        "uteka",
+        "vidal"
+      ],
+      "source_raw_mnn": [
+        {
+          "source": "uteka",
+          "raw_mnn": "Напроксен",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Напроксен"
+          ],
+          "url": null,
+          "parse_warnings": []
+        },
+        {
+          "source": "vidal",
+          "raw_mnn": "Напроксен",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Напроксен"
+          ],
+          "url": null,
+          "parse_warnings": []
+        }
+      ],
+      "resolved_rx_otc": "otc",
+      "resolved_age_segment": "unknown",
+      "needs_mnn_enrichment": false,
+      "resolution_reason": "consensus",
+      "anchor_components": [
+        "Напроксен"
+      ],
+      "mnn_enriched": null,
+      "mnn_enrichment_status": null,
+      "mnn_evidence": []
+    },
+    "enrichment_map": {
+      "mnn_enriched": null,
+      "rx_otc_enriched": "unknown",
+      "age_enriched": "unknown",
+      "mnn_enrichment_status": null,
+      "mnn_evidence": [],
+      "needs_human_review": false,
+      "enrichment_accepted": false
+    },
+    "research_context": {
+      "research_context": {
+        "search_queries": [],
+        "fallback_queries": [],
+        "search_count": null,
+        "selected_evidence": [],
+        "raw_artifact_path": "redesign/artifacts/mnn_wave500_v2_searxng_raw.jsonl",
+        "idempotency_key": "1538810ae923bf84d8303fdd4a18395d",
+        "attempt_count": 0
+      }
+    }
+  },
+  {
+    "product_id": "27053",
+    "run_id_source": "403",
+    "mnn_enrichment_run_id": 405,
+    "normalized_text": "АЕВИТ МЕЛИГЕН КАПС. ПО 200МГ №10 | МЕЛИГЕН ФП | МЕЛИГЕН ФП",
+    "product_kind": "drug",
+    "attr_mnn": "Аевит",
+    "attr_rx_otc": "",
+    "mnn_uteka": "",
+    "rx_uteka": "",
+    "mnn_asna": "Рыбий жир",
+    "rx_asna": "otc",
+    "mnn_apteka": "",
+    "rx_apteka": "",
+    "mnn_vidal": "",
+    "rx_vidal": "",
+    "source_canonical_json": "[{\"source\": \"asna\", \"raw_mnn\": \"Рыбий жир\", \"field_type\": \"explicit_mnn\", \"canonical_components\": [\"Рыбий жир\"], \"url\": null, \"parse_warnings\": []}]",
+    "component_stats_json": "[]",
+    "resolved_mnn": "",
+    "resolved_mnn_components": "",
+    "mnn_resolution_status": "unresolved_catalog",
+    "resolution_reason": "single_source",
+    "resolved_rx_otc": "unknown",
+    "resolved_age_segment": "unknown",
+    "needs_mnn_enrichment": true,
+    "enrichment_called": true,
+    "mnn_enrichment_status": "ok",
+    "mnn_enriched": "",
+    "rx_otc_enriched": "unknown",
+    "age_enriched": "универсальный",
+    "final_candidate_mnn": "",
+    "final_mnn_method": "",
+    "retry_count": 0,
+    "needs_human_review": true,
+    "evidence_urls": "https://bz.medvestnik.ru/drugs/273.html | https://medi.ru/instrukciya/aevit_17240/ | https://tabletka.efim360.ru/drug/aevit-'def'-Meligen | https://www.webapteka.ru/drugbase/name65691.html | https://medum.ru/aevit-meligen-kapsuly | https://instruktsiya-po-primeneniyu.ru/pharmacy/aevit-meligen-5984.html | https://zdesapteka.ru/instructions/aevit-meligen/ | https://medi.ru/instrukciya/aevit_17240/ | https://instruktsiya-po-primeneniyu.ru/pharmacy/aevit-meligen-5984.html | https://zdravcity.ru/p_aevit-kaps-n10-0092228.html | https://tabletka.efim360.ru/drug/aevit-'def'-Meligen | https://medi.ru/instrukciya/aevit_17240/",
+    "idempotency_key": "7e2bc18a911b1017e22548e354729d17",
+    "resolved_payload": {
+      "mnn_resolution_status": "unresolved_catalog",
+      "resolved_mnn": null,
+      "resolved_mnn_components": [],
+      "resolved_mnn_component_stats": [],
+      "resolved_mnn_sources": [],
+      "source_raw_mnn": [
+        {
+          "source": "asna",
+          "raw_mnn": "Рыбий жир",
+          "field_type": "explicit_mnn",
+          "canonical_components": [
+            "Рыбий жир"
+          ],
+          "url": null,
+          "parse_warnings": []
+        }
+      ],
+      "resolved_rx_otc": "unknown",
+      "resolved_age_segment": "unknown",
+      "needs_mnn_enrichment": true,
+      "resolution_reason": "single_source",
+      "anchor_components": [],
+      "mnn_enriched": null,
+      "mnn_enrichment_status": null,
+      "mnn_evidence": []
+    },
+    "enrichment_map": {
+      "mnn_enriched": null,
+      "rx_otc_enriched": "unknown",
+      "age_enriched": "универсальный",
+      "mnn_enrichment_status": "ok",
+      "mnn_evidence": [
+        {
+          "url": "https://bz.medvestnik.ru/drugs/273.html",
+          "title": "Аевит мелиген: инструкция по применению, классификация, статьи",
+          "query": "Аевит Мелиген МНН ГРЛС"
+        },
+        {
+          "url": "https://medi.ru/instrukciya/aevit_17240/",
+          "title": "Аевит - Мелиген - инструкция по применению",
+          "query": "Аевит Мелиген МНН ГРЛС"
+        },
+        {
+          "url": "https://tabletka.efim360.ru/drug/aevit-'def'-Meligen",
+          "title": "АЕВИТ - МЕЛИГЕН - инструкция по применению",
+          "query": "Аевит Мелиген МНН ГРЛС"
+        },
+        {
+          "url": "https://www.webapteka.ru/drugbase/name65691.html",
+          "title": "Аевит Мелиген — инструкция по применению, описание",
+          "query": "Аевит Мелиген МНН ГРЛС"
+        },
+        {
+          "url": "https://medum.ru/aevit-meligen-kapsuly",
+          "title": "Аевит Мелиген капсулы — инструкция по применению | лекарственный ...",
+          "query": "Аевит Мелиген МНН ГРЛС"
+        },
+        {
+          "url": "https://instruktsiya-po-primeneniyu.ru/pharmacy/aevit-meligen-5984.html",
+          "title": "Аевит - Мелиген - инструкция по применению",
+          "query": "Аевит Мелиген МНН ГРЛС"
+        },
+        {
+          "url": "https://zdesapteka.ru/instructions/aevit-meligen/",
+          "title": "Инструкция по применению Аевит Мелиген®, показания, состав, аналоги",
+          "query": "Аевит Мелиген МНН ГРЛС"
+        },
+        {
+          "url": "https://medi.ru/instrukciya/aevit_17240/",
+          "title": "Аевит - Мелиген - инструкция по применению",
+          "query": "Аевит Мелиген рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://instruktsiya-po-primeneniyu.ru/pharmacy/aevit-meligen-5984.html",
+          "title": "Аевит - Мелиген - инструкция по применению",
+          "query": "Аевит Мелиген рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://zdravcity.ru/p_aevit-kaps-n10-0092228.html",
+          "title": "Аевит капсулы 10шт АО Мелиген купить, цена, инструкция по применению ...",
+          "query": "Аевит Мелиген рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://tabletka.efim360.ru/drug/aevit-'def'-Meligen",
+          "title": "АЕВИТ - МЕЛИГЕН - инструкция по применению",
+          "query": "Аевит Мелиген рецептурный безрецептурный ГРЛС"
+        },
+        {
+          "url": "https://medi.ru/instrukciya/aevit_17240/",
+          "title": "Аевит - Мелиген - инструкция по применению",
+          "query": "Аевит Мелиген инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://zdesapteka.ru/instructions/aevit-meligen/",
+          "title": "Инструкция по применению Аевит Мелиген®, показания, состав, аналоги",
+          "query": "Аевит Мелиген инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://medum.ru/aevit-meligen",
+          "title": "Аевит Мелиген — инструкция по применению | справочник лекарственных ...",
+          "query": "Аевит Мелиген инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://www.webapteka.ru/drugbase/name65691.html",
+          "title": "Аевит Мелиген — инструкция по применению, описание",
+          "query": "Аевит Мелиген инструкция применение возраст дети взрослые"
+        },
+        {
+          "url": "https://apteka.ru/product/aevit-meligen-n20-kaps-po-200mg-5e326dacca7bdc000192f6e6/instructions/",
+          "title": "Инструкция По Применению Аевит Мелиген N20 Капс По 200мг",
+          "query": "Аевит Мелиген инструкция применение возраст дети взрослые"
+        }
+      ],
+      "needs_human_review": true,
+      "enrichment_accepted": false,
+      "enrichment_category": "BAS",
+      "enrichment_error": null
+    },
+    "research_context": {
+      "research_context": {
+        "search_queries": [
+          "Аевит Мелиген МНН ГРЛС",
+          "Аевит Мелиген рецептурный безрецептурный ГРЛС",
+          "Аевит Мелиген инструкция применение возраст дети взрослые"
+        ],
+        "fallback_queries": [],
+        "search_count": 16,
+        "selected_evidence": [
+          {
+            "rank": 1,
+            "source": "bz.medvestnik.ru",
+            "url": "https://bz.medvestnik.ru/drugs/273.html",
+            "title": "Аевит мелиген: инструкция по применению, классификация, статьи",
+            "query": "Аевит Мелиген МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 2,
+            "source": "medi.ru",
+            "url": "https://medi.ru/instrukciya/aevit_17240/",
+            "title": "Аевит - Мелиген - инструкция по применению",
+            "query": "Аевит Мелиген МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 3,
+            "source": "tabletka.efim360.ru",
+            "url": "https://tabletka.efim360.ru/drug/aevit-'def'-Meligen",
+            "title": "АЕВИТ - МЕЛИГЕН - инструкция по применению",
+            "query": "Аевит Мелиген МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 4,
+            "source": "www.webapteka.ru",
+            "url": "https://www.webapteka.ru/drugbase/name65691.html",
+            "title": "Аевит Мелиген — инструкция по применению, описание",
+            "query": "Аевит Мелиген МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 5,
+            "source": "medum.ru",
+            "url": "https://medum.ru/aevit-meligen-kapsuly",
+            "title": "Аевит Мелиген капсулы — инструкция по применению | лекарственный ...",
+            "query": "Аевит Мелиген МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 6,
+            "source": "instruktsiya-po-primeneniyu.ru",
+            "url": "https://instruktsiya-po-primeneniyu.ru/pharmacy/aevit-meligen-5984.html",
+            "title": "Аевит - Мелиген - инструкция по применению",
+            "query": "Аевит Мелиген МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 7,
+            "source": "zdesapteka.ru",
+            "url": "https://zdesapteka.ru/instructions/aevit-meligen/",
+            "title": "Инструкция по применению Аевит Мелиген®, показания, состав, аналоги",
+            "query": "Аевит Мелиген МНН ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 8,
+            "source": "medi.ru",
+            "url": "https://medi.ru/instrukciya/aevit_17240/",
+            "title": "Аевит - Мелиген - инструкция по применению",
+            "query": "Аевит Мелиген рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 9,
+            "source": "instruktsiya-po-primeneniyu.ru",
+            "url": "https://instruktsiya-po-primeneniyu.ru/pharmacy/aevit-meligen-5984.html",
+            "title": "Аевит - Мелиген - инструкция по применению",
+            "query": "Аевит Мелиген рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 10,
+            "source": "zdravcity.ru",
+            "url": "https://zdravcity.ru/p_aevit-kaps-n10-0092228.html",
+            "title": "Аевит капсулы 10шт АО Мелиген купить, цена, инструкция по применению ...",
+            "query": "Аевит Мелиген рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 11,
+            "source": "tabletka.efim360.ru",
+            "url": "https://tabletka.efim360.ru/drug/aevit-'def'-Meligen",
+            "title": "АЕВИТ - МЕЛИГЕН - инструкция по применению",
+            "query": "Аевит Мелиген рецептурный безрецептурный ГРЛС",
+            "excerpt": "",
+            "field_used": "other"
+          },
+          {
+            "rank": 12,
+            "source": "medi.ru",
+            "url": "https://medi.ru/instrukciya/aevit_17240/",
+            "title": "Аевит - Мелиген - инструкция по применению",
+            "query": "Аевит Мелиген инструкция применение возраст дети взрослые",
+            "excerpt": "",
+            "field_used": "other"
+          }
+        ],
+        "raw_artifact_path": "redesign/artifacts/mnn_wave500_v2_searxng_raw.jsonl",
+        "idempotency_key": "7e2bc18a911b1017e22548e354729d17",
+        "attempt_count": 1
+      }
+    }
+  }
+]

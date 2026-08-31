@@ -1,0 +1,26 @@
+{
+  "prompt_version": "prompt_enrichment_v1",
+  "input_rows": 500,
+  "eligible": 10,
+  "skipped": 246,
+  "called": 10,
+  "errors": 0,
+  "mnn_filled": 6,
+  "mnn_null": 4,
+  "rx_rx": 3,
+  "rx_otc": 1,
+  "rx_unknown": 1,
+  "combo_mono": 2,
+  "combo_multi": 1,
+  "combo_unknown": 2,
+  "skip_reasons": {
+    "kind_out_of_scope": 175,
+    "drug_mnn_and_rx_ok": 41,
+    "vitamin_complex_skip": 23,
+    "vitamin_no_signal": 7
+  },
+  "by_kind_enriched": {
+    "drug": 5,
+    "vitamin_or_baa": 5
+  }
+}

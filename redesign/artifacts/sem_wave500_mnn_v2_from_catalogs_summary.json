@@ -1,0 +1,60 @@
+{
+  "rows": 31,
+  "elapsed_sec": 247.01,
+  "avg_sec_per_row": 7.968,
+  "http_requests": 220,
+  "win_mnn_filled": 25,
+  "win_rx_filled": 22,
+  "top_sources": {
+    "win_mnn_rows": 25,
+    "win_rx_rows": 22,
+    "mnn_match_counts": {
+      "asna": 19,
+      "uteka": 18,
+      "apteka": 17,
+      "vidal": 19
+    },
+    "rx_match_counts": {
+      "uteka": 17,
+      "asna": 17,
+      "vidal": 20,
+      "apteka": 12
+    },
+    "mnn_top": [
+      [
+        "asna",
+        19
+      ],
+      [
+        "vidal",
+        19
+      ],
+      [
+        "uteka",
+        18
+      ],
+      [
+        "apteka",
+        17
+      ]
+    ],
+    "rx_top": [
+      [
+        "vidal",
+        20
+      ],
+      [
+        "uteka",
+        17
+      ],
+      [
+        "asna",
+        17
+      ],
+      [
+        "apteka",
+        12
+      ]
+    ]
+  }
+}

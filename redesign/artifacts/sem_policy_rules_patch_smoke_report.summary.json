@@ -1,0 +1,25 @@
+{
+  "row_count": 30,
+  "seed": "sem_rules_patch_2026-08-05",
+  "chunk_size": 10,
+  "execution_ids": [
+    "30065",
+    "30073",
+    "30083"
+  ],
+  "policy": "sem0_v3_prompt_semantic_v5",
+  "product_kind_counts": {
+    "medical_device": 7,
+    "drug": 9,
+    "vitamin_or_baa": 14
+  },
+  "attr_fill": {
+    "mnn": 14,
+    "nosology": 21,
+    "administration_route": 30,
+    "dosage_form": 23,
+    "age_segment": 30
+  },
+  "finished_at": "2026-08-05T13:04:49.212134+00:00",
+  "out": "redesign/artifacts/sem_policy_rules_patch_smoke_report.csv"
+}

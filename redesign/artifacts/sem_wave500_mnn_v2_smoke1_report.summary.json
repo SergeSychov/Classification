@@ -1,0 +1,21 @@
+{
+  "row_count": 1,
+  "seed": "sem_wave500_mnn_v2_2026-08-12",
+  "chunk_size": 1,
+  "execution_ids": [
+    "40248"
+  ],
+  "policy": "sem0_v3_prompt_semantic_v4",
+  "product_kind_counts": {
+    "medical_device": 1
+  },
+  "attr_fill": {
+    "mnn": 0,
+    "nosology": 0,
+    "administration_route": 1,
+    "dosage_form": 1,
+    "age_segment": 1
+  },
+  "finished_at": "2026-08-12T18:27:24.185841+00:00",
+  "out": "redesign/artifacts/sem_wave500_mnn_v2_smoke1_report.csv"
+}

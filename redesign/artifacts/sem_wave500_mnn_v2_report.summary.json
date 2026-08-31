@@ -1,0 +1,30 @@
+{
+  "row_count": 57,
+  "seed": "sem_wave500_mnn_v2_2026-08-12",
+  "chunk_size": 10,
+  "execution_ids": [
+    "40252",
+    "40255",
+    "40258",
+    "40261",
+    "40265",
+    "40268"
+  ],
+  "policy": "sem0_v3_prompt_semantic_v4",
+  "product_kind_counts": {
+    "other": 8,
+    "medical_device": 9,
+    "cosmetic_hygiene": 4,
+    "drug": 28,
+    "vitamin_or_baa": 8
+  },
+  "attr_fill": {
+    "mnn": 24,
+    "nosology": 31,
+    "administration_route": 52,
+    "dosage_form": 48,
+    "age_segment": 42
+  },
+  "finished_at": "2026-08-12T18:34:05.211217+00:00",
+  "out": "redesign/artifacts/sem_wave500_mnn_v2_report.csv"
+}

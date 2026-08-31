@@ -1,0 +1,197 @@
+{
+  "prompt_version": "mnn_tool_search_v1",
+  "smoke": null,
+  "wall_sec": 5405,
+  "models": [
+    {
+      "slug": "qwen3_8_max",
+      "model": "qwen3.8-max",
+      "n": 224,
+      "status_counts": {
+        "not_found": 161,
+        "invalid_json": 13,
+        "found": 50
+      },
+      "found_count": 50,
+      "coverage": 0.2232,
+      "search_used_count": 224,
+      "search_used_rate": 1.0,
+      "search_call_count": 480,
+      "latency_ms": {
+        "mean": 48453.4,
+        "p50": 40446.0,
+        "p95": 131344.7,
+        "sum": 10853569
+      },
+      "tokens": {
+        "prompt": 300833,
+        "completion": 102266,
+        "total": 403099
+      },
+      "vs_catalog": {
+        "catalog_only": 136,
+        "both_empty": 25,
+        "tool_api_error": 13,
+        "tool_only": 9,
+        "exact_match": 22,
+        "conflict": 5,
+        "normalized_match": 14
+      },
+      "vs_polza": {
+        "polza_only": 100,
+        "polza_not_found_baseline": 80,
+        "tool_api_error": 11,
+        "exact_match": 14,
+        "normalized_match": 14,
+        "conflict": 5
+      },
+      "vs_polza_agreement_rate": 0.1944,
+      "vs_polza_comparable_n": 144
+    },
+    {
+      "slug": "qwen3_7_max",
+      "model": "qwen3.7-max",
+      "n": 224,
+      "status_counts": {
+        "not_found": 99,
+        "found": 125
+      },
+      "found_count": 125,
+      "coverage": 0.558,
+      "search_used_count": 224,
+      "search_used_rate": 1.0,
+      "search_call_count": 237,
+      "latency_ms": {
+        "mean": 44901.5,
+        "p50": 47547.5,
+        "p95": 82206.6,
+        "sum": 10057936
+      },
+      "tokens": {
+        "prompt": 157867,
+        "completion": 278612,
+        "total": 436479
+      },
+      "vs_catalog": {
+        "catalog_only": 79,
+        "normalized_match": 20,
+        "conflict": 19,
+        "exact_match": 72,
+        "both_empty": 20,
+        "tool_only": 14
+      },
+      "vs_polza": {
+        "polza_only": 56,
+        "exact_match": 31,
+        "conflict": 19,
+        "normalized_match": 38,
+        "polza_not_found_baseline": 80
+      },
+      "vs_polza_agreement_rate": 0.4792,
+      "vs_polza_comparable_n": 144
+    },
+    {
+      "slug": "qwen3_7_flash",
+      "model": "qwen3.7-flash",
+      "n": 224,
+      "status_counts": {
+        "found": 107,
+        "not_found": 109,
+        "invalid_json": 8
+      },
+      "found_count": 107,
+      "coverage": 0.4777,
+      "search_used_count": 224,
+      "search_used_rate": 1.0,
+      "search_call_count": 232,
+      "latency_ms": {
+        "mean": 35024.5,
+        "p50": 38646.0,
+        "p95": 69091.2,
+        "sum": 7845482
+      },
+      "tokens": {
+        "prompt": 163045,
+        "completion": 477309,
+        "total": 640354
+      },
+      "vs_catalog": {
+        "conflict": 51,
+        "catalog_only": 88,
+        "exact_match": 36,
+        "tool_api_error": 8,
+        "both_empty": 21,
+        "tool_only": 11,
+        "normalized_match": 9
+      },
+      "vs_polza": {
+        "conflict": 41,
+        "polza_only": 57,
+        "normalized_match": 23,
+        "exact_match": 18,
+        "tool_api_error": 5,
+        "polza_not_found_baseline": 80
+      },
+      "vs_polza_agreement_rate": 0.2847,
+      "vs_polza_comparable_n": 144
+    },
+    {
+      "slug": "deepseek_v4_pro",
+      "model": "deepseek-v4-pro",
+      "n": 224,
+      "status_counts": {
+        "found": 129,
+        "not_found": 95
+      },
+      "found_count": 129,
+      "coverage": 0.5759,
+      "search_used_count": 224,
+      "search_used_rate": 1.0,
+      "search_call_count": 273,
+      "latency_ms": {
+        "mean": 21827.0,
+        "p50": 5857.0,
+        "p95": 64340.2,
+        "sum": 4889251
+      },
+      "tokens": {
+        "prompt": 175505,
+        "completion": 20550,
+        "total": 196055
+      },
+      "vs_catalog": {
+        "normalized_match": 57,
+        "catalog_only": 77,
+        "exact_match": 34,
+        "both_empty": 18,
+        "conflict": 22,
+        "tool_only": 16
+      },
+      "vs_polza": {
+        "exact_match": 39,
+        "polza_only": 53,
+        "normalized_match": 27,
+        "polza_not_found_baseline": 80,
+        "conflict": 25
+      },
+      "vs_polza_agreement_rate": 0.4583,
+      "vs_polza_comparable_n": 144
+    }
+  ],
+  "deepseek_balance_before": {
+    "is_available": true,
+    "balance_infos": [
+      {
+        "currency": "USD",
+        "total_balance": "6.75",
+        "granted_balance": "0.00",
+        "topped_up_balance": "6.75"
+      }
+    ]
+  },
+  "deepseek_balance_after": {
+    "error": "<urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  "serper_calls_total": 1222,
+  "serper_cost_note": "Serper billed per search request; see serper.dev pricing"
+}

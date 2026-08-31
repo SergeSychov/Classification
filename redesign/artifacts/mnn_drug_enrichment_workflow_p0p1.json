@@ -1,0 +1,1393 @@
+{
+  "updatedAt": "2026-08-11T13:35:33.658Z",
+  "createdAt": "2026-08-11T11:14:44.879Z",
+  "id": "bEyKA1JJr0swuLql",
+  "name": "mnn-drug-enrichment",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "options": {
+          "responseMode": "lastNode"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -200,
+        0
+      ],
+      "id": "a1000001-0001-4000-8000-000000000001",
+      "name": "When chat message received",
+      "webhookId": "mnn-drug-enrichment-chat"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "mnn-drug-enrichment",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -200,
+        240
+      ],
+      "id": "a1000001-0001-4000-8000-000000000002",
+      "name": "Webhook",
+      "webhookId": "mnn-drug-enrichment-hook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const PREPROCESS_SYSTEM = `You prepare search queries for a Russian pharmacy product enrichment pipeline.\n\nReturn ONLY valid JSON (no markdown) with this shape:\n{\n  \"trade_name\": \"short trade name without dosage/pack if possible\",\n  \"form_hint\": \"dosage form if present or null\",\n  \"manufacturer_hint\": \"manufacturer if present or null\",\n  \"queries\": [\"query1\", \"query2\", \"query3\"]\n}\n\nRules for queries (exactly 3 strings):\n1. \"{trade_name} МНН ГРЛС\" (or INN / действующее вещество)\n2. \"{trade_name} рецептурный безрецептурный ГРЛС\" (RX/OTC)\n3. \"{trade_name} инструкция применение возраст дети взрослые\"\n\nDo NOT classify the product. Do NOT invent clinical facts. Only rewrite the input into search queries.\nLanguage of queries: Russian.`;\n\nconst item = $input.first().json || {};\nlet product = '';\nlet source = 'chat';\n\nif (item.chatInput) {\n  product = String(item.chatInput);\n  source = 'chat';\n} else if (item.body && (item.body.product || item.body.chatInput || item.body.text)) {\n  product = String(item.body.product || item.body.chatInput || item.body.text);\n  source = 'webhook';\n} else if (item.product) {\n  product = String(item.product);\n  source = item.source || 'webhook';\n} else if (item.text) {\n  product = String(item.text);\n  source = 'webhook';\n}\n\nproduct = product.trim();\nif (!product) {\n  throw new Error('Empty product name. Send chat message or POST {\"product\":\"...\"}.');\n}\n\nreturn [{\n  json: {\n    product,\n    source,\n    prompt_system: PREPROCESS_SYSTEM,\n    prompt_user: `PRODUCT_INPUT:\\n${product}\\n\\nReturn JSON only.`,\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        120
+      ],
+      "id": "a1000001-0001-4000-8000-000000000003",
+      "name": "Prepare Input"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.deepseek.com/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "deepSeekApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"deepseek-chat\",\n  \"temperature\": 0.1,\n  \"response_format\": { \"type\": \"json_object\" },\n  \"messages\": [\n    { \"role\": \"system\", \"content\": {{ JSON.stringify($json.prompt_system) }} },\n    { \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt_user) }} }\n  ]\n}",
+        "options": {
+          "timeout": 90000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        340,
+        120
+      ],
+      "id": "a1000001-0001-4000-8000-000000000004",
+      "name": "DeepSeek — Preprocess",
+      "credentials": {
+        "deepSeekApi": {
+          "id": "xyaJwQg88odvtCfC",
+          "name": "DeepSeek account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "function extractJsonString(value) {\n  if (value === null || value === undefined) return null;\n  if (typeof value === 'object') return JSON.stringify(value);\n  let text = String(value).trim();\n  const fence = text.match(/^```(?:json)?\\s*\\n?([\\s\\S]+?)\\n?```\\s*$/i);\n  if (fence) text = fence[1].trim();\n  const start = text.indexOf('{');\n  const end = text.lastIndexOf('}');\n  if (start >= 0 && end > start) text = text.slice(start, end + 1);\n  return text;\n}\n\nconst prep = $('Prepare Input').first().json;\nconst http = $input.first().json;\nconst raw = http.choices?.[0]?.message?.content ?? http.output ?? http.text ?? null;\nconst text = extractJsonString(raw);\nlet parsed = {};\ntry {\n  parsed = JSON.parse(text);\n} catch (e) {\n  parsed = {};\n}\n\nconst product = prep.product;\nconst trade = (parsed.trade_name && String(parsed.trade_name).trim()) || product.split('|')[0].trim();\nlet queries = Array.isArray(parsed.queries) ? parsed.queries.map((q) => String(q).trim()).filter(Boolean) : [];\nif (queries.length === 0) {\n  queries = [\n    `${trade} МНН ГРЛС`,\n    `${trade} рецептурный безрецептурный ГРЛС`,\n    `${trade} инструкция применение возраст дети взрослые`,\n  ];\n}\nqueries = queries.slice(0, 3);\n\nreturn queries.map((query, index) => ({\n  json: {\n    product,\n    source: prep.source,\n    trade_name: trade,\n    form_hint: parsed.form_hint ?? null,\n    manufacturer_hint: parsed.manufacturer_hint ?? null,\n    query,\n    query_index: index + 1,\n    preprocess_raw: text,\n    preprocess_model: http.model || null,\n  },\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        120
+      ],
+      "id": "a1000001-0001-4000-8000-000000000006",
+      "name": "Parse Queries"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://85.198.66.232:8080/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.query }}"
+            },
+            {
+              "name": "format",
+              "value": "json"
+            },
+            {
+              "name": "language",
+              "value": "ru"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        860,
+        120
+      ],
+      "id": "a1000001-0001-4000-8000-000000000007",
+      "name": "SearXNG Search",
+      "notesInFlow": true,
+      "notes": "Forced SearXNG search via http://85.198.66.232:8080 (SearXNG account). Pipeline refuses to answer if no snippets.",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "const POSTPROCESS_SYSTEM = `You extract structured pharmacy attributes ONLY from PRODUCT_INPUT and SEARCH_RESULTS.\nIt is forbidden to use your own knowledge, memory, or training data.\nIf a fact is not supported by SEARCH_RESULTS, use null / \"not applicable\" / \"Other\" as specified.\n\nReturn ONLY valid JSON (no markdown):\n{\n  \"Category\": \"Drug\" | \"BAS\" | \"Other\",\n  \"mnn\": \"name\" | [\"name1\", \"name2\"] | null,\n  \"RX_OTC\": \"RX\" | \"OTC\" | \"not applicable\",\n  \"Age\": \"Взрослый\" | \"Детский\" | \"Универсальный\",\n  \"Text\": \"2-5 sentences in Russian citing what was found (include URLs when present)\"\n}\n\nField rules:\n- Category:\n  - Drug = лекарственное средство / препарат (ГРЛС, ЛС)\n  - BAS = БАД / biologically active supplement\n  - Other = гомеопатия, косметика, изделия, unclear, or insufficient evidence\n- mnn: international nonproprietary name / МНН / действующие вещества.\n  Combination products → array of component names.\n  If not found in SEARCH_RESULTS → null\n- RX_OTC:\n  - RX = рецептурный\n  - OTC = безрецептурный / отпускается без рецепта\n  - not applicable = BAS/Other or no evidence in SEARCH_RESULTS\n- Age:\n  - Детский if kids/children/педиатрия is the primary target\n  - Взрослый if adults only\n  - Универсальный if both / not restricted / unclear from snippets\n- Text: summarize ONLY from snippets; explicitly say what was missing if fields are null/not applicable.\n\nPrefer official sources when they conflict: ГРЛС / rosminzdrav / instruction leaflets over marketplace blurbs.`;\n\nconst PREFERRED_HOST_RE = /(vidal\\.ru|rlsnet\\.ru|grls\\.rosminzdrav\\.gov\\.ru|rosminzdrav|eisl\\.roszdravnadzor|инструкция|medi\\.ru|lsgeotar)/i;\n\nfunction hostScore(url, title) {\n  const s = `${url || ''} ${title || ''}`;\n  if (PREFERRED_HOST_RE.test(s)) return 0;\n  if (/apteka|uteka|asna|wildberries|ozon|market/i.test(s)) return 2;\n  return 1;\n}\n\nfunction collectSnippets(httpItems, built) {\n  const snippets = [];\n  for (let i = 0; i < httpItems.length; i++) {\n    const body = httpItems[i].json || {};\n    const query = built[i]?.json?.query || body.query || '';\n    const results = Array.isArray(body.results) ? body.results : [];\n    for (const r of results.slice(0, 8)) {\n      snippets.push({\n        query,\n        title: r.title || '',\n        url: r.url || '',\n        content: String(r.content || r.snippet || '').slice(0, 300),\n        _score: hostScore(r.url, r.title),\n      });\n    }\n  }\n  snippets.sort((a, b) => a._score - b._score);\n  return snippets.map(({ _score, ...rest }) => rest).slice(0, 16);\n}\n\nasync function searxSearch(query) {\n  try {\n    const body = await this.helpers.httpRequest({\n      method: 'GET',\n      url: 'http://127.0.0.1:8080/search',\n      qs: { q: query, format: 'json', language: 'ru' },\n      timeout: 30000,\n      json: true,\n    });\n    return body && typeof body === 'object' ? body : { results: [] };\n  } catch (e1) {\n    try {\n      const body = await this.helpers.httpRequest({\n        method: 'GET',\n        url: 'http://85.198.66.232:8080/search',\n        qs: { q: query, format: 'json', language: 'ru' },\n        timeout: 30000,\n        json: true,\n      });\n      return body && typeof body === 'object' ? body : { results: [] };\n    } catch (e2) {\n      return { results: [], _error: String(e2) };\n    }\n  }\n}\n\nconst httpItems = $input.all();\nconst built = $('Parse Queries').all();\nconst meta = built[0].json;\nlet snippets = collectSnippets(httpItems, built);\nconst usedQueries = built.map((b) => b.json.query);\nconst fallbackUsed = [];\n\n// P1: fallback searches when too few hits\nif (snippets.length < 3) {\n  const trade = meta.trade_name || meta.product.split('|')[0].trim();\n  const candidates = [\n    `${trade} действующее вещество`,\n    `${trade} МНН`,\n    `${trade} инструкция по применению`,\n  ].filter((q) => q && !usedQueries.includes(q));\n  for (const q of candidates.slice(0, 2)) {\n    const body = await searxSearch.call(this, q);\n    fallbackUsed.push(q);\n    const fakeBuilt = [{ json: { query: q } }];\n    const extra = collectSnippets([{ json: body }], fakeBuilt);\n    const seen = new Set(snippets.map((s) => s.url + '|' + s.title));\n    for (const s of extra) {\n      const key = s.url + '|' + s.title;\n      if (!seen.has(key)) {\n        snippets.push(s);\n        seen.add(key);\n      }\n    }\n    snippets.sort((a, b) => hostScore(a.url, a.title) - hostScore(b.url, b.title));\n    snippets = snippets.slice(0, 16);\n    if (snippets.length >= 3) break;\n  }\n}\n\nconst allQueries = usedQueries.concat(fallbackUsed);\n\nif (snippets.length === 0) {\n  return [{\n    json: {\n      product: meta.product,\n      source: meta.source,\n      trade_name: meta.trade_name,\n      search_count: 0,\n      search_queries: allQueries,\n      fallback_queries: fallbackUsed,\n      skip_llm: true,\n      status: 'error',\n      error_code: 'search_empty',\n      error_message: 'SearXNG returned no usable snippets after primary and fallback queries.',\n      retryable: true,\n      Category: null,\n      mnn: null,\n      RX_OTC: 'not applicable',\n      Age: 'Универсальный',\n      Text: 'Поиск не вернул результатов. МНН не извлечён (fail-closed, без догадок модели).',\n      ok_json: false,\n      warnings: ['search_empty'],\n    },\n  }];\n}\n\nconst searchBlock = snippets\n  .map((s, idx) => `${idx + 1}. query=${s.query}\\n   title=${s.title}\\n   url=${s.url}\\n   content=${s.content}`)\n  .join('\\n');\n\nconst prompt_user = [\n  'PRODUCT_INPUT:',\n  meta.product,\n  '',\n  `trade_name_guess: ${meta.trade_name}`,\n  '',\n  'SEARCH_RESULTS:',\n  searchBlock,\n  '',\n  'Return JSON only. Use ONLY SEARCH_RESULTS.',\n].join('\\n');\n\nreturn [{\n  json: {\n    product: meta.product,\n    source: meta.source,\n    trade_name: meta.trade_name,\n    search_count: snippets.length,\n    search_queries: allQueries,\n    fallback_queries: fallbackUsed,\n    skip_llm: false,\n    prompt_system: POSTPROCESS_SYSTEM,\n    prompt_user,\n    evidence: snippets.map((s) => ({ url: s.url, title: s.title, query: s.query })),\n  },\n}];\n",
+        "mode": "runOnceForAllItems"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        120
+      ],
+      "id": "a1000001-0001-4000-8000-000000000008",
+      "name": "Aggregate Search"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.deepseek.com/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "deepSeekApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"deepseek-chat\",\n  \"temperature\": 0.1,\n  \"response_format\": { \"type\": \"json_object\" },\n  \"messages\": [\n    { \"role\": \"system\", \"content\": {{ JSON.stringify($json.prompt_system) }} },\n    { \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt_user) }} }\n  ]\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1640,
+        40
+      ],
+      "id": "a1000001-0001-4000-8000-000000000009",
+      "name": "DeepSeek — Postprocess",
+      "credentials": {
+        "deepSeekApi": {
+          "id": "xyaJwQg88odvtCfC",
+          "name": "DeepSeek account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "function extractJsonString(value) {\n  if (value === null || value === undefined) return null;\n  if (typeof value === 'object') return JSON.stringify(value);\n  let text = String(value).trim();\n  const fence = text.match(/^```(?:json)?\\s*\\n?([\\s\\S]+?)\\n?```\\s*$/i);\n  if (fence) text = fence[1].trim();\n  const start = text.indexOf('{');\n  const end = text.lastIndexOf('}');\n  if (start >= 0 && end > start) text = text.slice(start, end + 1);\n  return text;\n}\n\nfunction normCategory(v) {\n  if (v === null || v === undefined || v === '') return 'Other';\n  const s = String(v).trim().toLowerCase();\n  if (['drug', 'лс', 'лекарство', 'лекарственный препарат', 'лекарственное средство'].includes(s)) return 'Drug';\n  if (['bas', 'bad', 'бад', 'баа'].includes(s)) return 'BAS';\n  if (['other', 'иное', 'другое', 'гомеопатия'].includes(s)) return 'Other';\n  return 'Other';\n}\n\nfunction normRx(v) {\n  if (v === null || v === undefined || v === '') return 'not applicable';\n  const s = String(v).trim().toLowerCase().replace(/\\s+/g, ' ');\n  if (['rx', 'рецептурный', 'по рецепту', 'prescription'].includes(s)) return 'RX';\n  if (['otc', 'безрецептурный', 'без рецепта', 'otc-препарат'].includes(s)) return 'OTC';\n  if (['not applicable', 'n/a', 'na', 'не применимо', 'unknown', 'неизвестно'].includes(s)) return 'not applicable';\n  return 'not applicable';\n}\n\nfunction normAge(v) {\n  if (v === null || v === undefined || v === '') return 'Универсальный';\n  const s = String(v).trim().toLowerCase();\n  if (s.includes('дет') || s.includes('child') || s.includes('kids') || s.includes('педиат')) return 'Детский';\n  if (s.includes('взросл') || s.includes('adult')) return 'Взрослый';\n  if (s.includes('универс') || s.includes('оба') || s.includes('любой')) return 'Универсальный';\n  return 'Универсальный';\n}\n\nfunction normMnn(v) {\n  if (v === null || v === undefined || v === '') return null;\n  if (Array.isArray(v)) {\n    const arr = v.map((x) => String(x).trim()).filter(Boolean);\n    if (arr.length === 0) return null;\n    if (arr.length === 1) return arr[0];\n    return arr;\n  }\n  const s = String(v).trim();\n  if (!s || s.toLowerCase() === 'null' || s === '-') return null;\n  if (s.includes('+')) {\n    const parts = s.split('+').map((p) => p.trim()).filter(Boolean);\n    if (parts.length > 1) return parts;\n  }\n  return s;\n}\n\nconst ctx = $('Aggregate Search').first().json;\nconst http = $input.first().json;\nconst alreadyRetried = Boolean(ctx._parse_retried || http._parse_retried);\n\n// If Aggregate already short-circuited\nif (ctx.skip_llm) {\n  return [{ json: { ...ctx, needs_parse_retry: false } }];\n}\n\nconst raw = http.choices?.[0]?.message?.content ?? http.output ?? http.text ?? null;\nconst rawText = extractJsonString(raw);\nlet parsed = null;\nlet ok = false;\nlet error = null;\ntry {\n  parsed = JSON.parse(rawText);\n  ok = parsed && typeof parsed === 'object' && !Array.isArray(parsed);\n} catch (e) {\n  error = String(e);\n  parsed = {};\n}\n\nconst Category = normCategory(parsed.Category ?? parsed.category);\nconst mnn = normMnn(parsed.mnn ?? parsed.MNN ?? parsed.inn);\nconst result = {\n  Category,\n  mnn,\n  RX_OTC: normRx(parsed.RX_OTC ?? parsed.rx_otc ?? parsed.Rx_OTC),\n  Age: normAge(parsed.Age ?? parsed.age ?? parsed.age_segment),\n  Text: parsed.Text || parsed.text || '',\n};\n\nif (!result.Text || !String(result.Text).trim()) {\n  result.Text = ok\n    ? `Поиск вернул ${ctx.search_count} сниппетов.`\n    : `Не удалось разобрать ответ модели. Raw: ${String(rawText || '').slice(0, 400)}`;\n}\n\nconst warnings = [];\nif (Array.isArray(ctx.fallback_queries) && ctx.fallback_queries.length) {\n  warnings.push('used_fallback_queries');\n}\nlet status = 'ok';\nif (!ok) {\n  status = 'error';\n} else if (Category === 'Drug' && (mnn === null || mnn === '' || (Array.isArray(mnn) && mnn.length === 0))) {\n  status = 'ok_partial';\n  warnings.push('mnn_not_found');\n}\n\nconst needs_parse_retry = (!ok) && !alreadyRetried;\n\nreturn [{\n  json: {\n    ...result,\n    text: JSON.stringify(result, null, 2),\n    output: JSON.stringify(result, null, 2),\n    product: ctx.product,\n    source: ctx.source,\n    search_count: ctx.search_count,\n    search_queries: ctx.search_queries,\n    fallback_queries: ctx.fallback_queries || [],\n    evidence: ctx.evidence || [],\n    validation_ok: ok,\n    validation_error: error,\n    ok_json: ok,\n    status: needs_parse_retry ? 'error' : status,\n    error_code: ok ? null : 'parse_error',\n    error_message: ok ? null : (error || 'Model returned non-JSON or invalid object'),\n    retryable: !ok,\n    warnings,\n    needs_parse_retry,\n    prompt_system: ctx.prompt_system,\n    prompt_user: ctx.prompt_user,\n    postprocess_model: http.model || null,\n    skip_llm: false,\n  },\n}];\n",
+        "mode": "runOnceForAllItems"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1900,
+        40
+      ],
+      "id": "a1000001-0001-4000-8000-00000000000b",
+      "name": "Validate JSON"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-webhook",
+              "leftValue": "={{ $json.source }}",
+              "rightValue": "webhook",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3100,
+        120
+      ],
+      "id": "a1000001-0001-4000-8000-00000000000c",
+      "name": "Is Webhook?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: $json.status, error_code: $json.error_code, error_message: $json.error_message, retryable: $json.retryable, Category: $json.Category, mnn: $json.mnn, RX_OTC: $json.RX_OTC, Age: $json.Age, Text: $json.Text, search_count: $json.search_count, search_queries: $json.search_queries, fallback_queries: $json.fallback_queries, evidence: $json.evidence, ok_json: $json.ok_json, warnings: $json.warnings, postprocess_model: $json.postprocess_model } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        3360,
+        40
+      ],
+      "id": "a1000001-0001-4000-8000-00000000000d",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const j = $input.first().json;\nreturn [{\n  json: {\n    status: j.status,\n    error_code: j.error_code,\n    error_message: j.error_message,\n    retryable: j.retryable,\n    Category: j.Category,\n    mnn: j.mnn,\n    RX_OTC: j.RX_OTC,\n    Age: j.Age,\n    Text: j.Text,\n    text: j.text || JSON.stringify({\n      status: j.status, Category: j.Category, mnn: j.mnn, RX_OTC: j.RX_OTC, Age: j.Age, Text: j.Text, warnings: j.warnings,\n    }, null, 2),\n    output: j.output || j.text || '',\n    search_count: j.search_count,\n    ok_json: j.ok_json,\n    warnings: j.warnings,\n  },\n}];\n",
+        "mode": "runOnceForAllItems"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3360,
+        220
+      ],
+      "id": "a1000001-0001-4000-8000-00000000000e",
+      "name": "Chat Output"
+    },
+    {
+      "parameters": {
+        "content": "## MNN Drug Enrichment (P0+P1)\n\nChat or POST `/webhook/mnn-drug-enrichment` with `{\"product\":\"...\"}`.\n\nPipeline: DeepSeek preprocess → SearXNG (×3) → Aggregate (+fallback searches, prefer official hosts) → DeepSeek postprocess → Validate (+1 parse retry) → Finalize.\n\nHTTP retries: DeepSeek×2 + SearXNG (3 tries). Empty search / LLM errors → structured JSON (`status`,`error_code`,`retryable`). Grounded only: no MNN without snippets.",
+        "height": 360,
+        "width": 420
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -220,
+        -220
+      ],
+      "id": "a1000001-0001-4000-8000-00000000000f",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "skip-llm",
+              "leftValue": "={{ $json.skip_llm }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "8fe54913-bb58-424a-ad2b-84ff6032b8b5",
+      "name": "IF Skip LLM",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1380,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "parse-retry",
+              "leftValue": "={{ $json.needs_parse_retry }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "48fdd30d-77ac-4646-b29b-fb695bbcf52c",
+      "name": "IF Parse Retry",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2140,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.deepseek.com/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "deepSeekApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"deepseek-chat\",\n  \"temperature\": 0.1,\n  \"response_format\": { \"type\": \"json_object\" },\n  \"messages\": [\n    { \"role\": \"system\", \"content\": {{ JSON.stringify($json.prompt_system) }} },\n    { \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt_user) }} }\n  ]\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2380,
+        -80
+      ],
+      "id": "a9eaab2f-c9d0-4a7f-a3c3-431838234c20",
+      "name": "DeepSeek — Postprocess Retry",
+      "credentials": {
+        "deepSeekApi": {
+          "id": "xyaJwQg88odvtCfC",
+          "name": "DeepSeek account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "function extractJsonString(value) {\n  if (value === null || value === undefined) return null;\n  if (typeof value === 'object') return JSON.stringify(value);\n  let text = String(value).trim();\n  const fence = text.match(/^```(?:json)?\\s*\\n?([\\s\\S]+?)\\n?```\\s*$/i);\n  if (fence) text = fence[1].trim();\n  const start = text.indexOf('{');\n  const end = text.lastIndexOf('}');\n  if (start >= 0 && end > start) text = text.slice(start, end + 1);\n  return text;\n}\n\nfunction normCategory(v) {\n  if (v === null || v === undefined || v === '') return 'Other';\n  const s = String(v).trim().toLowerCase();\n  if (['drug', 'лс', 'лекарство', 'лекарственный препарат', 'лекарственное средство'].includes(s)) return 'Drug';\n  if (['bas', 'bad', 'бад', 'баа'].includes(s)) return 'BAS';\n  if (['other', 'иное', 'другое', 'гомеопатия'].includes(s)) return 'Other';\n  return 'Other';\n}\n\nfunction normRx(v) {\n  if (v === null || v === undefined || v === '') return 'not applicable';\n  const s = String(v).trim().toLowerCase().replace(/\\s+/g, ' ');\n  if (['rx', 'рецептурный', 'по рецепту', 'prescription'].includes(s)) return 'RX';\n  if (['otc', 'безрецептурный', 'без рецепта', 'otc-препарат'].includes(s)) return 'OTC';\n  if (['not applicable', 'n/a', 'na', 'не применимо', 'unknown', 'неизвестно'].includes(s)) return 'not applicable';\n  return 'not applicable';\n}\n\nfunction normAge(v) {\n  if (v === null || v === undefined || v === '') return 'Универсальный';\n  const s = String(v).trim().toLowerCase();\n  if (s.includes('дет') || s.includes('child') || s.includes('kids') || s.includes('педиат')) return 'Детский';\n  if (s.includes('взросл') || s.includes('adult')) return 'Взрослый';\n  if (s.includes('универс') || s.includes('оба') || s.includes('любой')) return 'Универсальный';\n  return 'Универсальный';\n}\n\nfunction normMnn(v) {\n  if (v === null || v === undefined || v === '') return null;\n  if (Array.isArray(v)) {\n    const arr = v.map((x) => String(x).trim()).filter(Boolean);\n    if (arr.length === 0) return null;\n    if (arr.length === 1) return arr[0];\n    return arr;\n  }\n  const s = String(v).trim();\n  if (!s || s.toLowerCase() === 'null' || s === '-') return null;\n  if (s.includes('+')) {\n    const parts = s.split('+').map((p) => p.trim()).filter(Boolean);\n    if (parts.length > 1) return parts;\n  }\n  return s;\n}\n\nconst ctx = $('Aggregate Search').first().json;\nconst http = $input.first().json;\nconst alreadyRetried = true; // second pass\n\n// If Aggregate already short-circuited\nif (ctx.skip_llm) {\n  return [{ json: { ...ctx, needs_parse_retry: false } }];\n}\n\nconst raw = http.choices?.[0]?.message?.content ?? http.output ?? http.text ?? null;\nconst rawText = extractJsonString(raw);\nlet parsed = null;\nlet ok = false;\nlet error = null;\ntry {\n  parsed = JSON.parse(rawText);\n  ok = parsed && typeof parsed === 'object' && !Array.isArray(parsed);\n} catch (e) {\n  error = String(e);\n  parsed = {};\n}\n\nconst Category = normCategory(parsed.Category ?? parsed.category);\nconst mnn = normMnn(parsed.mnn ?? parsed.MNN ?? parsed.inn);\nconst result = {\n  Category,\n  mnn,\n  RX_OTC: normRx(parsed.RX_OTC ?? parsed.rx_otc ?? parsed.Rx_OTC),\n  Age: normAge(parsed.Age ?? parsed.age ?? parsed.age_segment),\n  Text: parsed.Text || parsed.text || '',\n};\n\nif (!result.Text || !String(result.Text).trim()) {\n  result.Text = ok\n    ? `Поиск вернул ${ctx.search_count} сниппетов.`\n    : `Не удалось разобрать ответ модели. Raw: ${String(rawText || '').slice(0, 400)}`;\n}\n\nconst warnings = [];\nif (Array.isArray(ctx.fallback_queries) && ctx.fallback_queries.length) {\n  warnings.push('used_fallback_queries');\n}\nlet status = 'ok';\nif (!ok) {\n  status = 'error';\n} else if (Category === 'Drug' && (mnn === null || mnn === '' || (Array.isArray(mnn) && mnn.length === 0))) {\n  status = 'ok_partial';\n  warnings.push('mnn_not_found');\n}\n\nconst needs_parse_retry = (!ok) && !alreadyRetried;\n\nreturn [{\n  json: {\n    ...result,\n    text: JSON.stringify(result, null, 2),\n    output: JSON.stringify(result, null, 2),\n    product: ctx.product,\n    source: ctx.source,\n    search_count: ctx.search_count,\n    search_queries: ctx.search_queries,\n    fallback_queries: ctx.fallback_queries || [],\n    evidence: ctx.evidence || [],\n    validation_ok: ok,\n    validation_error: error,\n    ok_json: ok,\n    status,\n    error_code: ok ? null : 'parse_error',\n    error_message: ok ? null : (error || 'Model returned non-JSON or invalid object'),\n    retryable: !ok,\n    warnings,\n    needs_parse_retry: false,\n    prompt_system: ctx.prompt_system,\n    prompt_user: ctx.prompt_user,\n    postprocess_model: http.model || null,\n    skip_llm: false,\n  },\n}];\n",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "6691c0ea-0ba0-4474-8eb8-2c2e580c300a",
+      "name": "Validate After Retry",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2620,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const j = $input.first().json || {};\n\nfunction emptyMnn(m) {\n  return m === null || m === undefined || m === '' || (Array.isArray(m) && m.length === 0);\n}\n\nconst warnings = Array.isArray(j.warnings) ? [...j.warnings] : [];\nlet status = j.status || 'ok';\nlet error_code = j.error_code || null;\nlet error_message = j.error_message || null;\nlet retryable = Boolean(j.retryable);\n\nif (j.skip_llm && j.error_code === 'search_empty') {\n  status = 'error';\n  error_code = 'search_empty';\n  retryable = true;\n} else if (error_code === 'parse_error' && !j.ok_json) {\n  status = 'error';\n  retryable = true;\n} else if (j.ok_json !== false && j.Category === 'Drug' && emptyMnn(j.mnn)) {\n  status = 'ok_partial';\n  if (!warnings.includes('mnn_not_found')) warnings.push('mnn_not_found');\n  error_code = null;\n  error_message = null;\n  retryable = false;\n} else if (j.ok_json) {\n  status = 'ok';\n  error_code = null;\n  error_message = null;\n  retryable = false;\n}\n\nconst out = {\n  status,\n  error_code,\n  error_message,\n  retryable,\n  Category: j.Category ?? null,\n  mnn: j.mnn ?? null,\n  RX_OTC: j.RX_OTC ?? 'not applicable',\n  Age: j.Age ?? 'Универсальный',\n  Text: j.Text || '',\n  search_count: j.search_count ?? 0,\n  search_queries: j.search_queries || [],\n  fallback_queries: j.fallback_queries || [],\n  evidence: j.evidence || [],\n  ok_json: Boolean(j.ok_json),\n  warnings,\n  product: j.product || null,\n  source: j.source || null,\n  postprocess_model: j.postprocess_model || null,\n  text: j.text || '',\n  output: j.output || j.text || '',\n};\n\nreturn [{ json: out }];\n",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "e2f43f7e-b85f-4b29-b928-a49f1d974b9f",
+      "name": "Finalize",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2860,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json || {};\nconst err = item.error || item;\nconst msg = String(err.message || item.message || JSON.stringify(item).slice(0, 500));\nconst desc = String(err.description || item.description || '');\nconst httpCode = String(err.httpCode || err.statusCode || item.httpCode || '');\nconst blob = `${msg} ${desc} ${httpCode}`.toLowerCase();\n\nlet error_code = 'llm_unavailable';\nlet retryable = true;\nif (/unauthorized|authorization|api key|invalid_api_key|401|403/.test(blob)) {\n  error_code = 'auth_failed';\n  retryable = false;\n} else if (/insufficient|balance|402|billing|quota/.test(blob)) {\n  error_code = 'billing';\n  retryable = false;\n} else if (/400|bad request|invalid/.test(blob) && !/401|403/.test(blob)) {\n  error_code = 'bad_request';\n  retryable = false;\n}\n\nlet source = 'webhook';\nlet product = null;\ntry {\n  const prep = $('Prepare Input').first().json;\n  source = prep.source || source;\n  product = prep.product || null;\n} catch (e) {}\n\nreturn [{\n  json: {\n    status: 'error',\n    error_code,\n    error_message: desc || msg,\n    retryable,\n    Category: null,\n    mnn: null,\n    RX_OTC: 'not applicable',\n    Age: 'Универсальный',\n    Text: '',\n    search_count: 0,\n    search_queries: [],\n    fallback_queries: [],\n    evidence: [],\n    ok_json: false,\n    warnings: [],\n    product,\n    source,\n    postprocess_model: null,\n    text: '',\n    output: '',\n  },\n}];\n",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "0220f68e-5835-4992-9fe7-6450a396945f",
+      "name": "Error Normalizer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1640,
+        320
+      ]
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Prepare Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prepare Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Input": {
+      "main": [
+        [
+          {
+            "node": "DeepSeek — Preprocess",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek — Preprocess": {
+      "main": [
+        [
+          {
+            "node": "Parse Queries",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Normalizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Queries": {
+      "main": [
+        [
+          {
+            "node": "SearXNG Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SearXNG Search": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Search": {
+      "main": [
+        [
+          {
+            "node": "IF Skip LLM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek — Postprocess": {
+      "main": [
+        [
+          {
+            "node": "Validate JSON",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Normalizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate JSON": {
+      "main": [
+        [
+          {
+            "node": "IF Parse Retry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Webhook?": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Chat Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Skip LLM": {
+      "main": [
+        [
+          {
+            "node": "Finalize",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "DeepSeek — Postprocess",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Parse Retry": {
+      "main": [
+        [
+          {
+            "node": "DeepSeek — Postprocess Retry",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Finalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek — Postprocess Retry": {
+      "main": [
+        [
+          {
+            "node": "Validate After Retry",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Normalizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate After Retry": {
+      "main": [
+        [
+          {
+            "node": "Finalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Normalizer": {
+      "main": [
+        [
+          {
+            "node": "Finalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize": {
+      "main": [
+        [
+          {
+            "node": "Is Webhook?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "nodeGroups": [],
+  "pinData": null,
+  "versionId": "8ddb3fa4-4633-494a-b63f-ca5876dcf79e",
+  "activeVersionId": "8ddb3fa4-4633-494a-b63f-ca5876dcf79e",
+  "versionCounter": 3,
+  "triggerCount": 2,
+  "sourceWorkflowId": null,
+  "shared": [
+    {
+      "updatedAt": "2026-08-11T11:14:44.889Z",
+      "createdAt": "2026-08-11T11:14:44.889Z",
+      "role": "workflow:owner",
+      "workflowId": "bEyKA1JJr0swuLql",
+      "projectId": "lSRMKjoLuwWtcJFM",
+      "project": {
+        "updatedAt": "2026-04-20T19:15:16.409Z",
+        "createdAt": "2026-04-20T19:13:49.867Z",
+        "id": "lSRMKjoLuwWtcJFM",
+        "name": "Serge Sychov <sychov@me.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "c703e30e-1ca6-4d0d-82a3-f1758402d3bf"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-08-11T13:35:33.661Z",
+    "createdAt": "2026-08-11T13:35:33.661Z",
+    "versionId": "8ddb3fa4-4633-494a-b63f-ca5876dcf79e",
+    "workflowId": "bEyKA1JJr0swuLql",
+    "nodes": [
+      {
+        "parameters": {
+          "public": true,
+          "options": {
+            "responseMode": "lastNode"
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          -200,
+          0
+        ],
+        "id": "a1000001-0001-4000-8000-000000000001",
+        "name": "When chat message received",
+        "webhookId": "mnn-drug-enrichment-chat"
+      },
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "mnn-drug-enrichment",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "position": [
+          -200,
+          240
+        ],
+        "id": "a1000001-0001-4000-8000-000000000002",
+        "name": "Webhook",
+        "webhookId": "mnn-drug-enrichment-hook"
+      },
+      {
+        "parameters": {
+          "jsCode": "const PREPROCESS_SYSTEM = `You prepare search queries for a Russian pharmacy product enrichment pipeline.\n\nReturn ONLY valid JSON (no markdown) with this shape:\n{\n  \"trade_name\": \"short trade name without dosage/pack if possible\",\n  \"form_hint\": \"dosage form if present or null\",\n  \"manufacturer_hint\": \"manufacturer if present or null\",\n  \"queries\": [\"query1\", \"query2\", \"query3\"]\n}\n\nRules for queries (exactly 3 strings):\n1. \"{trade_name} МНН ГРЛС\" (or INN / действующее вещество)\n2. \"{trade_name} рецептурный безрецептурный ГРЛС\" (RX/OTC)\n3. \"{trade_name} инструкция применение возраст дети взрослые\"\n\nDo NOT classify the product. Do NOT invent clinical facts. Only rewrite the input into search queries.\nLanguage of queries: Russian.`;\n\nconst item = $input.first().json || {};\nlet product = '';\nlet source = 'chat';\n\nif (item.chatInput) {\n  product = String(item.chatInput);\n  source = 'chat';\n} else if (item.body && (item.body.product || item.body.chatInput || item.body.text)) {\n  product = String(item.body.product || item.body.chatInput || item.body.text);\n  source = 'webhook';\n} else if (item.product) {\n  product = String(item.product);\n  source = item.source || 'webhook';\n} else if (item.text) {\n  product = String(item.text);\n  source = 'webhook';\n}\n\nproduct = product.trim();\nif (!product) {\n  throw new Error('Empty product name. Send chat message or POST {\"product\":\"...\"}.');\n}\n\nreturn [{\n  json: {\n    product,\n    source,\n    prompt_system: PREPROCESS_SYSTEM,\n    prompt_user: `PRODUCT_INPUT:\\n${product}\\n\\nReturn JSON only.`,\n  },\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          80,
+          120
+        ],
+        "id": "a1000001-0001-4000-8000-000000000003",
+        "name": "Prepare Input"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.deepseek.com/chat/completions",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "deepSeekApi",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"model\": \"deepseek-chat\",\n  \"temperature\": 0.1,\n  \"response_format\": { \"type\": \"json_object\" },\n  \"messages\": [\n    { \"role\": \"system\", \"content\": {{ JSON.stringify($json.prompt_system) }} },\n    { \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt_user) }} }\n  ]\n}",
+          "options": {
+            "timeout": 90000
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          340,
+          120
+        ],
+        "id": "a1000001-0001-4000-8000-000000000004",
+        "name": "DeepSeek — Preprocess",
+        "credentials": {
+          "deepSeekApi": {
+            "id": "xyaJwQg88odvtCfC",
+            "name": "DeepSeek account"
+          }
+        },
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 2000,
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "function extractJsonString(value) {\n  if (value === null || value === undefined) return null;\n  if (typeof value === 'object') return JSON.stringify(value);\n  let text = String(value).trim();\n  const fence = text.match(/^```(?:json)?\\s*\\n?([\\s\\S]+?)\\n?```\\s*$/i);\n  if (fence) text = fence[1].trim();\n  const start = text.indexOf('{');\n  const end = text.lastIndexOf('}');\n  if (start >= 0 && end > start) text = text.slice(start, end + 1);\n  return text;\n}\n\nconst prep = $('Prepare Input').first().json;\nconst http = $input.first().json;\nconst raw = http.choices?.[0]?.message?.content ?? http.output ?? http.text ?? null;\nconst text = extractJsonString(raw);\nlet parsed = {};\ntry {\n  parsed = JSON.parse(text);\n} catch (e) {\n  parsed = {};\n}\n\nconst product = prep.product;\nconst trade = (parsed.trade_name && String(parsed.trade_name).trim()) || product.split('|')[0].trim();\nlet queries = Array.isArray(parsed.queries) ? parsed.queries.map((q) => String(q).trim()).filter(Boolean) : [];\nif (queries.length === 0) {\n  queries = [\n    `${trade} МНН ГРЛС`,\n    `${trade} рецептурный безрецептурный ГРЛС`,\n    `${trade} инструкция применение возраст дети взрослые`,\n  ];\n}\nqueries = queries.slice(0, 3);\n\nreturn queries.map((query, index) => ({\n  json: {\n    product,\n    source: prep.source,\n    trade_name: trade,\n    form_hint: parsed.form_hint ?? null,\n    manufacturer_hint: parsed.manufacturer_hint ?? null,\n    query,\n    query_index: index + 1,\n    preprocess_raw: text,\n    preprocess_model: http.model || null,\n  },\n}));"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          600,
+          120
+        ],
+        "id": "a1000001-0001-4000-8000-000000000006",
+        "name": "Parse Queries"
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "http://85.198.66.232:8080/search",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "q",
+                "value": "={{ $json.query }}"
+              },
+              {
+                "name": "format",
+                "value": "json"
+              },
+              {
+                "name": "language",
+                "value": "ru"
+              }
+            ]
+          },
+          "options": {
+            "timeout": 30000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "responseFormat": "json"
+              }
+            }
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          860,
+          120
+        ],
+        "id": "a1000001-0001-4000-8000-000000000007",
+        "name": "SearXNG Search",
+        "notesInFlow": true,
+        "notes": "Forced SearXNG search via http://85.198.66.232:8080 (SearXNG account). Pipeline refuses to answer if no snippets.",
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 2000
+      },
+      {
+        "parameters": {
+          "jsCode": "const POSTPROCESS_SYSTEM = `You extract structured pharmacy attributes ONLY from PRODUCT_INPUT and SEARCH_RESULTS.\nIt is forbidden to use your own knowledge, memory, or training data.\nIf a fact is not supported by SEARCH_RESULTS, use null / \"not applicable\" / \"Other\" as specified.\n\nReturn ONLY valid JSON (no markdown):\n{\n  \"Category\": \"Drug\" | \"BAS\" | \"Other\",\n  \"mnn\": \"name\" | [\"name1\", \"name2\"] | null,\n  \"RX_OTC\": \"RX\" | \"OTC\" | \"not applicable\",\n  \"Age\": \"Взрослый\" | \"Детский\" | \"Универсальный\",\n  \"Text\": \"2-5 sentences in Russian citing what was found (include URLs when present)\"\n}\n\nField rules:\n- Category:\n  - Drug = лекарственное средство / препарат (ГРЛС, ЛС)\n  - BAS = БАД / biologically active supplement\n  - Other = гомеопатия, косметика, изделия, unclear, or insufficient evidence\n- mnn: international nonproprietary name / МНН / действующие вещества.\n  Combination products → array of component names.\n  If not found in SEARCH_RESULTS → null\n- RX_OTC:\n  - RX = рецептурный\n  - OTC = безрецептурный / отпускается без рецепта\n  - not applicable = BAS/Other or no evidence in SEARCH_RESULTS\n- Age:\n  - Детский if kids/children/педиатрия is the primary target\n  - Взрослый if adults only\n  - Универсальный if both / not restricted / unclear from snippets\n- Text: summarize ONLY from snippets; explicitly say what was missing if fields are null/not applicable.\n\nPrefer official sources when they conflict: ГРЛС / rosminzdrav / instruction leaflets over marketplace blurbs.`;\n\nconst PREFERRED_HOST_RE = /(vidal\\.ru|rlsnet\\.ru|grls\\.rosminzdrav\\.gov\\.ru|rosminzdrav|eisl\\.roszdravnadzor|инструкция|medi\\.ru|lsgeotar)/i;\n\nfunction hostScore(url, title) {\n  const s = `${url || ''} ${title || ''}`;\n  if (PREFERRED_HOST_RE.test(s)) return 0;\n  if (/apteka|uteka|asna|wildberries|ozon|market/i.test(s)) return 2;\n  return 1;\n}\n\nfunction collectSnippets(httpItems, built) {\n  const snippets = [];\n  for (let i = 0; i < httpItems.length; i++) {\n    const body = httpItems[i].json || {};\n    const query = built[i]?.json?.query || body.query || '';\n    const results = Array.isArray(body.results) ? body.results : [];\n    for (const r of results.slice(0, 8)) {\n      snippets.push({\n        query,\n        title: r.title || '',\n        url: r.url || '',\n        content: String(r.content || r.snippet || '').slice(0, 300),\n        _score: hostScore(r.url, r.title),\n      });\n    }\n  }\n  snippets.sort((a, b) => a._score - b._score);\n  return snippets.map(({ _score, ...rest }) => rest).slice(0, 16);\n}\n\nasync function searxSearch(query) {\n  try {\n    const body = await this.helpers.httpRequest({\n      method: 'GET',\n      url: 'http://127.0.0.1:8080/search',\n      qs: { q: query, format: 'json', language: 'ru' },\n      timeout: 30000,\n      json: true,\n    });\n    return body && typeof body === 'object' ? body : { results: [] };\n  } catch (e1) {\n    try {\n      const body = await this.helpers.httpRequest({\n        method: 'GET',\n        url: 'http://85.198.66.232:8080/search',\n        qs: { q: query, format: 'json', language: 'ru' },\n        timeout: 30000,\n        json: true,\n      });\n      return body && typeof body === 'object' ? body : { results: [] };\n    } catch (e2) {\n      return { results: [], _error: String(e2) };\n    }\n  }\n}\n\nconst httpItems = $input.all();\nconst built = $('Parse Queries').all();\nconst meta = built[0].json;\nlet snippets = collectSnippets(httpItems, built);\nconst usedQueries = built.map((b) => b.json.query);\nconst fallbackUsed = [];\n\n// P1: fallback searches when too few hits\nif (snippets.length < 3) {\n  const trade = meta.trade_name || meta.product.split('|')[0].trim();\n  const candidates = [\n    `${trade} действующее вещество`,\n    `${trade} МНН`,\n    `${trade} инструкция по применению`,\n  ].filter((q) => q && !usedQueries.includes(q));\n  for (const q of candidates.slice(0, 2)) {\n    const body = await searxSearch.call(this, q);\n    fallbackUsed.push(q);\n    const fakeBuilt = [{ json: { query: q } }];\n    const extra = collectSnippets([{ json: body }], fakeBuilt);\n    const seen = new Set(snippets.map((s) => s.url + '|' + s.title));\n    for (const s of extra) {\n      const key = s.url + '|' + s.title;\n      if (!seen.has(key)) {\n        snippets.push(s);\n        seen.add(key);\n      }\n    }\n    snippets.sort((a, b) => hostScore(a.url, a.title) - hostScore(b.url, b.title));\n    snippets = snippets.slice(0, 16);\n    if (snippets.length >= 3) break;\n  }\n}\n\nconst allQueries = usedQueries.concat(fallbackUsed);\n\nif (snippets.length === 0) {\n  return [{\n    json: {\n      product: meta.product,\n      source: meta.source,\n      trade_name: meta.trade_name,\n      search_count: 0,\n      search_queries: allQueries,\n      fallback_queries: fallbackUsed,\n      skip_llm: true,\n      status: 'error',\n      error_code: 'search_empty',\n      error_message: 'SearXNG returned no usable snippets after primary and fallback queries.',\n      retryable: true,\n      Category: null,\n      mnn: null,\n      RX_OTC: 'not applicable',\n      Age: 'Универсальный',\n      Text: 'Поиск не вернул результатов. МНН не извлечён (fail-closed, без догадок модели).',\n      ok_json: false,\n      warnings: ['search_empty'],\n    },\n  }];\n}\n\nconst searchBlock = snippets\n  .map((s, idx) => `${idx + 1}. query=${s.query}\\n   title=${s.title}\\n   url=${s.url}\\n   content=${s.content}`)\n  .join('\\n');\n\nconst prompt_user = [\n  'PRODUCT_INPUT:',\n  meta.product,\n  '',\n  `trade_name_guess: ${meta.trade_name}`,\n  '',\n  'SEARCH_RESULTS:',\n  searchBlock,\n  '',\n  'Return JSON only. Use ONLY SEARCH_RESULTS.',\n].join('\\n');\n\nreturn [{\n  json: {\n    product: meta.product,\n    source: meta.source,\n    trade_name: meta.trade_name,\n    search_count: snippets.length,\n    search_queries: allQueries,\n    fallback_queries: fallbackUsed,\n    skip_llm: false,\n    prompt_system: POSTPROCESS_SYSTEM,\n    prompt_user,\n    evidence: snippets.map((s) => ({ url: s.url, title: s.title, query: s.query })),\n  },\n}];\n",
+          "mode": "runOnceForAllItems"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1120,
+          120
+        ],
+        "id": "a1000001-0001-4000-8000-000000000008",
+        "name": "Aggregate Search"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.deepseek.com/chat/completions",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "deepSeekApi",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"model\": \"deepseek-chat\",\n  \"temperature\": 0.1,\n  \"response_format\": { \"type\": \"json_object\" },\n  \"messages\": [\n    { \"role\": \"system\", \"content\": {{ JSON.stringify($json.prompt_system) }} },\n    { \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt_user) }} }\n  ]\n}",
+          "options": {
+            "timeout": 120000
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1640,
+          40
+        ],
+        "id": "a1000001-0001-4000-8000-000000000009",
+        "name": "DeepSeek — Postprocess",
+        "credentials": {
+          "deepSeekApi": {
+            "id": "xyaJwQg88odvtCfC",
+            "name": "DeepSeek account"
+          }
+        },
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 2000,
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "function extractJsonString(value) {\n  if (value === null || value === undefined) return null;\n  if (typeof value === 'object') return JSON.stringify(value);\n  let text = String(value).trim();\n  const fence = text.match(/^```(?:json)?\\s*\\n?([\\s\\S]+?)\\n?```\\s*$/i);\n  if (fence) text = fence[1].trim();\n  const start = text.indexOf('{');\n  const end = text.lastIndexOf('}');\n  if (start >= 0 && end > start) text = text.slice(start, end + 1);\n  return text;\n}\n\nfunction normCategory(v) {\n  if (v === null || v === undefined || v === '') return 'Other';\n  const s = String(v).trim().toLowerCase();\n  if (['drug', 'лс', 'лекарство', 'лекарственный препарат', 'лекарственное средство'].includes(s)) return 'Drug';\n  if (['bas', 'bad', 'бад', 'баа'].includes(s)) return 'BAS';\n  if (['other', 'иное', 'другое', 'гомеопатия'].includes(s)) return 'Other';\n  return 'Other';\n}\n\nfunction normRx(v) {\n  if (v === null || v === undefined || v === '') return 'not applicable';\n  const s = String(v).trim().toLowerCase().replace(/\\s+/g, ' ');\n  if (['rx', 'рецептурный', 'по рецепту', 'prescription'].includes(s)) return 'RX';\n  if (['otc', 'безрецептурный', 'без рецепта', 'otc-препарат'].includes(s)) return 'OTC';\n  if (['not applicable', 'n/a', 'na', 'не применимо', 'unknown', 'неизвестно'].includes(s)) return 'not applicable';\n  return 'not applicable';\n}\n\nfunction normAge(v) {\n  if (v === null || v === undefined || v === '') return 'Универсальный';\n  const s = String(v).trim().toLowerCase();\n  if (s.includes('дет') || s.includes('child') || s.includes('kids') || s.includes('педиат')) return 'Детский';\n  if (s.includes('взросл') || s.includes('adult')) return 'Взрослый';\n  if (s.includes('универс') || s.includes('оба') || s.includes('любой')) return 'Универсальный';\n  return 'Универсальный';\n}\n\nfunction normMnn(v) {\n  if (v === null || v === undefined || v === '') return null;\n  if (Array.isArray(v)) {\n    const arr = v.map((x) => String(x).trim()).filter(Boolean);\n    if (arr.length === 0) return null;\n    if (arr.length === 1) return arr[0];\n    return arr;\n  }\n  const s = String(v).trim();\n  if (!s || s.toLowerCase() === 'null' || s === '-') return null;\n  if (s.includes('+')) {\n    const parts = s.split('+').map((p) => p.trim()).filter(Boolean);\n    if (parts.length > 1) return parts;\n  }\n  return s;\n}\n\nconst ctx = $('Aggregate Search').first().json;\nconst http = $input.first().json;\nconst alreadyRetried = Boolean(ctx._parse_retried || http._parse_retried);\n\n// If Aggregate already short-circuited\nif (ctx.skip_llm) {\n  return [{ json: { ...ctx, needs_parse_retry: false } }];\n}\n\nconst raw = http.choices?.[0]?.message?.content ?? http.output ?? http.text ?? null;\nconst rawText = extractJsonString(raw);\nlet parsed = null;\nlet ok = false;\nlet error = null;\ntry {\n  parsed = JSON.parse(rawText);\n  ok = parsed && typeof parsed === 'object' && !Array.isArray(parsed);\n} catch (e) {\n  error = String(e);\n  parsed = {};\n}\n\nconst Category = normCategory(parsed.Category ?? parsed.category);\nconst mnn = normMnn(parsed.mnn ?? parsed.MNN ?? parsed.inn);\nconst result = {\n  Category,\n  mnn,\n  RX_OTC: normRx(parsed.RX_OTC ?? parsed.rx_otc ?? parsed.Rx_OTC),\n  Age: normAge(parsed.Age ?? parsed.age ?? parsed.age_segment),\n  Text: parsed.Text || parsed.text || '',\n};\n\nif (!result.Text || !String(result.Text).trim()) {\n  result.Text = ok\n    ? `Поиск вернул ${ctx.search_count} сниппетов.`\n    : `Не удалось разобрать ответ модели. Raw: ${String(rawText || '').slice(0, 400)}`;\n}\n\nconst warnings = [];\nif (Array.isArray(ctx.fallback_queries) && ctx.fallback_queries.length) {\n  warnings.push('used_fallback_queries');\n}\nlet status = 'ok';\nif (!ok) {\n  status = 'error';\n} else if (Category === 'Drug' && (mnn === null || mnn === '' || (Array.isArray(mnn) && mnn.length === 0))) {\n  status = 'ok_partial';\n  warnings.push('mnn_not_found');\n}\n\nconst needs_parse_retry = (!ok) && !alreadyRetried;\n\nreturn [{\n  json: {\n    ...result,\n    text: JSON.stringify(result, null, 2),\n    output: JSON.stringify(result, null, 2),\n    product: ctx.product,\n    source: ctx.source,\n    search_count: ctx.search_count,\n    search_queries: ctx.search_queries,\n    fallback_queries: ctx.fallback_queries || [],\n    evidence: ctx.evidence || [],\n    validation_ok: ok,\n    validation_error: error,\n    ok_json: ok,\n    status: needs_parse_retry ? 'error' : status,\n    error_code: ok ? null : 'parse_error',\n    error_message: ok ? null : (error || 'Model returned non-JSON or invalid object'),\n    retryable: !ok,\n    warnings,\n    needs_parse_retry,\n    prompt_system: ctx.prompt_system,\n    prompt_user: ctx.prompt_user,\n    postprocess_model: http.model || null,\n    skip_llm: false,\n  },\n}];\n",
+          "mode": "runOnceForAllItems"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1900,
+          40
+        ],
+        "id": "a1000001-0001-4000-8000-00000000000b",
+        "name": "Validate JSON"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "cond-webhook",
+                "leftValue": "={{ $json.source }}",
+                "rightValue": "webhook",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          3100,
+          120
+        ],
+        "id": "a1000001-0001-4000-8000-00000000000c",
+        "name": "Is Webhook?"
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ { status: $json.status, error_code: $json.error_code, error_message: $json.error_message, retryable: $json.retryable, Category: $json.Category, mnn: $json.mnn, RX_OTC: $json.RX_OTC, Age: $json.Age, Text: $json.Text, search_count: $json.search_count, search_queries: $json.search_queries, fallback_queries: $json.fallback_queries, evidence: $json.evidence, ok_json: $json.ok_json, warnings: $json.warnings, postprocess_model: $json.postprocess_model } }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          3360,
+          40
+        ],
+        "id": "a1000001-0001-4000-8000-00000000000d",
+        "name": "Respond to Webhook"
+      },
+      {
+        "parameters": {
+          "jsCode": "const j = $input.first().json;\nreturn [{\n  json: {\n    status: j.status,\n    error_code: j.error_code,\n    error_message: j.error_message,\n    retryable: j.retryable,\n    Category: j.Category,\n    mnn: j.mnn,\n    RX_OTC: j.RX_OTC,\n    Age: j.Age,\n    Text: j.Text,\n    text: j.text || JSON.stringify({\n      status: j.status, Category: j.Category, mnn: j.mnn, RX_OTC: j.RX_OTC, Age: j.Age, Text: j.Text, warnings: j.warnings,\n    }, null, 2),\n    output: j.output || j.text || '',\n    search_count: j.search_count,\n    ok_json: j.ok_json,\n    warnings: j.warnings,\n  },\n}];\n",
+          "mode": "runOnceForAllItems"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3360,
+          220
+        ],
+        "id": "a1000001-0001-4000-8000-00000000000e",
+        "name": "Chat Output"
+      },
+      {
+        "parameters": {
+          "content": "## MNN Drug Enrichment (P0+P1)\n\nChat or POST `/webhook/mnn-drug-enrichment` with `{\"product\":\"...\"}`.\n\nPipeline: DeepSeek preprocess → SearXNG (×3) → Aggregate (+fallback searches, prefer official hosts) → DeepSeek postprocess → Validate (+1 parse retry) → Finalize.\n\nHTTP retries: DeepSeek×2 + SearXNG (3 tries). Empty search / LLM errors → structured JSON (`status`,`error_code`,`retryable`). Grounded only: no MNN without snippets.",
+          "height": 360,
+          "width": 420
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -220,
+          -220
+        ],
+        "id": "a1000001-0001-4000-8000-00000000000f",
+        "name": "Sticky Note"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "skip-llm",
+                "leftValue": "={{ $json.skip_llm }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "8fe54913-bb58-424a-ad2b-84ff6032b8b5",
+        "name": "IF Skip LLM",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1380,
+          120
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "parse-retry",
+                "leftValue": "={{ $json.needs_parse_retry }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "48fdd30d-77ac-4646-b29b-fb695bbcf52c",
+        "name": "IF Parse Retry",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          2140,
+          40
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.deepseek.com/chat/completions",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "deepSeekApi",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"model\": \"deepseek-chat\",\n  \"temperature\": 0.1,\n  \"response_format\": { \"type\": \"json_object\" },\n  \"messages\": [\n    { \"role\": \"system\", \"content\": {{ JSON.stringify($json.prompt_system) }} },\n    { \"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt_user) }} }\n  ]\n}",
+          "options": {
+            "timeout": 120000
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2380,
+          -80
+        ],
+        "id": "a9eaab2f-c9d0-4a7f-a3c3-431838234c20",
+        "name": "DeepSeek — Postprocess Retry",
+        "credentials": {
+          "deepSeekApi": {
+            "id": "xyaJwQg88odvtCfC",
+            "name": "DeepSeek account"
+          }
+        },
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 2000,
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "function extractJsonString(value) {\n  if (value === null || value === undefined) return null;\n  if (typeof value === 'object') return JSON.stringify(value);\n  let text = String(value).trim();\n  const fence = text.match(/^```(?:json)?\\s*\\n?([\\s\\S]+?)\\n?```\\s*$/i);\n  if (fence) text = fence[1].trim();\n  const start = text.indexOf('{');\n  const end = text.lastIndexOf('}');\n  if (start >= 0 && end > start) text = text.slice(start, end + 1);\n  return text;\n}\n\nfunction normCategory(v) {\n  if (v === null || v === undefined || v === '') return 'Other';\n  const s = String(v).trim().toLowerCase();\n  if (['drug', 'лс', 'лекарство', 'лекарственный препарат', 'лекарственное средство'].includes(s)) return 'Drug';\n  if (['bas', 'bad', 'бад', 'баа'].includes(s)) return 'BAS';\n  if (['other', 'иное', 'другое', 'гомеопатия'].includes(s)) return 'Other';\n  return 'Other';\n}\n\nfunction normRx(v) {\n  if (v === null || v === undefined || v === '') return 'not applicable';\n  const s = String(v).trim().toLowerCase().replace(/\\s+/g, ' ');\n  if (['rx', 'рецептурный', 'по рецепту', 'prescription'].includes(s)) return 'RX';\n  if (['otc', 'безрецептурный', 'без рецепта', 'otc-препарат'].includes(s)) return 'OTC';\n  if (['not applicable', 'n/a', 'na', 'не применимо', 'unknown', 'неизвестно'].includes(s)) return 'not applicable';\n  return 'not applicable';\n}\n\nfunction normAge(v) {\n  if (v === null || v === undefined || v === '') return 'Универсальный';\n  const s = String(v).trim().toLowerCase();\n  if (s.includes('дет') || s.includes('child') || s.includes('kids') || s.includes('педиат')) return 'Детский';\n  if (s.includes('взросл') || s.includes('adult')) return 'Взрослый';\n  if (s.includes('универс') || s.includes('оба') || s.includes('любой')) return 'Универсальный';\n  return 'Универсальный';\n}\n\nfunction normMnn(v) {\n  if (v === null || v === undefined || v === '') return null;\n  if (Array.isArray(v)) {\n    const arr = v.map((x) => String(x).trim()).filter(Boolean);\n    if (arr.length === 0) return null;\n    if (arr.length === 1) return arr[0];\n    return arr;\n  }\n  const s = String(v).trim();\n  if (!s || s.toLowerCase() === 'null' || s === '-') return null;\n  if (s.includes('+')) {\n    const parts = s.split('+').map((p) => p.trim()).filter(Boolean);\n    if (parts.length > 1) return parts;\n  }\n  return s;\n}\n\nconst ctx = $('Aggregate Search').first().json;\nconst http = $input.first().json;\nconst alreadyRetried = true; // second pass\n\n// If Aggregate already short-circuited\nif (ctx.skip_llm) {\n  return [{ json: { ...ctx, needs_parse_retry: false } }];\n}\n\nconst raw = http.choices?.[0]?.message?.content ?? http.output ?? http.text ?? null;\nconst rawText = extractJsonString(raw);\nlet parsed = null;\nlet ok = false;\nlet error = null;\ntry {\n  parsed = JSON.parse(rawText);\n  ok = parsed && typeof parsed === 'object' && !Array.isArray(parsed);\n} catch (e) {\n  error = String(e);\n  parsed = {};\n}\n\nconst Category = normCategory(parsed.Category ?? parsed.category);\nconst mnn = normMnn(parsed.mnn ?? parsed.MNN ?? parsed.inn);\nconst result = {\n  Category,\n  mnn,\n  RX_OTC: normRx(parsed.RX_OTC ?? parsed.rx_otc ?? parsed.Rx_OTC),\n  Age: normAge(parsed.Age ?? parsed.age ?? parsed.age_segment),\n  Text: parsed.Text || parsed.text || '',\n};\n\nif (!result.Text || !String(result.Text).trim()) {\n  result.Text = ok\n    ? `Поиск вернул ${ctx.search_count} сниппетов.`\n    : `Не удалось разобрать ответ модели. Raw: ${String(rawText || '').slice(0, 400)}`;\n}\n\nconst warnings = [];\nif (Array.isArray(ctx.fallback_queries) && ctx.fallback_queries.length) {\n  warnings.push('used_fallback_queries');\n}\nlet status = 'ok';\nif (!ok) {\n  status = 'error';\n} else if (Category === 'Drug' && (mnn === null || mnn === '' || (Array.isArray(mnn) && mnn.length === 0))) {\n  status = 'ok_partial';\n  warnings.push('mnn_not_found');\n}\n\nconst needs_parse_retry = (!ok) && !alreadyRetried;\n\nreturn [{\n  json: {\n    ...result,\n    text: JSON.stringify(result, null, 2),\n    output: JSON.stringify(result, null, 2),\n    product: ctx.product,\n    source: ctx.source,\n    search_count: ctx.search_count,\n    search_queries: ctx.search_queries,\n    fallback_queries: ctx.fallback_queries || [],\n    evidence: ctx.evidence || [],\n    validation_ok: ok,\n    validation_error: error,\n    ok_json: ok,\n    status,\n    error_code: ok ? null : 'parse_error',\n    error_message: ok ? null : (error || 'Model returned non-JSON or invalid object'),\n    retryable: !ok,\n    warnings,\n    needs_parse_retry: false,\n    prompt_system: ctx.prompt_system,\n    prompt_user: ctx.prompt_user,\n    postprocess_model: http.model || null,\n    skip_llm: false,\n  },\n}];\n",
+          "mode": "runOnceForAllItems"
+        },
+        "id": "6691c0ea-0ba0-4474-8eb8-2c2e580c300a",
+        "name": "Validate After Retry",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2620,
+          -80
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const j = $input.first().json || {};\n\nfunction emptyMnn(m) {\n  return m === null || m === undefined || m === '' || (Array.isArray(m) && m.length === 0);\n}\n\nconst warnings = Array.isArray(j.warnings) ? [...j.warnings] : [];\nlet status = j.status || 'ok';\nlet error_code = j.error_code || null;\nlet error_message = j.error_message || null;\nlet retryable = Boolean(j.retryable);\n\nif (j.skip_llm && j.error_code === 'search_empty') {\n  status = 'error';\n  error_code = 'search_empty';\n  retryable = true;\n} else if (error_code === 'parse_error' && !j.ok_json) {\n  status = 'error';\n  retryable = true;\n} else if (j.ok_json !== false && j.Category === 'Drug' && emptyMnn(j.mnn)) {\n  status = 'ok_partial';\n  if (!warnings.includes('mnn_not_found')) warnings.push('mnn_not_found');\n  error_code = null;\n  error_message = null;\n  retryable = false;\n} else if (j.ok_json) {\n  status = 'ok';\n  error_code = null;\n  error_message = null;\n  retryable = false;\n}\n\nconst out = {\n  status,\n  error_code,\n  error_message,\n  retryable,\n  Category: j.Category ?? null,\n  mnn: j.mnn ?? null,\n  RX_OTC: j.RX_OTC ?? 'not applicable',\n  Age: j.Age ?? 'Универсальный',\n  Text: j.Text || '',\n  search_count: j.search_count ?? 0,\n  search_queries: j.search_queries || [],\n  fallback_queries: j.fallback_queries || [],\n  evidence: j.evidence || [],\n  ok_json: Boolean(j.ok_json),\n  warnings,\n  product: j.product || null,\n  source: j.source || null,\n  postprocess_model: j.postprocess_model || null,\n  text: j.text || '',\n  output: j.output || j.text || '',\n};\n\nreturn [{ json: out }];\n",
+          "mode": "runOnceForAllItems"
+        },
+        "id": "e2f43f7e-b85f-4b29-b928-a49f1d974b9f",
+        "name": "Finalize",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2860,
+          120
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const item = $input.first().json || {};\nconst err = item.error || item;\nconst msg = String(err.message || item.message || JSON.stringify(item).slice(0, 500));\nconst desc = String(err.description || item.description || '');\nconst httpCode = String(err.httpCode || err.statusCode || item.httpCode || '');\nconst blob = `${msg} ${desc} ${httpCode}`.toLowerCase();\n\nlet error_code = 'llm_unavailable';\nlet retryable = true;\nif (/unauthorized|authorization|api key|invalid_api_key|401|403/.test(blob)) {\n  error_code = 'auth_failed';\n  retryable = false;\n} else if (/insufficient|balance|402|billing|quota/.test(blob)) {\n  error_code = 'billing';\n  retryable = false;\n} else if (/400|bad request|invalid/.test(blob) && !/401|403/.test(blob)) {\n  error_code = 'bad_request';\n  retryable = false;\n}\n\nlet source = 'webhook';\nlet product = null;\ntry {\n  const prep = $('Prepare Input').first().json;\n  source = prep.source || source;\n  product = prep.product || null;\n} catch (e) {}\n\nreturn [{\n  json: {\n    status: 'error',\n    error_code,\n    error_message: desc || msg,\n    retryable,\n    Category: null,\n    mnn: null,\n    RX_OTC: 'not applicable',\n    Age: 'Универсальный',\n    Text: '',\n    search_count: 0,\n    search_queries: [],\n    fallback_queries: [],\n    evidence: [],\n    ok_json: false,\n    warnings: [],\n    product,\n    source,\n    postprocess_model: null,\n    text: '',\n    output: '',\n  },\n}];\n",
+          "mode": "runOnceForAllItems"
+        },
+        "id": "0220f68e-5835-4992-9fe7-6450a396945f",
+        "name": "Error Normalizer",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1640,
+          320
+        ]
+      }
+    ],
+    "connections": {
+      "When chat message received": {
+        "main": [
+          [
+            {
+              "node": "Prepare Input",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Prepare Input",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Input": {
+        "main": [
+          [
+            {
+              "node": "DeepSeek — Preprocess",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "DeepSeek — Preprocess": {
+        "main": [
+          [
+            {
+              "node": "Parse Queries",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Error Normalizer",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Queries": {
+        "main": [
+          [
+            {
+              "node": "SearXNG Search",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "SearXNG Search": {
+        "main": [
+          [
+            {
+              "node": "Aggregate Search",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Aggregate Search": {
+        "main": [
+          [
+            {
+              "node": "IF Skip LLM",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "DeepSeek — Postprocess": {
+        "main": [
+          [
+            {
+              "node": "Validate JSON",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Error Normalizer",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Validate JSON": {
+        "main": [
+          [
+            {
+              "node": "IF Parse Retry",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Is Webhook?": {
+        "main": [
+          [
+            {
+              "node": "Respond to Webhook",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Chat Output",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF Skip LLM": {
+        "main": [
+          [
+            {
+              "node": "Finalize",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "DeepSeek — Postprocess",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF Parse Retry": {
+        "main": [
+          [
+            {
+              "node": "DeepSeek — Postprocess Retry",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Finalize",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "DeepSeek — Postprocess Retry": {
+        "main": [
+          [
+            {
+              "node": "Validate After Retry",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Error Normalizer",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Validate After Retry": {
+        "main": [
+          [
+            {
+              "node": "Finalize",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Error Normalizer": {
+        "main": [
+          [
+            {
+              "node": "Finalize",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Finalize": {
+        "main": [
+          [
+            {
+              "node": "Is Webhook?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Serge Sychov",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-08-11T13:35:33.934Z",
+        "id": 1051,
+        "workflowId": "bEyKA1JJr0swuLql",
+        "versionId": "8ddb3fa4-4633-494a-b63f-ca5876dcf79e",
+        "event": "activated",
+        "userId": "c703e30e-1ca6-4d0d-82a3-f1758402d3bf"
+      }
+    ]
+  }
+}

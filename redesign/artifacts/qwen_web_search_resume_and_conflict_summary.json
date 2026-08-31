@@ -1,0 +1,44 @@
+{
+  "resumed_api_errors_targeted": 59,
+  "resume_attempted": 2,
+  "resume_attempted_ids": [
+    "20172",
+    "20358"
+  ],
+  "recovered_web_search": 0,
+  "remaining_api_errors": 59,
+  "remaining_error_types": {
+    "INSUFFICIENT_BALANCE": 59
+  },
+  "resume_blocked_reason": "aborted after consecutive INSUFFICIENT_BALANCE/daily-limit 402 responses (Polza wallet ~397 RUB remains, but daily spend cap is hit: «Достигнут дневной лимит по сумме»). Recovered 0/59.",
+  "before_status_counts": {
+    "found": 144,
+    "not_found": 21,
+    "api_error": 59
+  },
+  "after_status_counts": {
+    "found": 144,
+    "not_found": 21,
+    "api_error": 59
+  },
+  "after_vs_catalog_counts": {
+    "normalized_match": 65,
+    "exact_match": 42,
+    "both_empty": 10,
+    "conflict": 25,
+    "qwen_only": 12,
+    "catalog_only": 11,
+    "qwen_api_error": 59
+  },
+  "total_rows": 224,
+  "search_confirmed": 165,
+  "found": 144,
+  "exact_match": 42,
+  "normalized_match": 65,
+  "conflict": 25,
+  "qwen_only": 12,
+  "catalog_only": 11,
+  "conflict_review_rows": 48,
+  "elapsed_sec": 13.75,
+  "polza_note": "HTTP 402 INSUFFICIENT_BALANCE here means daily spend cap ('Достигнут дневной лимит по сумме'), not empty wallet balance."
+}

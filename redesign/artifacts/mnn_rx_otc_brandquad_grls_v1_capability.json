@@ -1,0 +1,57 @@
+{
+  "portal_entry_url": "https://pharm.brandquad.ru/",
+  "host": "pharm.brandquad.ru",
+  "host_class": "third_party_commercial_grls_mirror",
+  "why_not_official_p1": "Brandquad commercial SPA/API, not Minzdrav/EGISZ",
+  "official_p1": false,
+  "headers_http_status": 200,
+  "headers": {
+    "cancel_date": "Дата аннулирования РУ",
+    "cert_num": "Номер РУ",
+    "exp_date": "Дата окончания действия РУ",
+    "holder": "Юр. Лицо держателя РУ",
+    "holder_country": "Страна держателя РУ",
+    "holder_name": "Держатель РУ",
+    "inn": "МНХН",
+    "is_life_important": "ЖНВЛП",
+    "is_narcotic": "Статус ПККН",
+    "manufacturing_form": "Потребительская упаковка",
+    "manufacturing_form_all": "Форма выпуска полная",
+    "manufacturing_info_address": "Адрес стадии производства",
+    "manufacturing_info_all": "Сведения о стадиях производства",
+    "manufacturing_info_country": "Страна производства",
+    "manufacturing_info_manufacturer": "Производитель",
+    "manufacturing_info_stage": "Стадия производства",
+    "name": "Торговое наименование",
+    "normative_doc": "Нормативная документация",
+    "orphan": "Орфанный",
+    "ptg": "Фармако-терапевтическая группа",
+    "reg_date": "Дата регистрации",
+    "state": "Состояние РУ"
+  },
+  "search_interface": {
+    "method": "POST",
+    "path": "/api/grls",
+    "content_type": "application/json",
+    "body": {
+      "page": 1,
+      "page_size": 10,
+      "order_by": "",
+      "filters": [
+        {
+          "field": "name",
+          "exp": "term",
+          "value": [
+            "<trade_name>"
+          ]
+        }
+      ]
+    }
+  },
+  "login_required": false,
+  "captcha_or_waf_observed": false,
+  "direct_public_lookup_feasible": true,
+  "tls_unverified": true,
+  "notes": "Public Vue SPA posts to /api/grls. Viewing described as free by Brandquad. Not official GRLS.",
+  "inspected_at": "2026-08-19T07:26:13.423676+00:00"
+}

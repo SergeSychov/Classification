@@ -1,0 +1,50 @@
+{
+  "rows": 5,
+  "elapsed_sec": 7.83,
+  "avg_sec_per_row": 1.565,
+  "http_requests": 0,
+  "win_mnn_filled": 3,
+  "win_rx_filled": 2,
+  "top_sources": {
+    "win_mnn_rows": 3,
+    "win_rx_rows": 2,
+    "mnn_match_counts": {
+      "asna": 3,
+      "apteka": 3,
+      "uteka": 1
+    },
+    "rx_match_counts": {
+      "asna": 2,
+      "apteka": 2,
+      "uteka": 1
+    },
+    "mnn_top": [
+      [
+        "asna",
+        3
+      ],
+      [
+        "apteka",
+        3
+      ],
+      [
+        "uteka",
+        1
+      ]
+    ],
+    "rx_top": [
+      [
+        "asna",
+        2
+      ],
+      [
+        "apteka",
+        2
+      ],
+      [
+        "uteka",
+        1
+      ]
+    ]
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "catalog_path": "/Users/serge/Developer/categories/redesign/artifacts/sem_wave500_mnn_from_catalogs.csv",
+  "wave_path": "/Users/serge/Developer/categories/redesign/artifacts/sem_wave500_report.csv",
+  "catalog_rows": 245,
+  "catalog_columns": [],
+  "wave_rows": 500,
+  "wave_drugs": 224,
+  "catalog_mnn_columns_used": [
+    "mnn_uteka",
+    "mnn_asna",
+    "mnn_apteka",
+    "mnn_vidal",
+    "mnn_stolichki",
+    "win_mnn"
+  ],
+  "drug_rows_selected": 224,
+  "rows_run": 224,
+  "elapsed_sec": 0.0,
+  "avg_sec_per_row": 0.0,
+  "search_confirmed_rows": 165,
+  "qwen_found": 144,
+  "qwen_coverage": 0.6429,
+  "status_counts": {
+    "found": 144,
+    "not_found": 21,
+    "api_error": 59
+  },
+  "vs_catalog_counts": {
+    "normalized_match": 65,
+    "exact_match": 42,
+    "both_empty": 10,
+    "conflict": 25,
+    "qwen_only": 12,
+    "catalog_only": 11,
+    "qwen_api_error": 59
+  },
+  "integration": {
+    "provider": "polza",
+    "endpoint": "POST /chat/completions",
+    "web_search": "plugins:[{id:web, engine:exa}]",
+    "dashscope_enable_search": "accepted_but_ignored_no_annotations",
+    "source_field": "choices[0].message.annotations[].url_citation"
+  }
+}

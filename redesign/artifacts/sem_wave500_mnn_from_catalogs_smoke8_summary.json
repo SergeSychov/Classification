@@ -1,0 +1,19 @@
+{
+  "input_processed": 8,
+  "drugs": 6,
+  "vitamins": 2,
+  "mnn_enriched_total": 5,
+  "mnn_enriched_drugs": 5,
+  "mnn_enriched_vitamins": 0,
+  "rx_rx": 3,
+  "rx_otc": 2,
+  "rx_unknown": 3,
+  "source_uteka": 2,
+  "source_eapteka": 2,
+  "source_union": 2,
+  "source_none": 2,
+  "uteka_mnn": 3,
+  "eapteka_mnn": 3,
+  "uteka_errors": 3,
+  "eapteka_errors": 2
+}

@@ -1,0 +1,44 @@
+{
+  "mnn_test_run_id": "probe",
+  "product_id": "probe",
+  "run_id": null,
+  "normalized_text": "НУРОФЕН ТАБЛ. П/О 200МГ №20",
+  "input_payload": {
+    "product_id": "probe",
+    "normalized_text": "НУРОФЕН ТАБЛ. П/О 200МГ №20",
+    "attr_brand": "Нурофен",
+    "attr_dosage_form": "таблетки",
+    "attr_dosage": "200 мг",
+    "attr_administration_route": "",
+    "semantic_explanation": "",
+    "product_kind": "drug"
+  },
+  "request": {
+    "model": "qwen/qwen3.5-flash-02-23@reasoning_effort=none",
+    "plugins": [
+      {
+        "id": "web",
+        "engine": "exa",
+        "max_results": 5
+      }
+    ],
+    "search_prompt": "Нурофен таблетки 200 мг НУРОФЕН ТАБЛ. П/О 200МГ №20",
+    "has_system": true,
+    "has_user": true,
+    "response_format": null,
+    "note": "enable_search DashScope params are NOT used (ignored by Polza)",
+    "system_prompt_version": "mnn_qwen_web_search_v1",
+    "user_prompt": "Определи MNN для следующего товара через web search.\n\nИсходный товар:\n- product_id: probe\n- normalized_text: НУРОФЕН ТАБЛ. П/О 200МГ №20\n- бренд / торговое наименование: Нурофен\n- лекарственная форма: таблетки\n- дозировка / концентрация: 200 мг\n- путь введения: —\n- дополнительный семантический контекст: —\n\nПриоритетно ищи в русскоязычных источниках, в том числе в каталогах:\nЮтека, Еаптека, Apteka.ru, Здравсити, а также на сайтах производителей,\nесли они доступны в поиске.\n\nВерни строго такой JSON:\n\n{\n  \"mnn\": \"строка или null\",\n  \"status\": \"found | not_found | conflict\",\n  \"model_confidence\": 0.0,\n  \"short_explanation\": \"краткое объяснение на русском\",\n  \"identity_match\": {\n    \"brand_match\": true,\n    \"dosage_form_match\": true,\n    \"dosage_match\": true\n  },\n  \"used_source_indexes\": [1, 2],\n  \"evidence\": \"краткая формулировка, что именно источник сообщает о MNN\"\n}\n\nВажно:\n- mnn должен быть null, если нет достаточного подтверждения.\n- model_confidence не является доказательством и не заменяет источник.\n- used_source_indexes должны ссылаться только на реальные результаты поиска,\n  возвращённые API."
+  },
+  "raw_api_response": null,
+  "source_metadata": [],
+  "parsed_response": null,
+  "validation": {
+    "qwen_search_status": "api_error",
+    "qwen_search_mnn": "",
+    "qwen_vs_catalog_status": "qwen_api_error",
+    "source_count": 0
+  },
+  "error": "HTTP 402: {\"error\":{\"code\":\"INSUFFICIENT_BALANCE\",\"message\":\"Достигнут дневной лимит по сумме\"},\"trace_id\":\"91ea2b3a-a094-4b83-9eef-c8554300ba6d\"}",
+  "latency_ms": 0
+}

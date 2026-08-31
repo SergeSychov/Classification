@@ -1,0 +1,11 @@
+{
+  "rows": 186,
+  "elapsed_sec": 862.88,
+  "http_requests": 1058,
+  "source_class_counts": {
+    "product_card": 546,
+    "search_only": 384
+  },
+  "product_card_sites": 546,
+  "search_only_sites": 384
+}

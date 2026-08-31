@@ -1,0 +1,19 @@
+{
+  "wave_label": "sem0_smoke",
+  "seed": "sem0_smoke_2026-07-30",
+  "n": 9,
+  "product_ids": [
+    254,
+    1347,
+    1623,
+    5597,
+    6117,
+    6168,
+    9249,
+    9335,
+    11225
+  ],
+  "generated_at": "2026-07-30T14:22:42.229969+00:00",
+  "isolation_filter": "exclude prod Stage 2 log/runs activity last 24h",
+  "applied_via": "n8n_temp_postgres_workflow"
+}

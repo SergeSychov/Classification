@@ -1,0 +1,93 @@
+{
+  "all_skus_pass": true,
+  "selftest": {
+    "ok": true,
+    "tests_run": 5,
+    "failures": 0,
+    "errors": 0
+  },
+  "per_sku": [
+    {
+      "product_id": 3065,
+      "final_always_null": true,
+      "outcome_feasibility_only": true,
+      "candidate_only_from_valid_p1b": true,
+      "no_search_engines": true,
+      "pass": true
+    },
+    {
+      "product_id": 4922,
+      "final_always_null": true,
+      "outcome_feasibility_only": true,
+      "candidate_only_from_valid_p1b": true,
+      "no_search_engines": true,
+      "pass": true
+    },
+    {
+      "product_id": 4924,
+      "final_always_null": true,
+      "outcome_feasibility_only": true,
+      "candidate_only_from_valid_p1b": true,
+      "no_search_engines": true,
+      "pass": true
+    },
+    {
+      "product_id": 19370,
+      "final_always_null": true,
+      "outcome_feasibility_only": true,
+      "candidate_only_from_valid_p1b": true,
+      "no_search_engines": true,
+      "pass": true
+    },
+    {
+      "product_id": 26115,
+      "final_always_null": true,
+      "outcome_feasibility_only": true,
+      "candidate_only_from_valid_p1b": true,
+      "no_search_engines": true,
+      "pass": true
+    },
+    {
+      "product_id": 10046,
+      "final_always_null": true,
+      "outcome_feasibility_only": true,
+      "candidate_only_from_valid_p1b": true,
+      "no_search_engines": true,
+      "pass": true
+    },
+    {
+      "product_id": 7275,
+      "final_always_null": true,
+      "outcome_feasibility_only": true,
+      "candidate_only_from_valid_p1b": true,
+      "no_search_engines": true,
+      "pass": true
+    },
+    {
+      "product_id": 1053,
+      "final_always_null": true,
+      "outcome_feasibility_only": true,
+      "candidate_only_from_valid_p1b": true,
+      "no_search_engines": true,
+      "pass": true
+    },
+    {
+      "product_id": 2621,
+      "final_always_null": true,
+      "outcome_feasibility_only": true,
+      "candidate_only_from_valid_p1b": true,
+      "no_search_engines": true,
+      "pass": true
+    },
+    {
+      "product_id": 18377,
+      "final_always_null": true,
+      "outcome_feasibility_only": true,
+      "candidate_only_from_valid_p1b": true,
+      "no_search_engines": true,
+      "pass": true
+    }
+  ],
+  "no_search_engines": true,
+  "no_pharmacy_as_p1": true
+}

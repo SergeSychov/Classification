@@ -1,0 +1,12 @@
+{
+  "out": "redesign/artifacts/sem_policy_v3_smoke_report.csv",
+  "row_count": 12,
+  "seed": "sem_policy_v3_2026-08-04",
+  "chunk_size": 6,
+  "execution_ids": [
+    "29078",
+    "29085"
+  ],
+  "policy": "sem0_v2_prompt_semantic_v3",
+  "finished_at": "2026-08-04T19:30:50.953332+00:00"
+}

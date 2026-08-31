@@ -1,0 +1,12 @@
+{
+  "all_skus_pass": true,
+  "selftest": {
+    "ok": true,
+    "tests_run": 5,
+    "failures": 0,
+    "errors": 0
+  },
+  "no_search_engines": true,
+  "p2_never_sets_final": true,
+  "official_p1": false
+}

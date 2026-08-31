@@ -1,4 +1,33 @@
-Wave-100 rubric labels (fill label_* columns):
+Wave-100 / Wave-500 rubric labels (fill label_* columns):
 correct, incorrect, unknown_acceptable, missing_should_exist
+
 Per attr: mnn, brand, rx_otc, nosology, administration_route, dosage_form, dosage, age_segment, package_hint, combination_hint
+Also: label_product_kind
 Do not score final category_id.
+
+=== Policy note (Sem0 v3 + Sem1 prompt_semantic_v4) ===
+
+Critical hard-gate attrs (for critical_error_rate before Wave-500):
+- ALWAYS: mnn, dosage_form, administration_route — BUT only when policy says the attr should exist.
+- product_kind errors count as critical for borderline review.
+
+NON-CRITICAL (do NOT inflate critical_error_rate):
+- administration_route + dosage_form for product_kind=cosmetic_hygiene
+- administration_route + dosage_form for medical_device + medical_device_profile=hygiene_like
+- age_segment globally (policy still aligning; score for analytics only)
+- combination_hint, brand (secondary)
+
+vitamin_or_baa:
+- nosology MUST be one of: нутрицевтики | парафармацевтики | эубиотики | отдельные нутриенты | комплексные профили
+- nutrient string in nosology is incorrect; nutrient belongs in mnn
+- rx_otc null is correct
+
+drug:
+- mnn null is acceptable when INN is not explicit in text (prefer null over wrong brand→INN guess)
+- mnn incorrect if wrong substance invented
+
+medical_device clinical_like:
+- route/form/dosage/package may be missing_should_exist if text clearly contains them
+
+cosmetic_hygiene:
+- route/form may be filled (наружно / крем / …) when text supports; still NON-CRITICAL for gate

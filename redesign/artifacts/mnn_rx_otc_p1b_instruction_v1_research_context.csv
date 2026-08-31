@@ -1,0 +1,11 @@
+product_id,p1b_access_status,p1b_record_url,identity_grade,candidate,conflict,docs_passed,blocker
+3065,p1b_host_not_found,,,,False,0,
+4922,p1b_valid_explicit_status,https://termikon.ru/instrukcii/termikon-sprey-instrukciya.html,A,otc,False,1,
+4924,p1b_valid_explicit_status,https://termikon.ru/instrukcii/termikon-krem-instrukciya.html,A,otc,False,1,
+19370,p1b_record_found_status_missing,https://duspatalin.ru/instruktsiya/135/,A,,False,0,
+26115,p1b_record_not_found,,,,False,0,
+10046,p1b_host_not_found,,,,False,0,
+7275,p1b_host_not_found,,,,False,0,
+1053,p1b_host_not_found,,,,False,0,
+2621,p1b_record_not_found,,,,False,0,
+18377,p1b_record_found_identity_insufficient,https://gippokrat.ru/doc/price/price_31.07.2023_min.pdf,D,,False,0,

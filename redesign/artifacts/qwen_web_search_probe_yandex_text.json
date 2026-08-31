@@ -1,0 +1,81 @@
+{
+  "id": "gen_2196366046671671297",
+  "object": "chat.completion",
+  "created": 1785958477,
+  "model": "qwen/qwen3.5-flash-02-23",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "{\n  \"mnn\": \"ibuprofen\",\n  \"status\": \"found\",\n  \"model_confidence\": 0.98,\n  \"short_explanation\": \"Активным веществом препарата Нурофен 200 мг является ибупрофен (MNN: ibuprofen), что подтверждается несколькими источниками из результатов поиска.\",\n  \"identity_match\": {\n    \"brand_match\": true,\n    \"dosage_form_match\": true,\n    \"dosage_match\": true\n  },\n  \"used_source_indexes\": [\n    1,\n    3,\n    4\n  ],\n  \"evidence\": \"Согласно источникам [1], [3] и [4], каждая таблетка Нурофена 200 мг содержит 200 мг ибупрофена, который является международным непатентованным наименованием (МНН) для данного действующего вещества.\"\n}"
+      },
+      "finish_reason": "stop",
+      "logprobs": null
+    }
+  ],
+  "provider": "openrouter",
+  "usage": {
+    "prompt_tokens": 840,
+    "completion_tokens": 214,
+    "total_tokens": 1054,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "audio_tokens": 0,
+      "image_tokens": 0,
+      "accepted_prediction_tokens": null,
+      "rejected_prediction_tokens": null
+    },
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "server_tool_use": null,
+    "cost_rub": 0.01227699,
+    "cost": 0.01227699,
+    "plugins": {
+      "web": {
+        "operations": [
+          {
+            "operation": "web_search",
+            "latency_ms": 891,
+            "cost_rub": 0
+          }
+        ],
+        "total_cost_rub": 0,
+        "pipeline": {
+          "query": "Определи MNN для: Нурофен таблетки 200 мг. Приоритет: uteka.ru, eapteka.ru, apteka.ru. JSON: {\"mnn\":\"строка или null\",\"status\":\"found|not_found|conflict\",\"model_confidence\":0.0,\"short_explanation\":\"...\",\"identity_match\":{\"brand_match\":true,\"dosage_form_match\":true,\"dosage_match\":true},\"used_source_indexes\":[1],\"evidence\":\"...\"}",
+          "results": [
+            {
+              "title": "Нурофен 200 мг 20 шт. таблетки, покрытые оболочкой",
+              "url": "https://apteka.ru/product/nurofen-200-mg-20-sht-tabletki-pokrytye-obolochkoj-5e3268d3ca7bdc000192d25d/",
+              "snippet": "Варианты товара Нурофен. Нурофен 200 мг 10 шт. таблетки, покрытые оболочкой."
+            },
+            {
+              "title": "Нурофен 200 мг 48 шт. таблетки, покрытые оболочкой",
+              "url": "https://apteka.ru/product/nurofen-200-mg-48-sht-tabletki-pokrytye-obolochkoj-66dee7550b53ae0b56c17771/",
+              "snippet": "Нурофен® применяют при головной боли, мигрени, зубной боли, болезненных менструациях, невралгии, боли в спине, мышечной боли, ревматической боли и боли в суставах; а также при лихорадочном состоянии при гриппе и простудных заболеваниях."
+            },
+            {
+              "title": "Нурофен, 200 мг, таблетки, покрытые оболочкой, 48 шт.",
+              "url": "https://uteka.ru/product/nurofen-415084/",
+              "snippet": "Нурофен: Показания. Головная боль; Мигрень; Зубная боль; Болезненные менструации; Невралгия; Боль в спине; Мышечная боль; Ревматическая боль; Боли в суставах; Лихорадочные состояния при гриппе и простудных заболеваниях."
+            },
+            {
+              "title": "Нурофен 200 мг 10 шт. таблетки, покрытые оболочкой",
+              "url": "https://apteka.ru/product/nurofen-200-mg-10-sht-tabletki-pokrytye-obolochkoj-5e3268d3f5a9ae0001408906/",
+              "snippet": "Каждая таблетка содержит 200 мг ибупрофена - противовоспалительного, жаропонижающего и обезболивающего средства. Нурофен применяется для снятия боли при головных болях, зубной боли, мышечной боли, боли при ревматизме, радикулите и других состояниях."
+            },
+            {
+              "title": "Нурофен 12+ 200 мг 12 шт. таблетки, покрытые оболочкой",
+              "url": "https://apteka.ru/product/nurofen-12-200-mg-12-sht-tabletki-pokrytye-obolochkoj-5f05d56bd3e47800010fb8f3/",
+              "snippet": "Для достижения более быстрого терапевтического эффекта у взрослых доза может быть увеличена до 2 таблеток (400мг) до 3 раз в сутки."
+            }
+          ]
+        }
+      }
+    }
+  }
+}

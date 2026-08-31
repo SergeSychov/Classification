@@ -1,47 +1,53 @@
 {
   "out": "redesign/artifacts/sem_wave100_report.csv",
   "row_count": 100,
-  "rubric_label_columns": [
-    "label_mnn",
-    "label_brand",
-    "label_rx_otc",
-    "label_nosology",
-    "label_administration_route",
-    "label_dosage_form",
-    "label_dosage",
-    "label_age_segment",
-    "label_package_hint",
-    "label_combination_hint"
+  "seed": "sem_wave100_2026-07-30_policy_v2",
+  "policy": "sem0_v2 + prompt_semantic_v3",
+  "chunk_size": 10,
+  "execution_ids": [
+    "21611",
+    "21617",
+    "21622",
+    "21627",
+    "21632",
+    "21637",
+    "21642",
+    "21648",
+    "21653",
+    "21659"
   ],
-  "rubric_values": [
-    "correct",
-    "incorrect",
-    "unknown_acceptable",
-    "missing_should_exist"
-  ],
-  "meta": {
-    "execution_id": "19932",
-    "status": "success",
-    "fin_close": [
-      {
-        "id": "307",
-        "status": "finished_empty",
-        "success_count": 0,
-        "metadata": {
-          "trigger": "webhook",
-          "skeleton": "b2",
-          "allowlist_n": 100,
-          "total_count": 0,
-          "sem_smoke_mode": true,
-          "sem_smoke_seed": "sem_wave100_2026-07-29",
-          "sem_smoke_wave": "S1",
-          "hierarchy_run_mode": "sem_smoke",
-          "needs_review_count": 0
-        }
-      }
-    ],
-    "sem_count": 100,
-    "upsert_snapshot_ran": false,
-    "sem_agent_ran": true
+  "mode": "chunked_10x10",
+  "upsert_snapshot_ran": false,
+  "prod_untouched": true,
+  "finished_at": "2026-07-30T15:57:06.722680+00:00",
+  "coverage": {
+    "attr_mnn": {
+      "non_null": 42,
+      "n": 100
+    },
+    "attr_nosology": {
+      "non_null": 53,
+      "n": 100
+    },
+    "attr_rx_otc": {
+      "non_null": 39,
+      "n": 100
+    },
+    "attr_administration_route": {
+      "non_null": 73,
+      "n": 100
+    },
+    "attr_dosage_form": {
+      "non_null": 73,
+      "n": 100
+    },
+    "attr_dosage": {
+      "non_null": 49,
+      "n": 100
+    },
+    "attr_package_hint": {
+      "non_null": 98,
+      "n": 100
+    }
   }
 }

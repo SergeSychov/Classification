@@ -1,0 +1,20 @@
+{
+  "wave_label": "n10",
+  "seed": "sem_wave100_n10_policy_v2",
+  "n": 10,
+  "product_ids": [
+    36,
+    71,
+    91,
+    254,
+    459,
+    1347,
+    1423,
+    1623,
+    2131,
+    2148
+  ],
+  "generated_at": "2026-07-30T15:12:07.904810+00:00",
+  "isolation_filter": "exclude prod Stage 2 log/runs activity last 24h",
+  "applied_via": "n8n_temp_postgres_workflow"
+}
