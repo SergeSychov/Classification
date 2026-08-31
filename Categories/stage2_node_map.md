@@ -112,7 +112,7 @@ flowchart TB
 |------|------------|
 | **In — Manual** | Ручной запуск из UI n8n |
 | **In — Webhook** | Внешний запуск POST-запросом |
-| **In — Webhook Start** | Читает `batch_size` из body (1–100, по умолчанию 5) |
+| **In — Webhook Start** | Читает `batch_size` из body (1–10, по умолчанию 5). Волны больше 10 — только последовательные чанки (`n8n_execution_contract.md`) |
 | **Run — Create Run** | Создаёт запись в `classification_runs`, возвращает `run_id` |
 | **Run — Init Constants** | Прикладывает словарь констант: стадии, пороги, имена моделей |
 | **Load — Select Batch** | Выбирает товары `pending` + primary shortlist; `LIMIT = batch_size` |

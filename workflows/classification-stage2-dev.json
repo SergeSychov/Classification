@@ -20,7 +20,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $input.first().json.body || {};\nconst batchRaw = Number(body.batch_size);\nconst batchSize = Number.isFinite(batchRaw) && batchRaw > 0\n  ? Math.min(Math.trunc(batchRaw), 500)\n  : 5;\n\nreturn [{\n  json: {\n    trigger: 'webhook',\n    batch_size: batchSize\n  }\n}];"
+        "jsCode": "const body = $input.first().json.body || {};\nconst batchRaw = Number(body.batch_size);\nconst batchSize = Number.isFinite(batchRaw) && batchRaw > 0\n  ? Math.min(Math.trunc(batchRaw), 10)\n  : 5;\n\nreturn [{\n  json: {\n    trigger: 'webhook',\n    batch_size: batchSize\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,

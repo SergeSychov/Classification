@@ -14,6 +14,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+import n8n_executions as nx  # noqa: E402
+
 ENV_PATH = ROOT / ".env"
 WEBHOOK_PATH_FILE = ROOT / "workflows" / "classification-stage2-dev.webhook"
 WORKFLOW_ID_FILE = ROOT / "workflows" / "classification-stage2-dev.id"
@@ -121,11 +124,17 @@ def wait_for_execution(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run classification-stage2-dev via webhook")
-    parser.add_argument("--batch-size", type=int, default=5, help="Batch size passed to workflow")
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=5,
+        help=f"Batch size passed to workflow (max {nx.MAX_CHUNK_SIZE})",
+    )
     parser.add_argument("--wait", action="store_true", help="Wait until execution finishes")
     parser.add_argument("--timeout", type=int, default=600, help="Wait timeout in seconds")
     parser.add_argument("--poll", type=float, default=5.0, help="Polling interval in seconds")
     args = parser.parse_args()
+    args.batch_size = nx.clamp_chunk_size(args.batch_size)
 
     env = load_env(ENV_PATH)
     base_url = env["N8N_URL"].rstrip("/")
@@ -133,6 +142,9 @@ def main() -> int:
     webhook_path = resolve_webhook_path(env)
     webhook_url = f"{base_url}/webhook/{webhook_path}"
 
+    stopped = nx.ensure_idle_then_allow_trigger(workflow_id, timeout_sec=args.timeout)
+    if stopped:
+        print(f"[run] stopped stale executions: {stopped}", flush=True)
     ensure_active(workflow_id)
 
     started_before = time.time()

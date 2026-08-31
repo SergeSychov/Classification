@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import ssl
 import subprocess
+import sys
 import time
 import urllib.error
 import urllib.request
@@ -13,6 +14,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+import n8n_executions as nx  # noqa: E402
+
 ENV_PATH = ROOT / ".env"
 STAGE2_ID = (ROOT / "workflows" / "classification-stage2-dev.id").read_text().strip()
 SHORTLIST_ID = (ROOT / "workflows" / "shortlist.id").read_text().strip()
@@ -190,6 +194,7 @@ def max_execution_id(workflow_id: str) -> int:
 
 
 def run_shortlist_once() -> str:
+    nx.ensure_idle_then_allow_trigger(SHORTLIST_ID)
     before = max_execution_id(SHORTLIST_ID)
     body = post_webhook(SHORTLIST_WEBHOOK, {})
     log(f"ShortList webhook: {body[:200]}")
@@ -231,6 +236,8 @@ def prepare_shortlists(baseline_pc: int) -> None:
 
 
 def run_stage2_chunk() -> None:
+    nx.clamp_chunk_size(CHUNK)
+    nx.ensure_idle_then_allow_trigger(STAGE2_ID)
     before = max_execution_id(STAGE2_ID)
     body = post_webhook(STAGE2_WEBHOOK, {"batch_size": CHUNK})
     log(f"stage2 webhook: {body[:200]}")

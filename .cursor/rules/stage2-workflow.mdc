@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Stage 2 workflow conventions
 
-Перед правками прочитай `Categories/stage2_workflow_contract.md`.
+Перед правками прочитай `Categories/stage2_workflow_contract.md` и `Categories/n8n_execution_contract.md` (чанки ≤ 10, не стартовать второй run пока жив предыдущий).
 
 ## Имена нод
 

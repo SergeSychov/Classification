@@ -296,7 +296,7 @@ Judge **не** использует DeepSeek — только Polza / Qwen (см
 |------|-----|------------|
 | In — Manual | Trigger | Ручной запуск |
 | In — Webhook | Webhook | POST `/webhook/classification-stage2-dev` |
-| In — Webhook Start | Code | `batch_size` из body (1–100, дефолт 5) |
+| In — Webhook Start | Code | `batch_size` из body (1–10, дефолт 5). Большие волны — только чанками, см. `Categories/n8n_execution_contract.md` |
 | Run — Create Run | Postgres | INSERT `classification_runs`, статус `running` |
 | Run — Init Constants | Code | Словарь `constants` (стадии, пороги, модели) |
 | Load — Select Batch | Postgres | Товары `pending` + primary shortlist; `LIMIT = batch_size` |
@@ -385,6 +385,13 @@ python3 scripts/run_workflow.py --wait                     # smoke-test
 
 **Не трогать:** `classification-stage2-prepare-for-llm` (эталон).
 
+**Executions:** один live run на workflow; chunk ≤ 10; следующий чанк только после terminal status — `Categories/n8n_execution_contract.md`.
+
+```bash
+python3 scripts/run_hierarchy_workflow.py --batch-size 5 --wait
+python3 scripts/wave100_chunked_run.py --chunk-size 10 --ids-file redesign/artifacts/sem_wave100_allowlist.json
+```
+
 ---
 
 ## 11. Чеклист при добавлении ноды
@@ -394,5 +401,5 @@ python3 scripts/run_workflow.py --wait                     # smoke-test
 - [ ] `constants` из `Run — Init Constants`, не хардкод строк
 - [ ] Позиция в блоке, без перекрытий
 - [ ] Sticky note обновлён при новом субпроцессе
-- [ ] Push + smoke-test
+- [ ] Push + smoke-test (`--batch-size` ≤ 10, `--wait`; не стартовать, пока предыдущий execution жив)
 - [ ] Новый LLM Agent → своя Chat Model нода в зоне (`P1 — DeepSeek`, не shared на несколько Agents)

@@ -1,0 +1,16 @@
+---
+description: Sequential n8n executions — one live run, chunks ≤10, stop zombies
+globs: scripts/run_*.py,scripts/wave*.py,scripts/n8n_executions.py,workflows/*.json,Categories/n8n_execution_contract.md,Categories/stage2_workflow_contract.md
+alwaysApply: true
+---
+
+# n8n execution policy
+
+Canon: `Categories/n8n_execution_contract.md`. Helper: `scripts/n8n_executions.py`.
+
+- One live execution per workflow. Wait until idle (`running`/`waiting`/`new`) before a new webhook or `n8n execute`.
+- LLM/Merge-parallel batches: **chunk size ≤ 10**. Default smoke **5**. Never `batch_size=100`/`500` in one execution.
+- Next chunk only after the previous execution is terminal.
+- Stop executions stuck > 30 minutes before starting another run.
+- No `* * * * *` crons that perform HTTP/LLM. Schedule wall-clock time or an explicit command.
+- Do not enable error-workflow autoresume while the task runner is unhealthy.

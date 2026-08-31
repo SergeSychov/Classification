@@ -14,6 +14,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+import n8n_executions as nx  # noqa: E402
+
 ENV_PATH = ROOT / ".env"
 WORKFLOW_ID_FILE = ROOT / "workflows" / "classification-stage2-hierarchy-dev.id"
 DEFAULT_WEBHOOK_PATH = "classification-stage2-hierarchy-dev"
@@ -51,7 +54,7 @@ def api_request(method: str, path: str, payload: dict | None = None) -> dict:
         raise RuntimeError(f"{method} {path} failed ({error.code}): {detail}") from error
 
 
-def webhook_request(url: str, payload: dict | None = None) -> tuple[int, str]:
+def webhook_request(url: str, payload: dict | None = None, timeout: int = 30) -> tuple[int, str]:
     data = None
     headers = {"Accept": "application/json"}
     if payload is not None:
@@ -60,10 +63,15 @@ def webhook_request(url: str, payload: dict | None = None) -> tuple[int, str]:
     request = urllib.request.Request(url, data=data, headers=headers, method="POST")
     context = ssl._create_unverified_context()
     try:
-        with urllib.request.urlopen(request, timeout=120, context=context) as response:
+        with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
             return response.status, response.read().decode("utf-8")
     except urllib.error.HTTPError as error:
         return error.code, error.read().decode("utf-8", errors="replace")
+    except Exception as error:
+        # Sync webhook may keep the HTTP connection open until the whole
+        # workflow finishes; treat timeout/connection drop as "triggered"
+        # and recover via execution polling.
+        return 0, f"webhook_deferred:{error}"
 
 
 def ensure_active(workflow_id: str) -> None:
@@ -82,8 +90,19 @@ def wait_for_execution(
     started_after_ts: float,
     timeout_sec: int,
     poll_sec: float,
+    expected_n: int = 0,
+    progress_artifact: str | None = None,
 ) -> dict:
+    """Wait until execution finishes; print Sem progress when includeData available."""
+    # Lazy import twin module helpers without packaging.
+    sys.path.insert(0, str(ROOT / "scripts"))
+    try:
+        import wave_progress as wp  # type: ignore
+    except Exception:
+        wp = None
+
     deadline = time.time() + timeout_sec
+    last_exec_id = None
     while time.time() < deadline:
         result = api_request("GET", f"/api/v1/executions?workflowId={workflow_id}&limit=5")
         for execution in result.get("data", []):
@@ -93,7 +112,16 @@ def wait_for_execution(
             started_ts = parse_started_at(started_at)
             if started_ts + 1 < started_after_ts:
                 continue
+            last_exec_id = str(execution.get("id"))
             status = execution.get("status")
+            if wp is not None and last_exec_id:
+                try:
+                    snap = wp.snapshot_execution(last_exec_id, expected_n or None)
+                    print(wp.format_line(snap), flush=True)
+                    if progress_artifact:
+                        wp.write_artifact(Path(progress_artifact), snap)
+                except Exception as err:
+                    print(f"[progress] snapshot defer: {err}", flush=True)
             if execution.get("finished") or status in {
                 "success",
                 "error",
@@ -103,6 +131,24 @@ def wait_for_execution(
                 return execution
             break
         time.sleep(poll_sec)
+
+    # Final check before raising — polling may have been slow, not failed.
+    if last_exec_id:
+        try:
+            data = api_request("GET", f"/api/v1/executions/{last_exec_id}")
+            status = data.get("status")
+            if data.get("finished") or status in {"success", "error", "crashed", "canceled"}:
+                return data
+            print(
+                "polling interrupted/timeout, execution status requires one final API check: "
+                f"id={last_exec_id} status={status} finished={data.get('finished')}",
+                file=sys.stderr,
+            )
+        except Exception as err:
+            print(
+                f"polling interrupted/timeout, final API check failed for {last_exec_id}: {err}",
+                file=sys.stderr,
+            )
     raise TimeoutError(f"Execution did not finish within {timeout_sec}s")
 
 
@@ -121,14 +167,20 @@ def analyze_execution(exec_id: str) -> dict:
         return out
 
     posts = flat("Sem — Post-process")
+    posts0 = flat("Sem0 — Post-process")
+    norms = flat("Norm — Normalize Sem attrs")
     close = flat("Fin — Close Run")
     load = flat("Load — Select Batch")
     return {
         "execution_id": exec_id,
         "status": data.get("status"),
         "load_count": len(load),
+        "sem0_post_count": len(posts0),
         "sem_post_count": len(posts),
+        "sem_norm_count": len(norms),
+        "sem0_agent_ran": "Sem0 — AI Agent" in run_data,
         "sem_agent_ran": "Sem — AI Agent" in run_data,
+        "sem_norm_ran": "Norm — Normalize Sem attrs" in run_data,
         "upsert_snapshot_ran": "DB — Upsert Snapshot" in run_data,
         "fin_close": [
             {k: x.get(k) for k in ("id", "status", "success_count", "metadata")}
@@ -137,6 +189,8 @@ def analyze_execution(exec_id: str) -> dict:
         "sem_summary": [
             {
                 "product_id": x.get("product_id") or (x.get("context") or {}).get("product_id"),
+                "product_kind": x.get("product_kind")
+                or ((x.get("semantic_attrs") or {}).get("product_kind")),
                 "validation_passed": x.get("semantic_validation_passed"),
                 "reject_reason": x.get("semantic_reject_reason"),
                 "decision_status": x.get("decision_status"),
@@ -156,7 +210,14 @@ def main() -> int:
     parser.add_argument("--timeout", type=int, default=900)
     parser.add_argument("--poll", type=float, default=5.0)
     parser.add_argument("--analyze", help="Analyze existing execution id only")
+    parser.add_argument(
+        "--progress-artifact",
+        default=str(ROOT / "redesign" / "artifacts" / "wave100_progress_summary.json"),
+        help="Write live progress JSON while waiting",
+    )
     args = parser.parse_args()
+    if not args.analyze:
+        args.batch_size = nx.clamp_chunk_size(args.batch_size)
 
     if args.analyze:
         print(json.dumps(analyze_execution(args.analyze), ensure_ascii=False, indent=2))
@@ -168,9 +229,21 @@ def main() -> int:
     webhook_path = env.get("N8N_HIERARCHY_WEBHOOK_PATH", DEFAULT_WEBHOOK_PATH).strip("/")
     webhook_url = f"{base_url}/webhook/{webhook_path}"
 
+    stopped = nx.ensure_idle_then_allow_trigger(workflow_id, timeout_sec=args.timeout)
+    if stopped:
+        print(f"[run] stopped stale executions: {stopped}", flush=True)
     ensure_active(workflow_id)
     started_before = time.time()
-    status, body = webhook_request(webhook_url, {"batch_size": args.batch_size, "trigger": "sem_smoke"})
+    print(
+        f"[run] triggering webhook batch_size={args.batch_size} at {started_before}",
+        flush=True,
+    )
+    status, body = webhook_request(
+        webhook_url,
+        {"batch_size": args.batch_size, "trigger": "sem_smoke"},
+        timeout=20,
+    )
+    print(f"[run] webhook_status={status} body_prefix={str(body)[:200]}", flush=True)
     if status >= 400:
         raise RuntimeError(f"Webhook call failed ({status}): {body}")
 
@@ -189,6 +262,8 @@ def main() -> int:
             started_after_ts=started_before,
             timeout_sec=args.timeout,
             poll_sec=args.poll,
+            expected_n=args.batch_size,
+            progress_artifact=args.progress_artifact,
         )
         output["execution"] = execution
         exec_id = str(execution.get("id"))
