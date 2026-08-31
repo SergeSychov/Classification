@@ -1,0 +1,61 @@
+spec_example_id,product_id,check_name,expected,actual,pass
+1,54,row_present,present,present,pass
+1,54,strength_v4_1,5000 ЕД/мл,5000 ЕД/мл,pass
+1,54,container_not_inferred_ampoule,"unknown or empty, not ампула",unknown,pass
+1,54,unit_content_amount_v4_1,5 мл,5 мл,pass
+1,54,pack_unit_count_v4_1,N5,N5,pass
+1,54,pack_structure_has_5ml_N5,contains 5 мл and N5,"5 мл, N5",pass
+1,54,query_has_5ml_N5,contains 5 мл and N5,Гепарин раствор 5000 ЕД/мл 5 мл N5,pass
+1,54,strength_not_classified_as_pack,5000 ЕД/мл not in unit_content,5 мл,pass
+2,844,row_present,present,present,pass
+2,844,strength_v4_1,300 мг/мл,300 мг/мл,pass
+2,844,container_type_v4_1,флакон,флакон,pass
+2,844,unit_content_amount_v4_1,25 мл,25 мл,pass
+2,844,pack_unit_count_v4_1,N1 implicit or partial/ambiguous,N1,pass
+2,844,pack_structure_has_flacon_25ml,флакон and 25 мл,"флакон 25 мл, N1",pass
+3,1053,row_present,present,present,pass
+3,1053,strength_v4_1,5%,5%,pass
+3,1053,container_type_v4_1,флакон,флакон,pass
+3,1053,unit_content_amount_v4_1,2.5 мл,2.5 мл,pass
+3,1053,pack_structure_has_flacon_2_5,флакон and 2.5 мл,"флакон 2.5 мл, N1",pass
+4,2348,row_present,present,present,pass
+4,2348,strength_empty,empty,,pass
+4,2348,container_type_v4_1,флакон,флакон,pass
+4,2348,unit_content_amount_v4_1,100 мл,100 мл,pass
+4,2348,pack_structure_has_flacon_100,флакон and 100 мл,"флакон 100 мл, N1",pass
+3763,3763,row_present,present,present,pass
+3763,3763,manufacturer_v4_1,ФАРМГРУПП ООО,ФАРМГРУПП ООО,pass
+3763,3763,manufacturer_prefix_raw_v4_1,ФАРМГРУПП,ФАРМГРУПП,pass
+3763,3763,product_name_remainder_raw_v4_1,5 ТРАВ УСПОКОИТЕЛЬНАЯ,5 ТРАВ УСПОКОИТЕЛЬНАЯ,pass
+3763,3763,dosage_form_v4_1,настойка,настойка,pass
+3763,3763,container_type_v4_1,флакон,флакон,pass
+3763,3763,unit_content_amount_v4_1,250 мл,250 мл,pass
+3763,3763,brand_not_farmgrupp,!= Фармгрупп,5 трав успокоительная,pass
+3763,3763,brand_or_product_name_v4_1,5 трав успокоительная,5 трав успокоительная,pass
+3763,3763,query_tokens,"5 трав, успокоительная, настойка, флакон, 250 мл",5 трав успокоительная настойка флакон 250 мл N1,pass
+3763,3763,retrieval_has_manufacturer,ФАРМГРУПП ООО,"5 трав успокоительная настойка флакон 250 мл N1, ФАРМГРУПП ООО",pass
+3763,3763,no_sredstvo_invented,средство not added,5 трав успокоительная настойка флакон 250 мл N1,pass
+3763,3763,variant_flag,product_name_variant_needs_policy_v4_1=true,true,pass
+6,4487,row_present,present,present,pass
+6,4487,strength_v4_1,50 мг/мл,50 мг/мл,pass
+6,4487,container_type_v4_1,ампула,ампула,pass
+6,4487,unit_content_amount_v4_1,5 мл,5 мл,pass
+6,4487,pack_unit_count_v4_1,N10,N10,pass
+6,4487,query_has_ampoule_5ml_N10,"ампула, 5 мл, N10",Транексамовая Кислота раствор 50 мг/мл ампула 5 мл N10,pass
+7,4922,row_present,present,present,pass
+7,4922,strength_v4_1,1%,1%,pass
+7,4922,container_type_v4_1,флакон,флакон,pass
+7,4922,unit_content_amount_v4_1,30 г,30 г,pass
+8,4924,row_present,present,present,pass
+8,4924,strength_v4_1,1%,1%,pass
+8,4924,container_type_v4_1,туба,туба,pass
+8,4924,unit_content_amount_v4_1,15 г,15 г,pass
+9,8055,row_present,present,present,pass
+9,8055,strength_v4_1,2 мг/мл + 5 мг/мл,2 мг/мл + 5 мг/мл,pass
+9,8055,container_type_v4_1,флакон,флакон,pass
+9,8055,unit_content_amount_v4_1,5 мл,5 мл,pass
+9,8055,pack_unit_count_v4_1,N1,N1,pass
+9,8055,query_has_flacon_5ml_N1,"флакон, 5 мл, N1",Римасопт ВМ капли 2 мг/мл + 5 мг/мл флакон 5 мл N1,pass
+form,3759,dosage_form_granules,гранулы,гранулы,pass
+form,22548,dosage_form_dragee,драже,драже,pass
+form,9941,dosage_form_mouthwash,ополаскиватель,ополаскиватель,pass

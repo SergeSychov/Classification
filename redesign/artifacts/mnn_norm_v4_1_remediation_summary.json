@@ -1,0 +1,342 @@
+{
+  "policy_version": "norm_v4_1_offline_pack_and_retrieval_remediation",
+  "date": "2026-08-20",
+  "row_count": 100,
+  "unique_product_ids": 100,
+  "reviewed_row_count": 50,
+  "reviewed_unique_product_ids": 50,
+  "input_sha256": {
+    "mnn_norm_v4_experiment_full.csv": "7a33e7423b8e94aa7c3f36f888b46f8c9bbfe013bdc1e9d054f9d628b41b5473",
+    "mnn_norm_v4_experiment_text_quality.csv": "e519c8212cbbeccc95e43105fd726d272352dc5032e5e800bbff77342a92c49c",
+    "mnn_norm_v4_experiment_human_review.csv": "07910f68ffe93a8d129778a4751e5bf9a4f936219f161f7fce3fef3d56303674",
+    "mnn_norm_v4_experiment_human_reviewed.csv": "d06fd739a1de9aaf2f982f2808c72d0c5c78efa8298b64a05f4c40260a743c43",
+    "mnn_norm_v4_experiment_exceptions.csv": "fd53e01059c237bd15864832ab6fa2a8333a106ac8e0f274adaadb9bcb09d110",
+    "mnn_norm_v4_experiment_summary.json": "7d8e1bdfc07342d2b089f72d59e6015d57e094a5025564df25135cd94edf0781",
+    "mnn_norm_v4_experiment_summary.md": "7f4b947676809e9454d88c08780ddfc14e8d2d6bd5acf661af15efe2414c985d",
+    "m5_norm_v4_design.md": "85e0a641bf4b817feaeea59b728a7408adaf85c01567fcf8267fa3d96adb3a4c",
+    "m5_norm_v4_future_n8n_plan.md": "35e8250a2b0f16af479a1c42b731c07b1209dc6358ce910e00f0d63fc1e9c603",
+    "mnn_norm_v4_experiment.py": "19947797e06ec094f36d2a444cb5fba4535c729f154885e11c3d936a96a4189d",
+    "mnn_identity_enrichment_pass_human_review_v2 - mnn_identity_enrichment_pass_human_review_v2.csv": "ec167da556040e71e458c6bc74ba832b9f5cc60372d4e6e3de346f1373f93f5b",
+    "mnn_identity_enrichment_pass_review_text_quality_v1.csv": "2ad6c69e6f7bfac410ec2270f7c1d608fdf45fdd48fdd66564405cd6c2d4c344",
+    "mnn_identity_enrichment_pass_results.csv": "be3e8c74ec63c303261ae2aa3d7a79fbf545e2b7df60f4b9e5c485d276f94736",
+    "mnn_identity_enrichment_pass_research_context.csv": "7fe535fd4bf4dc9c22df995e61f3c542fd84be84275e5becd23a863d12a45146"
+  },
+  "m50_label_counts": {
+    "identity": {
+      "yes": 41,
+      "no": 4,
+      "uncertain": 5,
+      "blank": 0
+    },
+    "query": {
+      "yes": 41,
+      "no": 3,
+      "uncertain": 6,
+      "blank": 0
+    },
+    "manufacturer": {
+      "yes": 50,
+      "no": 0,
+      "uncertain": 0,
+      "blank": 0
+    }
+  },
+  "m50_notes_summary": [
+    {
+      "product_id": "54",
+      "identity": "no",
+      "query": "no",
+      "manufacturer": "yes",
+      "note": "severity=major; reason=unit_volume_and_container_lost; source_pack=\"амп. 5 мл N5\"; actual_pack=\"N5\"; expected=\"амп. 5 мл N5\"; action=\"add_container_and_unit_content_fields\""
+    },
+    {
+      "product_id": "844",
+      "identity": "uncertain",
+      "query": "uncertain",
+      "manufacturer": "yes",
+      "note": "severity=policy_needed; reason=container_not_structured; source_pack=\"фл. 2.5 мл\"; actual_pack=\"2.5 мл\"; expected=\"фл. 2.5 мл; count=1\"; action=\"add_container_and_unit_content_fields\""
+    },
+    {
+      "product_id": "1053",
+      "identity": "uncertain",
+      "query": "uncertain",
+      "manufacturer": "yes",
+      "note": "severity=policy_needed; reason=container_not_structured; source_pack=\"фл. 100 мл\"; actual_pack=\"100 мл\"; expected=\"фл. 100 мл; count=1\"; action=\"add_container_and_unit_content_fields\""
+    },
+    {
+      "product_id": "2348",
+      "identity": "uncertain",
+      "query": "uncertain",
+      "manufacturer": "yes",
+      "note": "severity=policy_needed; reason=container_not_structured; source_pack=\"фл. 100 мл\"; actual_pack=\"100 мл\"; expected=\"фл. 100 мл; count=1\"; action=\"add_container_and_unit_content_fields\""
+    },
+    {
+      "product_id": "3763",
+      "identity": "no",
+      "query": "uncertain",
+      "manufacturer": "yes",
+      "note": "severity=critical; reason=brand_role_misattributed_and_product_name_loss; source_head=\"ФАРМГРУПП НАСТОЙКА 5 ТРАВ УСПОКОИТЕЛЬНАЯ\"; source_manufacturer=\"ФАРМГРУПП ООО\"; actual_brand=\"Фармгрупп\"; expected_brand=\"5 трав успокоительная\"; lost_tokens=\"5 трав|успокоительная\"; actual_query=\"Фармгрупп настойка 250 мл\"; expected_query=\"5 трав успокоительная настойка флакон 250 мл\"; action=\"add_manufacturer_prefix_detection_and_name_recovery_rule\""
+    },
+    {
+      "product_id": "4487",
+      "identity": "no",
+      "query": "no",
+      "manufacturer": "yes",
+      "note": "severity=major; reason=unit_volume_and_container_lost; source_pack=\"амп. 5 мл N10\"; actual_pack=\"N10\"; expected=\"амп. 5 мл N10\"; action=\"add_container_and_unit_content_fields\""
+    },
+    {
+      "product_id": "4922",
+      "identity": "uncertain",
+      "query": "uncertain",
+      "manufacturer": "yes",
+      "note": "severity=policy_needed; reason=container_not_structured; source_pack=\"фл. 30 г\"; actual_pack=\"30 г\"; expected=\"фл. 30 г; count=1\"; action=\"add_container_and_unit_content_fields\""
+    },
+    {
+      "product_id": "4924",
+      "identity": "uncertain",
+      "query": "uncertain",
+      "manufacturer": "yes",
+      "note": "severity=policy_needed; reason=container_not_structured; source_pack=\"фл. 30 г\"; actual_pack=\"30 г\"; expected=\"фл. 30 г; count=1\"; action=\"add_container_and_unit_content_fields\""
+    },
+    {
+      "product_id": "8055",
+      "identity": "no",
+      "query": "no",
+      "manufacturer": "yes",
+      "note": "severity=major; reason=unit_volume_and_container_lost; source_pack=\"фл. 5 мл N1\"; actual_pack=\"N1\"; expected=\"фл. 5 мл N1\"; action=\"add_container_and_unit_content_fields\""
+    }
+  ],
+  "m50_defect_ids": [
+    "54",
+    "844",
+    "1053",
+    "2348",
+    "3763",
+    "4487",
+    "4922",
+    "4924",
+    "8055"
+  ],
+  "m50_defect_row_count": 9,
+  "resolution_counts": {
+    "resolved": 8,
+    "partially_resolved": 1,
+    "still_open": 0,
+    "not_applicable": 91
+  },
+  "all_rows_resolution_counts": {
+    "not_applicable": 91,
+    "partially_resolved": 1,
+    "resolved": 8
+  },
+  "defect_resolutions": [
+    {
+      "product_id": "54",
+      "status": "partially_resolved",
+      "reason": "Restored unit volume 5 мл and N5 in query/retrieval; kept 5000 ЕД/мл as strength. Source has no амп./ампула marker, so container stays unknown (not inferred). Reviewer note source_pack=амп. 5 мл N5 does not match actual source."
+    },
+    {
+      "product_id": "844",
+      "status": "resolved",
+      "reason": "Structured флакон + 25 мл (source ФЛ. 25МЛ). Reviewer note 2.5 мл was a copy-paste error vs source."
+    },
+    {
+      "product_id": "1053",
+      "status": "resolved",
+      "reason": "Structured флакон + 2.5 мл from source ФЛ. 2,5МЛ. Reviewer note фл. 100 мл was a copy-paste error."
+    },
+    {
+      "product_id": "2348",
+      "status": "resolved",
+      "reason": "Structured флакон + 100 мл from source ФЛ. 100МЛ. Strength left empty (none in source)."
+    },
+    {
+      "product_id": "3763",
+      "status": "resolved",
+      "reason": "Manufacturer prefix stripped from brand; remainder 5 трав успокоительная used. Query keeps remainder+настойка+флакон+250 мл; retrieval adds ФАРМГРУПП ООО. Flagged product_name_variant_needs_policy (no invented 'средство')."
+    },
+    {
+      "product_id": "4487",
+      "status": "resolved",
+      "reason": "Structured ампула + 5 мл + N10 from source АМП. 5МЛ №10. Strength 50 мг/мл kept."
+    },
+    {
+      "product_id": "4922",
+      "status": "resolved",
+      "reason": "Structured флакон + 30 г from source ФЛ. 30Г."
+    },
+    {
+      "product_id": "4924",
+      "status": "resolved",
+      "reason": "Structured туба + 15 г from actual source ТУБА 15Г. Reviewer note фл. 30 г was a copy-paste error."
+    },
+    {
+      "product_id": "8055",
+      "status": "resolved",
+      "reason": "Structured флакон + 5 мл + N1 from source ФЛ. 5МЛ №1. Multi-component strength kept."
+    }
+  ],
+  "query_length": {
+    "n": 100,
+    "min": 19,
+    "max": 66,
+    "mean": 35.64,
+    "p50": 34.0,
+    "p90": 47.1
+  },
+  "retrieval_length": {
+    "n": 100,
+    "min": 28,
+    "max": 89,
+    "mean": 54.76,
+    "p50": 54.0,
+    "p90": 74.0
+  },
+  "disambiguator_nonempty": 100,
+  "retrieval_join_mismatches": 0,
+  "query_manufacturer_leaks": 0,
+  "pack_coverage": {
+    "explicit_container": 17,
+    "unit_amount": 30,
+    "explicit_count": 83,
+    "inferred_n1": 12,
+    "parsed": 95,
+    "partial": 5,
+    "ambiguous": 0,
+    "not_applicable": 0,
+    "query_gained_container": 17,
+    "query_gained_unit_amount": 6,
+    "query_gained_pack_count": 12
+  },
+  "manufacturer_prefix": {
+    "detected": 1,
+    "recovered": 1,
+    "ambiguous": 0,
+    "unresolved": 0,
+    "not_applicable": 99
+  },
+  "farmgrupp": {
+    "brand": "5 трав успокоительная",
+    "prefix": "ФАРМГРУПП",
+    "remainder": "5 ТРАВ УСПОКОИТЕЛЬНАЯ",
+    "query": "5 трав успокоительная настойка флакон 250 мл N1",
+    "retrieval": "5 трав успокоительная настойка флакон 250 мл N1, ФАРМГРУПП ООО",
+    "recovery_status": "recovered"
+  },
+  "dosage_form_policy": {
+    "3759": "гранулы",
+    "22548": "драже",
+    "9941": "ополаскиватель"
+  },
+  "regression": {
+    "n": 60,
+    "pass": 60,
+    "fail": 0,
+    "human_review_ids": [
+      "8",
+      "28",
+      "34",
+      "45",
+      "54",
+      "56",
+      "68",
+      "70",
+      "72",
+      "73",
+      "75",
+      "88",
+      "92",
+      "249",
+      "354",
+      "456",
+      "486",
+      "777",
+      "844",
+      "884",
+      "1053",
+      "1668",
+      "1765",
+      "2023",
+      "2348",
+      "2621",
+      "3027",
+      "3065",
+      "3759",
+      "3763",
+      "4487",
+      "4922",
+      "4924",
+      "5010",
+      "5270",
+      "7625",
+      "8055",
+      "8753",
+      "9511",
+      "9941",
+      "12495",
+      "13125",
+      "14758",
+      "15150",
+      "18377",
+      "20614",
+      "20628",
+      "22468",
+      "22548",
+      "24255"
+    ]
+  },
+  "exception_count": 7,
+  "exception_reason_counts": {
+    "m50_defect_partially_resolved": 1,
+    "manufacturer_prefix_in_product_name": 1,
+    "pack_parse_status=partial": 5
+  },
+  "review_sample_size": 50,
+  "review_strata": {
+    "m50_label_no": 3,
+    "manufacturer_prefix_recovery": 1,
+    "m50_label_uncertain": 5,
+    "dosage_form_vocab_policy": 3,
+    "ordinary_successfully_remediated": 22,
+    "pack_container_amount_count": 2,
+    "single_container_implicit_n1": 6,
+    "multi_component_strength_pack": 6,
+    "retained_multi_entity_manufacturer": 2
+  },
+  "mandatory_ids_present": [
+    "8",
+    "54",
+    "844",
+    "1053",
+    "2348",
+    "3763",
+    "4487",
+    "4922",
+    "4924",
+    "8055",
+    "3759",
+    "22548"
+  ],
+  "spec_to_product_id": {
+    "1": "54",
+    "2": "844",
+    "3": "1053",
+    "4": "2348",
+    "3763": "3763",
+    "6": "4487",
+    "7": "4922",
+    "8": "4924",
+    "9": "8055"
+  },
+  "isolation": "offline reviewed remediation only; no web/LLM/DB/n8n; no attr/snapshot/product_kind/prod/Sem changes; no commit/push.",
+  "output_sha256": {
+    "mnn_norm_v4_1_remediation_full.csv": "466c6164ef8b13be70ab61795de5c9e0c12cdee061e4e7869282d230b25d7470",
+    "mnn_norm_v4_1_remediation_summary.md": "97452656b1adab46c34934b5882a07c85e5e2b64aa19f74abc3e62c624fcef88",
+    "mnn_norm_v4_1_remediation_text_quality.csv": "9fbd0315eaa9c96293a33bc81223e3ae7e962826da1ecd94c1139d968893a1b0",
+    "mnn_norm_v4_1_remediation_human_review.csv": "f51d76195dc1d3cfb404f9b67cada4d0aa1f5f92d36c6bc95a76606570dc88ef",
+    "mnn_norm_v4_1_remediation_exceptions.csv": "827f7632f5812d6138381854f7b395cdf0d4077a054242a94e986386b0a450bb",
+    "mnn_norm_v4_1_remediation_data_dictionary.md": "921169455657170e639fabee4ba99b734b14362c51de80c2683da597d2e8d440",
+    "mnn_norm_v4_1_remediation_regression_cases.csv": "9c9187829a7ae6b4752c1c7671d93e8c83a8df1b23b5174c67bb779d0922a392",
+    "mnn_norm_v4_1_remediation_summary.json": "b6edc5d3ba90bb9fab02d79931ce59c760004f67e3057b02c68d9ba5c63c9283"
+  }
+}

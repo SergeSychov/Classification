@@ -1,0 +1,254 @@
+{
+  "constraints_respected": {
+    "no_attr_snapshot_product_kind_prod_sem_changes": true,
+    "no_commit_push": true,
+    "no_input_modification": true,
+    "no_overwrite_normalized_text": true,
+    "no_web_llm_db_n8n": true,
+    "offline_experiment_only": true
+  },
+  "dedup_metrics": {
+    "manufacturer": {
+      "dedup_count_distribution": {
+        "1": 49,
+        "2": 51
+      },
+      "rows_deduplicated": 100,
+      "rows_with_dup_before": 100
+    },
+    "pack": {
+      "dedup_count_distribution": {
+        "0": 86,
+        "1": 14
+      },
+      "rows_deduplicated": 14,
+      "rows_with_dup_before": 14
+    }
+  },
+  "experiment_date": "2026-08-19",
+  "extraction_coverage": {
+    "brand": {
+      "n": 100,
+      "percent": 100.0
+    },
+    "brand_extracted": {
+      "n": 100,
+      "percent": 100.0
+    },
+    "form_non_unknown": {
+      "n": 99,
+      "percent": 99.0
+    },
+    "manufacturer": {
+      "n": 100,
+      "percent": 100.0
+    },
+    "pack": {
+      "n": 100,
+      "percent": 100.0
+    },
+    "strength": {
+      "n": 84,
+      "percent": 84.0
+    }
+  },
+  "flag_distribution": {
+    "manufacturer_conflict": 0,
+    "manufacturer_deduped": 100,
+    "manufacturer_multi_entity": 2,
+    "missing_brand": 0,
+    "missing_form": 1,
+    "missing_manufacturer": 0,
+    "missing_pack": 0,
+    "missing_strength": 16,
+    "multi_component_strength": 8,
+    "pack_deduped": 14,
+    "parse_ambiguous": 3
+  },
+  "human_review_sample": {
+    "actual_size": 50,
+    "composition": {
+      "distinct_manufacturer_segments": 2,
+      "fill_flagged": 5,
+      "herbal_or_form_special": 5,
+      "manufacturer_duplicates": 15,
+      "multi_component_strength": 8,
+      "ordinary": 5,
+      "pack_duplicates": 10
+    },
+    "product_ids": [
+      "8",
+      "28",
+      "34",
+      "45",
+      "54",
+      "56",
+      "68",
+      "70",
+      "72",
+      "73",
+      "75",
+      "88",
+      "92",
+      "249",
+      "354",
+      "456",
+      "486",
+      "777",
+      "844",
+      "884",
+      "1053",
+      "1668",
+      "1765",
+      "2023",
+      "2348",
+      "2621",
+      "3027",
+      "3065",
+      "3556",
+      "3759",
+      "3763",
+      "3781",
+      "4133",
+      "4403",
+      "4481",
+      "4487",
+      "4593",
+      "4684",
+      "4922",
+      "4924",
+      "5010",
+      "5258",
+      "5267",
+      "5270",
+      "8055",
+      "13125",
+      "14758",
+      "20614",
+      "22468",
+      "24750"
+    ],
+    "requested": {
+      "distinct_manufacturer_segments": 5,
+      "herbal_or_form_special": 5,
+      "manufacturer_duplicates": 15,
+      "multi_component_strength": 10,
+      "ordinary": 5,
+      "pack_duplicates": 10
+    }
+  },
+  "input_sha256_after_required": {
+    "mnn_identity_enrichment_pass_human_review_v2 - mnn_identity_enrichment_pass_human_review_v2.csv": "ec167da556040e71e458c6bc74ba832b9f5cc60372d4e6e3de346f1373f93f5b",
+    "mnn_identity_enrichment_pass_research_context.csv": "7fe535fd4bf4dc9c22df995e61f3c542fd84be84275e5becd23a863d12a45146",
+    "mnn_identity_enrichment_pass_results.csv": "be3e8c74ec63c303261ae2aa3d7a79fbf545e2b7df60f4b9e5c485d276f94736",
+    "mnn_identity_enrichment_pass_review_text_quality_v1.csv": "2ad6c69e6f7bfac410ec2270f7c1d608fdf45fdd48fdd66564405cd6c2d4c344"
+  },
+  "input_sha256_unchanged": true,
+  "length_metrics": {
+    "full_v4": {
+      "max": 133,
+      "median": 85.0,
+      "min": 45,
+      "n": 100,
+      "p90": 110.5
+    },
+    "identity_v4": {
+      "max": 88,
+      "median": 57.5,
+      "min": 34,
+      "n": 100,
+      "p90": 78.0
+    },
+    "query_v4": {
+      "max": 66,
+      "median": 31.5,
+      "min": 19,
+      "n": 100,
+      "p90": 44.0
+    },
+    "source": {
+      "max": 214,
+      "median": 82.0,
+      "min": 37,
+      "n": 100,
+      "p90": 124.1
+    }
+  },
+  "output_row_count": 100,
+  "output_unique_product_id": 100,
+  "policy_version": "norm_v4_experiment_m5_0",
+  "preflight": {
+    "actual_row_count": 100,
+    "all_review_ids_in_results": true,
+    "count_mismatch": false,
+    "duplicate_product_id_count": 0,
+    "expected_row_count": 100,
+    "input_sha256": {
+      "mnn_age_threshold_reconciliation_reviewed_v1_1.csv": "9b853de53c9f61343cefc28764582c5433906afabdc288feb95957bd55e9bd2f",
+      "mnn_identity_enrichment_pass_human_review_v2 - mnn_identity_enrichment_pass_human_review_v2.csv": "ec167da556040e71e458c6bc74ba832b9f5cc60372d4e6e3de346f1373f93f5b",
+      "mnn_identity_enrichment_pass_research_context.csv": "7fe535fd4bf4dc9c22df995e61f3c542fd84be84275e5becd23a863d12a45146",
+      "mnn_identity_enrichment_pass_results.csv": "be3e8c74ec63c303261ae2aa3d7a79fbf545e2b7df60f4b9e5c485d276f94736",
+      "mnn_identity_enrichment_pass_review_text_quality_v1.csv": "2ad6c69e6f7bfac410ec2270f7c1d608fdf45fdd48fdd66564405cd6c2d4c344"
+    },
+    "normalized_text_present": true,
+    "optional_age_file_present": true,
+    "primary_input": "mnn_identity_enrichment_pass_human_review_v2 - mnn_identity_enrichment_pass_human_review_v2.csv",
+    "research_context_overlap": 55,
+    "text_quality_input_rows": 10,
+    "unique_product_id": 100
+  },
+  "representative_examples": [
+    {
+      "before": "ЭПЛЕРЕНОН-ТЕВА 25мг N30 таб. покрытые пленочной оболочкой Тева фармасьютикал воркс прайвэт Лимитед Компани | Тева фармасьютикал воркс прайвэт Лимитед Компани | Тева фармасьютикал воркс прайвэт Лимитед Компани | N30",
+      "full_v4": "ЭПЛЕРЕНОН-ТЕВА; таблетки, покрытые пленочной оболочкой; 25 мг; N30; производитель: Тева фармасьютикал воркс прайвэт Лимитед Компани",
+      "identity_v4": "Эплеренон-Тева; таблетки; 25 мг; N30; Тева фармасьютикал воркс прайвэт Лимитед Компани",
+      "product_id": "68",
+      "query_v4": "Эплеренон-Тева таблетки 25 мг N30"
+    },
+    {
+      "before": "ГЕСПЕРИДИН+ДИОСМИН 100мг+900мг N30 таб. покрытые пленочной оболочкой Алиум АО | Алиум АО | Алиум АО | N30",
+      "full_v4": "ГЕСПЕРИДИН+ДИОСМИН; таблетки, покрытые пленочной оболочкой; 100 мг + 900 мг; N30; производитель: Алиум АО",
+      "identity_v4": "Гесперидин+Диосмин; таблетки; 100 мг + 900 мг; N30; Алиум АО",
+      "product_id": "88",
+      "query_v4": "Гесперидин+Диосмин таблетки 100 мг + 900 мг N30"
+    },
+    {
+      "before": "МЕЛИССЫ ЛЕКАРСТВЕННОЙ ТРАВА Ф/П 1,5Г №20 ЗДОРОВЬЕ | ЗДОРОВЬЕ ФИРМА ООО | ЗДОРОВЬЕ ФИРМА ООО",
+      "full_v4": "МЕЛИССЫ ЛЕКАРСТВЕННОЙ; трава, фильтр-пакеты; 1.5 г; N20; производитель: ЗДОРОВЬЕ ФИРМА ООО",
+      "identity_v4": "Мелиссы Лекарственной; фильтр-пакеты; 1.5 г; N20; ЗДОРОВЬЕ ФИРМА ООО",
+      "product_id": "13616",
+      "query_v4": "Мелиссы Лекарственной фильтр-пакеты 1.5 г N20"
+    },
+    {
+      "before": "ТАМИФЛЮ КАПС. 75МГ №10 | ДЕЛФАРМ МИЛАНО С.Р.Л./Ф.ХОФФМАНН-ЛЯ РОШ ЛТД/СЕНЕКСИ С.А.С. | ДЕЛФАРМ МИЛАНО С.Р.Л./Ф.ХОФФМАНН-ЛЯ РОШ ЛТД/СЕНЕКСИ С.А.С.",
+      "full_v4": "ТАМИФЛЮ; капсулы; 75 мг; N10; производитель: ДЕЛФАРМ МИЛАНО С.Р.Л./Ф.ХОФФМАНН-ЛЯ РОШ ЛТД/СЕНЕКСИ С.А.С.",
+      "identity_v4": "Тамифлю; капсулы; 75 мг; N10; ДЕЛФАРМ МИЛАНО С.Р.Л./Ф.ХОФФМАНН-ЛЯ РОШ ЛТД/СЕНЕКСИ С.А.С.",
+      "product_id": "5270",
+      "query_v4": "Тамифлю капсулы 75 мг N10"
+    },
+    {
+      "before": "ФЛУКОНАЗОЛ-OBL КАПС. 150МГ №4 | ОБОЛЕНСКОЕ ФП АО | ОБОЛЕНСКОЕ ФП АО",
+      "full_v4": "ФЛУКОНАЗОЛ-OBL; капсулы; 150 мг; N4; производитель: ОБОЛЕНСКОЕ ФП АО",
+      "identity_v4": "Флуконазол-OBL; капсулы; 150 мг; N4; ОБОЛЕНСКОЕ ФП АО",
+      "product_id": "3065",
+      "query_v4": "Флуконазол-OBL капсулы 150 мг N4"
+    }
+  ],
+  "safety": {
+    "brand_preserved_count": 100,
+    "duplicate_product_id_in_output": 0,
+    "empty_output_count": 0,
+    "exception_row_count": 3,
+    "flag_counts": {
+      "ambiguous_parse": 3,
+      "manufacturer_conflict": 0,
+      "possible_brand_loss": 0,
+      "possible_form_loss": 0,
+      "possible_pack_loss": 0,
+      "possible_strength_loss": 0
+    },
+    "manufacturer_in_original_ok": 100,
+    "pack_retained_count": 100,
+    "strength_retained_count": 100
+  }
+}
