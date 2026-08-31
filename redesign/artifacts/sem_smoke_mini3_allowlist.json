@@ -1,0 +1,13 @@
+{
+  "wave_label": "mini3",
+  "seed": "sem_wave100_mini3_policy_v2",
+  "n": 3,
+  "product_ids": [
+    36,
+    71,
+    91
+  ],
+  "generated_at": "2026-07-30T15:04:19.192377+00:00",
+  "isolation_filter": "exclude prod Stage 2 log/runs activity last 24h",
+  "applied_via": "n8n_temp_postgres_workflow"
+}
