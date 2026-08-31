@@ -81,6 +81,51 @@ WHERE st.experiment_enabled IS TRUE
 ORDER BY p.product_id
 LIMIT {{ Number($('Run — Create Run').first().json.batch_size) || 5 }};"""
 
+# Wave-500 MNN v3: allowlist isolation only — also loads classified rows so N=500
+# is reachable after excluding prior Sem selections. Snapshot still off; revert restores backup.
+SMOKE_LOAD_SQL_ALLOWLIST_WIDE = """-- SEM SMOKE temporary Load (hierarchy-dev only) — ALLOWLIST-WIDE
+-- Includes classified (allowlist + kill-switch isolation). Revert via backup.
+WITH settings AS (
+  SELECT
+    COALESCE(
+      (SELECT (value->>'value')::boolean
+       FROM pipeline_settings
+       WHERE key = 'hierarchy_experiment_enabled'),
+      false
+    ) AS experiment_enabled,
+    COALESCE(
+      (SELECT value->'product_ids'
+       FROM pipeline_settings
+       WHERE key = 'hierarchy_product_allowlist'),
+      '[]'::jsonb
+    ) AS product_ids
+)
+SELECT
+  p.product_id,
+  p.product_raw_id,
+  p.rule_top_category_id,
+  p.rule_top_score,
+  p.rule_shortlist_id,
+  p.rule_decision_status,
+  p.decision_status,
+  s.product_type_guess,
+  s.shortlist_count,
+  s.shortlist_json,
+  s.combined_text
+FROM product_classification p
+JOIN classification_shortlist s
+  ON s.product_id = p.product_id
+CROSS JOIN settings st
+WHERE st.experiment_enabled IS TRUE
+  AND jsonb_array_length(st.product_ids) > 0
+  AND p.decision_status IN ('pending', 'needs_human_review', 'classified', 'pending_fallback')
+  AND (s.stage IS NULL OR s.stage = 'primary_rules')
+  AND p.product_id = ANY (
+    SELECT jsonb_array_elements_text(st.product_ids)::bigint
+  )
+ORDER BY p.product_id
+LIMIT {{ Number($('Run — Create Run').first().json.batch_size) || 5 }};"""
+
 SAFE_CREATE_RUN_META = (
     "'{{ JSON.stringify({ trigger: $json.trigger || \"manual\", skeleton: \"b2\" })"
     ".replace(/'/g, \"''\") }}'::jsonb"
@@ -229,13 +274,21 @@ def apply_smoke(
     seed: str,
     allowlist_n: int,
     with_inject: bool,
+    include_classified: bool = False,
 ) -> None:
     load = node_by_name(wf, LOAD_NAME)
-    load["parameters"]["query"] = SMOKE_LOAD_SQL
-    load["notes"] = (
-        "SEM SMOKE temporary: allowlist + kill-switch with safe defaults; "
-        "revert via backup restore"
-    )
+    if include_classified:
+        load["parameters"]["query"] = SMOKE_LOAD_SQL_ALLOWLIST_WIDE
+        load["notes"] = (
+            "SEM SMOKE ALLOWLIST-WIDE (incl. classified); "
+            "revert via backup restore"
+        )
+    else:
+        load["parameters"]["query"] = SMOKE_LOAD_SQL
+        load["notes"] = (
+            "SEM SMOKE temporary: allowlist + kill-switch with safe defaults; "
+            "revert via backup restore"
+        )
     patch_create_run_metadata(wf, wave=wave, seed=seed, allowlist_n=allowlist_n)
     patch_init_smoke_wave(wf, wave)
     if with_inject:
@@ -302,6 +355,11 @@ def main() -> int:
     parser.add_argument("--allowlist-n", type=int, default=15)
     parser.add_argument("--no-push", action="store_true")
     parser.add_argument(
+        "--include-classified",
+        action="store_true",
+        help="Allowlist-wide Load including classified (Wave-500 MNN v3)",
+    )
+    parser.add_argument(
         "--revert-fallback",
         action="store_true",
         help="Manual reconstruction if backup missing",
@@ -345,6 +403,7 @@ def main() -> int:
             seed=args.seed,
             allowlist_n=args.allowlist_n,
             with_inject=False,
+            include_classified=bool(args.include_classified),
         )
     else:
         apply_smoke(
@@ -353,6 +412,7 @@ def main() -> int:
             seed=args.seed,
             allowlist_n=args.allowlist_n,
             with_inject=True,
+            include_classified=bool(args.include_classified),
         )
     save_wf(wf)
     if not args.no_push:
@@ -363,6 +423,7 @@ def main() -> int:
                 "action": args.action,
                 "seed": args.seed,
                 "allowlist_n": args.allowlist_n,
+                "include_classified": bool(args.include_classified),
                 "inject": args.action == "apply-s2-live",
                 "pushed": not args.no_push,
             },

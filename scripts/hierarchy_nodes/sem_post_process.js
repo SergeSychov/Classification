@@ -57,7 +57,207 @@ const ATTR_KEYS = [
   'combination_hint',
 ];
 
-const RX_OTC_ALLOWED = new Set(['rx', 'otc', 'unknown', null]);
+const VITAMIN_NOSOLOGY = new Set([
+  'нутрицевтики',
+  'парафармацевтики',
+  'эубиотики',
+  'отдельные нутриенты',
+  'комплексные профили',
+]);
+
+/** Ordered nutrient patterns: first match wins (more specific first). */
+const NUTRIENT_RULES = [
+  { out: 'L-метилфолат', re: /l[\s-]*метилфолат|метилфолат|methylfolate/ },
+  { out: 'Коэнзим Q10', re: /коэнзим\s*q\s*10|коэнзим\s*q10|coq10|убихинон/ },
+  { out: 'Омега-3', re: /омега[\s-]*3|omega[\s-]*3|омега\s*3/ },
+  { out: 'Псиллиум', re: /псиллиум|псилли?ум|psyllium|подорожник\s+яйцевид/ },
+  { out: 'Куркумин', re: /куркумин|curcumin/ },
+  { out: 'Коллаген', re: /коллаген|collagen/ },
+  { out: 'Таурин', re: /таурин(?!\s*табс)|таурин\b/ },
+  { out: 'Лецитин', re: /лецитин/ },
+  { out: 'Хром', re: /\bхром\b|chromium/ },
+  { out: 'Лютеин', re: /лютеин/ },
+  { out: 'МСМ', re: /\bмсм\b|\bmsm\b/ },
+  { out: 'Аскорбиновая кислота', re: /аскорбин|витамин\s*c\b|ascorb/ },
+];
+
+const MULTI_VITAMIN_BRANDS =
+  /компливит|алфавит|супрадин|daily\s*vits|мультивитам|поливитам|витаминно[\s-]*минеральн|нейчес\s+баунти|nature'?s\s+bounty/i;
+
+function foldText(s) {
+  return String(s || '')
+    .toLowerCase()
+    .replace(/ё/g, 'е')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function normalizeRxOtc(raw, productKind) {
+  if (productKind && productKind !== 'drug') return 'не применимо';
+  const t = foldText(raw);
+  if (!t) return null;
+  if (
+    t === 'rx' ||
+    /^(рецептурн|по\s+рецепту)/.test(t) ||
+    t.includes('рецептурн') ||
+    /\bпо\s+рецепту\b/.test(t)
+  ) {
+    if (/без\s*рецепт|безрецептур|otc|овер/.test(t) && !/по\s+рецепту|рецептурн/.test(t)) {
+      return 'otc';
+    }
+    if (/без\s*рецепт|безрецептур/.test(t)) return 'otc';
+    return 'rx';
+  }
+  if (
+    t === 'otc' ||
+    /без\s*рецепт|безрецептур|овер[\s-]*каунтер|over[\s-]*the[\s-]*counter/.test(t)
+  ) {
+    return 'otc';
+  }
+  if (t === 'не применимо' || t === 'n/a' || t === 'na' || t === 'unknown') return null;
+  return null;
+}
+
+function detectNutrientInText(text) {
+  const t = foldText(text);
+  if (!t) return null;
+  for (const rule of NUTRIENT_RULES) {
+    if (rule.re.test(t)) return rule.out;
+  }
+  return null;
+}
+
+function countNutrientHits(text) {
+  const t = foldText(text);
+  let n = 0;
+  for (const rule of NUTRIENT_RULES) {
+    if (rule.re.test(t)) n += 1;
+  }
+  return n;
+}
+
+function mnnGroundedInText(mnn, text) {
+  const m = foldText(mnn);
+  const t = foldText(text);
+  if (!m || !t) return false;
+  if (m === 'комплекс') return true;
+  // Require a substantial token from mnn to appear in text (avoid brand→random INN).
+  const tokens = m
+    .split(/[^a-zа-я0-9+]+/i)
+    .map((x) => x.trim())
+    .filter((x) => x.length >= 4);
+  if (tokens.length === 0) {
+    // short codes like B12, D3
+    return /\b[bв]?[0-9]{1,2}\b|\b[aadeкk]\b/i.test(m) ? t.includes(m.replace(/\s/g, '')) || /витамин/.test(t) : t.includes(m);
+  }
+  return tokens.some((tok) => t.includes(tok));
+}
+
+function looksLikeNutrientLabel(s) {
+  const t = foldText(s);
+  if (!t) return false;
+  if (/^витамин\b|^vitamin\b/.test(t)) return true;
+  if (/^(b|в)\s*-?\s*\d+|фолиев|омега|ретинол|токоферол|аскорбин/.test(t)) return true;
+  if (t === 'комплекс') return true;
+  return false;
+}
+
+function normalizeVitaminNosology(raw) {
+  const t = foldText(raw);
+  if (!t) return null;
+  for (const allowed of VITAMIN_NOSOLOGY) {
+    if (t === foldText(allowed)) return allowed;
+  }
+  if (/эубиот|пробиот|пребиот|синбиот/.test(t)) return 'эубиотики';
+  if (/парафарм/.test(t)) return 'парафармацевтики';
+  if (/нутрицевт|бад|биодобав/.test(t)) return 'нутрицевтики';
+  if (/комплексн|мультивитам|поливитам/.test(t)) return 'комплексные профили';
+  if (/отдельн|моно|нутриент|витамин/.test(t)) return 'отдельные нутриенты';
+  return null;
+}
+
+function normalizeCombinationHint(raw, mode) {
+  const t = foldText(raw);
+  if (mode === 'mono') return 'монокомпонентный';
+  if (mode === 'multi_brand') return 'многокомпонентный витаминно-минеральный комплекс';
+  if (mode === 'combo') {
+    if (/монокомпонент|монопрепарат|моно\b/.test(t)) return 'комбинированный';
+    if (/многокомпонентн.*витамин|витаминно[\s-]*минеральн/.test(t)) {
+      return 'многокомпонентный витаминно-минеральный комплекс';
+    }
+    if (/многокомпонентн/.test(t)) return 'многокомпонентный комплекс';
+    if (/комбинир|комплекс/.test(t) || !t) return 'комбинированный';
+    // Drop free-text like «лецитин + расторопша» / «черника + лютеин»
+    if (/\+|и\s+/.test(t) && t.length < 60) return 'комбинированный';
+    return 'комбинированный';
+  }
+  return safeText(raw);
+}
+
+function enforceVitaminNosologyAndMnn(attrs, textHint) {
+  let nos = safeText(attrs.nosology);
+  let mnn = safeText(attrs.mnn);
+  let combo = safeText(attrs.combination_hint);
+  const text = foldText(textHint || '') + ' ' + foldText(mnn) + ' ' + foldText(attrs.brand);
+
+  if (nos && looksLikeNutrientLabel(nos) && !VITAMIN_NOSOLOGY.has(foldText(nos))) {
+    if (!mnn) mnn = nos;
+    const isComplex = /комплекс|мульти|поливитам/i.test(nos);
+    nos = isComplex ? 'комплексные профили' : 'отдельные нутриенты';
+  }
+  const mapped = normalizeVitaminNosology(nos);
+  if (nos && !mapped) {
+    nos = mnn && /комплекс/i.test(mnn) ? 'комплексные профили' : 'нутрицевтики';
+  } else if (mapped) {
+    nos = mapped;
+  }
+
+  const nutrient = detectNutrientInText(textHint || text);
+  const hits = countNutrientHits(textHint || text);
+  const isMultiBrand = MULTI_VITAMIN_BRANDS.test(textHint || text);
+
+  if (isMultiBrand && hits !== 1) {
+    mnn = 'Комплекс';
+    combo = normalizeCombinationHint(combo, 'multi_brand');
+    if (!nos || nos === 'нутрицевтики') nos = 'комплексные профили';
+  } else if (nutrient && (hits === 1 || !mnn || foldText(mnn) === 'комплекс')) {
+    // Prefer explicit single nutrient over bare «Комплекс».
+    if (hits <= 1 || foldText(mnn) === 'комплекс' || !mnn) {
+      mnn = nutrient;
+      combo = normalizeCombinationHint(combo, hits > 1 ? 'combo' : 'mono');
+      if (hits <= 1 && (!nos || nos === 'комплексные профили')) nos = 'отдельные нутриенты';
+    }
+  } else if (foldText(mnn) === 'комплекс' || (!mnn && hits >= 2)) {
+    mnn = 'Комплекс';
+    combo = normalizeCombinationHint(combo, isMultiBrand ? 'multi_brand' : 'combo');
+    if (!nos) nos = 'комплексные профили';
+  } else if (mnn && hits <= 1 && nutrient && foldText(mnn) === foldText(nutrient)) {
+    combo = normalizeCombinationHint(combo, 'mono');
+  } else if (combo) {
+    // Normalize free-form combo labels when already set
+    if (/монокомпонент|монопрепарат|без\s+добавок|моно\b/.test(foldText(combo))) {
+      combo = 'монокомпонентный';
+    } else if (/многокомпонентн.*витамин|витаминно[\s-]*минеральн/.test(foldText(combo))) {
+      combo = 'многокомпонентный витаминно-минеральный комплекс';
+    } else if (/многокомпонентн/.test(foldText(combo))) {
+      combo = 'многокомпонентный комплекс';
+    } else if (/комбинир|комплекс|\+/.test(foldText(combo))) {
+      combo = 'комбинированный';
+    }
+  }
+
+  attrs.nosology = nos;
+  attrs.mnn = mnn;
+  attrs.combination_hint = combo;
+}
+
+function enforceDrugMnnGrounding(attrs, text) {
+  const mnn = safeText(attrs.mnn);
+  if (!mnn) return;
+  if (!mnnGroundedInText(mnn, text)) {
+    attrs.mnn = null;
+  }
+}
 
 return items.map((item, index) => {
   const root = item.json || {};
@@ -65,8 +265,16 @@ return items.map((item, index) => {
   const C = root.constants || {};
 
   const WORKFLOW_VERSION = root.workflow_version || 'stage2_hierarchy_v1';
-  const PROMPT_VERSION = root.prompt_version || 'prompt_semantic_v1';
+  const PROMPT_VERSION = 'prompt_semantic_v5';
   const STAGE = (C.stage && C.stage.semantic_primary) || 'semantic_primary';
+  const productKind = safeText(root.product_kind) || 'other';
+  const productFamily = safeText(root.product_family);
+  const medicalDeviceProfile = safeText(root.medical_device_profile);
+  const productKindGroupHint = safeText(root.product_kind_group_hint);
+  const attrProfile =
+    root.attr_profile && typeof root.attr_profile === 'object' && !Array.isArray(root.attr_profile)
+      ? root.attr_profile
+      : {};
   const DECISION_PENDING =
     (C.decision_status && C.decision_status.pending_fallback) || 'pending_fallback';
   const NEXT_DIR =
@@ -121,9 +329,7 @@ return items.map((item, index) => {
         semanticAttrs = {};
         for (const key of ATTR_KEYS) {
           if (key === 'rx_otc') {
-            const rx = safeText(obj.rx_otc);
-            semanticAttrs.rx_otc =
-              rx === null ? null : RX_OTC_ALLOWED.has(rx.toLowerCase()) ? rx.toLowerCase() : rx;
+            semanticAttrs.rx_otc = normalizeRxOtc(obj.rx_otc, productKind);
           } else {
             semanticAttrs[key] = safeText(obj[key]);
           }
@@ -137,13 +343,7 @@ return items.map((item, index) => {
         semanticAttrs = {};
         for (const key of ATTR_KEYS) {
           if (key === 'rx_otc') {
-            const rx = safeText(obj.rx_otc);
-            if (rx === null) semanticAttrs.rx_otc = null;
-            else if (RX_OTC_ALLOWED.has(rx.toLowerCase())) semanticAttrs.rx_otc = rx.toLowerCase();
-            else {
-              semanticAttrs.rx_otc = rx;
-              // non-fatal: keep attr, mark soft warning via reject_reason only if otherwise OK
-            }
+            semanticAttrs.rx_otc = normalizeRxOtc(obj.rx_otc, productKind);
           } else {
             semanticAttrs[key] = safeText(obj[key]);
           }
@@ -153,6 +353,43 @@ return items.map((item, index) => {
         logStatus = LOG.success || 'success';
       }
     }
+  }
+
+  // Enforce Sem0 attr_profile + kind-specific hard-nulls (policy rules patch).
+  if (semanticAttrs && typeof semanticAttrs === 'object') {
+    for (const key of ATTR_KEYS) {
+      if (attrProfile[key] === 'not_applicable') {
+        semanticAttrs[key] = null;
+      }
+    }
+    const textHint = root.normalized_text || root.combined_text || '';
+    if (productKind === 'vitamin_or_baa') {
+      semanticAttrs.rx_otc = 'не применимо';
+      enforceVitaminNosologyAndMnn(semanticAttrs, textHint);
+    } else if (productKind === 'medical_device') {
+      semanticAttrs.mnn = null;
+      semanticAttrs.rx_otc = 'не применимо';
+      semanticAttrs.nosology = null;
+      semanticAttrs.combination_hint = null;
+    } else if (productKind === 'cosmetic_hygiene') {
+      semanticAttrs.mnn = null;
+      semanticAttrs.rx_otc = 'не применимо';
+      semanticAttrs.nosology = null;
+      semanticAttrs.dosage = null;
+      semanticAttrs.combination_hint = null;
+      // route / form allowed when attr_profile says applicable (policy v3).
+    } else if (productKind === 'drug') {
+      enforceDrugMnnGrounding(semanticAttrs, textHint);
+      semanticAttrs.rx_otc = normalizeRxOtc(semanticAttrs.rx_otc, 'drug');
+    } else {
+      // other
+      semanticAttrs.rx_otc = 'не применимо';
+    }
+    semanticAttrs.product_kind = productKind;
+    semanticAttrs.product_family = productFamily;
+    semanticAttrs.attr_profile = attrProfile;
+    if (medicalDeviceProfile) semanticAttrs.medical_device_profile = medicalDeviceProfile;
+    if (productKindGroupHint) semanticAttrs.product_kind_group_hint = productKindGroupHint;
   }
 
   // Always soft-continue to Dir seam; never classified at Sem.
@@ -172,7 +409,7 @@ return items.map((item, index) => {
     actor_name: MODEL_NAME,
     validation_passed: validationPassed,
     reject_reason: rejectReason,
-    notes: 'semantic_primary_v1',
+    notes: 'semantic_primary_v5',
   });
 
   const routingHint = {

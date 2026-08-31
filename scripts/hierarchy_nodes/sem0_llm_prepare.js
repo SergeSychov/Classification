@@ -1,4 +1,4 @@
-// Sem — LLM Prepare (hierarchy B3 Sem).
+// Sem0 — LLM Prepare (product_kind_select).
 
 function withoutStaleLlmOutput(j) {
   const src = j || {};
@@ -17,7 +17,7 @@ function withoutStaleLlmOutput(j) {
 return items.map((item, index) => {
   const j = withoutStaleLlmOutput(item.json);
   const WORKFLOW_VERSION = 'stage2_hierarchy_v1';
-  const PROMPT_VERSION = 'prompt_semantic_v5';
+  const PROMPT_VERSION = 'prompt_sem0_v3';
   const C = j.constants || {};
 
   return {
@@ -25,7 +25,7 @@ return items.map((item, index) => {
       ...j,
       workflow_version: WORKFLOW_VERSION,
       prompt_version: PROMPT_VERSION,
-      stage: (C.stage && C.stage.semantic_primary) || 'semantic_primary',
+      stage: 'product_kind_select',
       actor_type: (C.actor_type && C.actor_type.llm) || 'llm',
       actor_name:
         (C.model && C.model.cascade_actor_name) ||

@@ -51,8 +51,7 @@ return items.map((item, index) => {
   const actorType = sqlText(j.actor_type) || 'llm';
   const actorName = sqlText(j.actor_name) || 'deepseek-chat';
   const workflowVersion = sqlText(j.workflow_version) || 'stage2_hierarchy_v1';
-  const promptVersion = sqlText(j.prompt_version) || 'prompt_semantic_v1';
-
+  const promptVersion = sqlText(j.prompt_version) || 'prompt_semantic_v5';
   const inputPayload = {
     product_id: sqlNumber(j.product_id),
     product_raw_id: sqlNumber(j.product_raw_id),

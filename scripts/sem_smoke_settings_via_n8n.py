@@ -83,6 +83,31 @@ SELECT
   (SELECT product_ids FROM arr) AS product_ids;
 """
 
+APPLY_FIXED_IDS_SQL_TEMPLATE = """
+WITH arr AS (
+  SELECT '{product_ids_json}'::jsonb AS product_ids
+),
+upd_allowlist AS (
+  UPDATE pipeline_settings ps
+  SET value = jsonb_build_object('product_ids', arr.product_ids),
+      updated_at = NOW()
+  FROM arr
+  WHERE ps.key = 'hierarchy_product_allowlist'
+  RETURNING ps.value AS allowlist
+),
+upd_enabled AS (
+  UPDATE pipeline_settings
+  SET value = '{{"value": true}}'::jsonb,
+      updated_at = NOW()
+  WHERE key = 'hierarchy_experiment_enabled'
+  RETURNING value AS enabled
+)
+SELECT
+  (SELECT enabled FROM upd_enabled) AS enabled,
+  (SELECT allowlist FROM upd_allowlist) AS allowlist,
+  (SELECT product_ids FROM arr) AS product_ids;
+"""
+
 REVERT_SQL = """
 WITH upd_enabled AS (
   UPDATE pipeline_settings
@@ -298,9 +323,40 @@ def main() -> int:
     parser.add_argument("--seed", default="sem_smoke_2026-07-22")
     parser.add_argument("--n", type=int, default=15)
     parser.add_argument("--wave-label", default="S1")
+    parser.add_argument(
+        "--ids-file",
+        help="JSON allowlist artifact with product_ids (fixed re-run; skips seeded pick)",
+    )
     args = parser.parse_args()
 
     if args.action == "apply":
+        if args.ids_file:
+            payload = json.loads(Path(args.ids_file).read_text(encoding="utf-8"))
+            ids = [int(x) for x in payload.get("product_ids") or []]
+            if args.n and len(ids) > args.n:
+                ids = ids[: int(args.n)]
+            ids_json = json.dumps(ids, ensure_ascii=False)
+            sql = APPLY_FIXED_IDS_SQL_TEMPLATE.format(
+                product_ids_json=ids_json.replace("'", "''")
+            )
+            out = run_sql(sql)
+            art = write_allowlist_artifact(args.seed, len(ids), ids, args.wave_label)
+            print(
+                json.dumps(
+                    {
+                        "action": "apply",
+                        "mode": "fixed_ids",
+                        "product_ids": ids,
+                        "count": len(ids),
+                        "artifact": str(art.relative_to(ROOT)),
+                        "raw_result": out.get("result"),
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+            )
+            return 0 if ids else 1
+
         sql = APPLY_SQL_TEMPLATE.format(seed=args.seed.replace("'", "''"), n=int(args.n))
         out = run_sql(sql)
         ids = extract_product_ids(out.get("result") or {})

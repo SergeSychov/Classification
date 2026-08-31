@@ -22,6 +22,7 @@ const NAMES = {
   deepseek: "Sem — DeepSeek",
   merge: "Sem — Merge LLM",
   post: "Sem — Post-process",
+  normAttrs: "Norm — Normalize Sem attrs",
   route: "Sem — Route",
   prepLog: "Sem — Prepare Log",
   sticky: "🔗 Sem — B3 (log-only; Dir later)",
@@ -112,6 +113,16 @@ function main() {
     id: uuid(),
     name: NAMES.post,
   };
+  const normAttrs = {
+    parameters: { jsCode: loadJs("sem_normalize_attrs.js") },
+    type: "n8n-nodes-base.code",
+    typeVersion: 2,
+    position: [2390, -1296],
+    id: uuid(),
+    name: NAMES.normAttrs,
+    notes:
+      "Normalize administration_route / dosage_form / age_segment. See sem_attr_dictionaries.md",
+  };
   const route = {
     parameters: {
       rules: {
@@ -164,7 +175,7 @@ function main() {
   const sticky = {
     parameters: {
       content:
-        "## Sem (B3)\n\n**Live:** Limit → Build → Prepare → Agent/DeepSeek → Merge → Post → Route → Prepare Log → Insert Log → Fin Barrier\n\n**No** Upsert Snapshot (terminal-only).\n**No** Dict Norm on this path.\n**No** category_id in Sem JSON.\nDefault `next_action=direction_select` (Dir not wired).\nLoad stays `WHERE false`.",
+        "## Sem (B3)\n\n**Live:** Limit → Build → Prepare → Agent/DeepSeek → Merge → Post → **Norm Sem attrs** → Route → Prepare Log → Insert Log → Fin Barrier\n\n**No** Upsert Snapshot (terminal-only).\n**No** Dict Norm on this path.\n**No** category_id in Sem JSON.\nDefault `next_action=direction_select` (Dir not wired).\nLoad stays `WHERE false`.",
       height: 320,
       width: 420,
       color: 5,
@@ -191,6 +202,7 @@ function main() {
     deepseek,
     merge,
     post,
+    normAttrs,
     route,
     prepLog,
     sticky
@@ -223,6 +235,9 @@ function main() {
     main: [[{ node: NAMES.post, type: "main", index: 0 }]],
   };
   connections[NAMES.post] = {
+    main: [[{ node: NAMES.normAttrs, type: "main", index: 0 }]],
+  };
+  connections[NAMES.normAttrs] = {
     main: [[{ node: NAMES.route, type: "main", index: 0 }]],
   };
   // Both Route outputs → Prepare Log (v1); B4 will rewire direction_select → Dir
@@ -270,8 +285,8 @@ function main() {
 
   fs.writeFileSync(WF_PATH, JSON.stringify(wf, null, 2) + "\n", "utf8");
   console.log(`Patched ${WF_PATH}`);
-  console.log("  + Sem zone (Build/Prepare/Agent/DeepSeek/Merge/Post/Route/Prepare Log)");
-  console.log("  wire: Limit → Sem → Prepare Log → Insert Log → Fin Barrier");
+  console.log("  + Sem zone (Build/Prepare/Agent/DeepSeek/Merge/Post/Norm attrs/Route/Prepare Log)");
+  console.log("  wire: Limit → Sem → Norm attrs → Prepare Log → Insert Log → Fin Barrier");
   console.log("  Load WHERE false retained; Dict Norm unwired; empty Fin retained");
 }
 

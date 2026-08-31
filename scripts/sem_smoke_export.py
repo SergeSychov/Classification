@@ -82,14 +82,35 @@ def rows_from_execution(exec_id: str) -> tuple[list[dict], dict]:
     data = api_request("GET", f"/api/v1/executions/{exec_id}?includeData=true")
     run_data = data.get("data", {}).get("resultData", {}).get("runData", {})
     posts = flat_node(run_data, "Sem — Post-process")
+    norms = flat_node(run_data, "Norm — Normalize Sem attrs")
+    # Prefer Norm output for attrs (normalized); fall back to Post-process.
+    by_pid: dict = {}
+    for j in posts:
+        pid = j.get("product_id") or (j.get("context") or {}).get("product_id")
+        by_pid[pid] = {"post": j, "norm": None}
+    for j in norms:
+        pid = j.get("product_id") or (j.get("context") or {}).get("product_id")
+        if pid in by_pid:
+            by_pid[pid]["norm"] = j
+        else:
+            by_pid[pid] = {"post": j, "norm": j}
     closes = flat_node(run_data, "Fin — Close Run")
     rows = []
-    for j in posts:
+    for pid, pair in by_pid.items():
+        j = pair["norm"] or pair["post"]
+        post = pair["post"] or j
         attrs = j.get("semantic_attrs") if isinstance(j.get("semantic_attrs"), dict) else {}
+        post_attrs = (
+            post.get("semantic_attrs") if isinstance(post.get("semantic_attrs"), dict) else {}
+        )
+        meta_norm = j.get("sem_attr_norm_meta") if isinstance(j.get("sem_attr_norm_meta"), dict) else {}
         row = {
-            "product_id": j.get("product_id") or (j.get("context") or {}).get("product_id"),
+            "product_id": pid,
             "run_id": j.get("run_id") or (j.get("context") or {}).get("run_id"),
             "normalized_text": j.get("normalized_text"),
+            "product_kind": j.get("product_kind") or attrs.get("product_kind"),
+            "medical_device_profile": j.get("medical_device_profile")
+            or attrs.get("medical_device_profile"),
             "semantic_confidence": j.get("semantic_confidence"),
             "semantic_explanation": j.get("semantic_explanation"),
             "semantic_validation_passed": j.get("semantic_validation_passed"),
@@ -99,6 +120,15 @@ def rows_from_execution(exec_id: str) -> tuple[list[dict], dict]:
             "selected_category_id": j.get("selected_category_id"),
             "stage": j.get("stage"),
             "log_status": j.get("log_status"),
+            "attr_administration_route_raw": meta_norm.get("administration_route_raw")
+            if meta_norm
+            else post_attrs.get("administration_route"),
+            "attr_dosage_form_raw": meta_norm.get("dosage_form_raw")
+            if meta_norm
+            else post_attrs.get("dosage_form"),
+            "attr_age_segment_raw": meta_norm.get("age_segment_raw")
+            if meta_norm
+            else post_attrs.get("age_segment"),
         }
         for key in ATTR_KEYS:
             row[f"attr_{key}"] = attrs.get(key) if attrs else None
@@ -112,8 +142,10 @@ def rows_from_execution(exec_id: str) -> tuple[list[dict], dict]:
             for x in closes[-1:]
         ],
         "sem_count": len(posts),
+        "sem_norm_count": len(norms),
         "upsert_snapshot_ran": "DB — Upsert Snapshot" in run_data,
         "sem_agent_ran": "Sem — AI Agent" in run_data,
+        "sem_norm_ran": "Norm — Normalize Sem attrs" in run_data,
     }
     return rows, meta
 
@@ -123,6 +155,8 @@ def csv_fieldnames() -> list[str]:
         "product_id",
         "run_id",
         "normalized_text",
+        "product_kind",
+        "medical_device_profile",
         "semantic_confidence",
         "semantic_explanation",
         "semantic_validation_passed",
@@ -132,6 +166,9 @@ def csv_fieldnames() -> list[str]:
         "selected_category_id",
         "stage",
         "log_status",
+        "attr_administration_route_raw",
+        "attr_dosage_form_raw",
+        "attr_age_segment_raw",
     ]
     for key in ATTR_KEYS:
         base.append(f"attr_{key}")
