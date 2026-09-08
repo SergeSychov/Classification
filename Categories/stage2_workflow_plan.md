@@ -458,9 +458,9 @@
 
 ---
 
-## Hierarchy redesign progress (updated 2026-08-19)
+## Hierarchy redesign progress (updated 2026-09-08)
 
-Отдельный трек от current Stage 2. Канон: `redesign/20_MIGRATION_PLAN.md`, статус: `redesign/00_PROJECT_STATUS.md`, короткий roadmap: `redesign/29_SHORT_ROADMAP.md`.  
+Отдельный трек от current Stage 2. Канон: `redesign/20_MIGRATION_PLAN.md`, статус: `redesign/00_PROJECT_STATUS.md`, короткий roadmap: `redesign/29_SHORT_ROADMAP.md`, digest 20 дней: `redesign/31_CHANGES_2026-08-19_to_2026-09-08.md`.  
 **Prod Stage 2** (`classification-stage2-dev`, `BaBjEPi78taRj2G5`) — **не менялся**.
 
 ### Done
@@ -473,7 +473,7 @@
 * **B3 Sem** (`semantic_primary`, log-only) — **закрыта в git** ✅ (см. п.26); Dir не подключён; snapshot не пишется.
 * **Sem smoke S0/S1/S2** — **закрыта** ✅ (см. п.27); reversible allowlist; rollback to safe default verified.
 * **Wave-100 Sem validation (v1)** — **done** (exec **19932**, N=100, pre-Sem0): LLM-on / snapshot-off; gate awaiting human labels.
-* **Sem0 + Sem1 attr_profile policy v2** — **finalized** (см. п.29–30): `prompt_sem0_v2` / `prompt_semantic_v3`; Wave-100 rerun chunked 10×10; progress tooling; rollback verified.
+* **Sem0 + Sem1 attr_profile policy v2** — **finalized** (см. п.29–30): `prompt_sem0_v2` / `prompt_semantic_v3`; Wave-100 rerun chunked 10×10; progress tooling; rollback verified. Sem0+Sem attr Norm **зафиксированы в git** (2026-08-31).
 * **Offline MNN identity gate Wave‑500 v3 + enrichment run 461 + human-review quality baseline** — **done** ✅ (см. **п.38**). MNN/RX/Age **не** влиты в live Sem / `attr_*`.
 * **Offline BAS/Other override policy v1 + human validation (M2 / M2.1)** — **done** ✅ (см. **п.39**). Audit-only; implementation contract draft **not applied**.
 * **M3.0 RX/OTC source audit + M3.1 standalone retriever design** — **done** ✅ (см. **п.40**).
@@ -484,6 +484,7 @@
 * **M4 Age pilot contract** — **validated** ✅ (см. **п.45**). Audit-only; not a routing gate; not merged to `attr_age_segment`.
 * **M5.0 Norm v4 offline experiment** — **done** ✅ (см. **п.46**). Parallel fields only; current `normalized_text` not replaced. **Not accepted** for hierarchy-dev / n8n rollout.
 * **M5.1 Norm v4.1 offline remediation** — **done** ✅ (см. **п.47**). Pack structure + retrieval composite + manufacturer-prefix recovery; `*_v4_1` only.
+* **n8n execution contract** — **done** ✅ (см. **п.48**). One live exec / workflow; chunks ≤ 10; zombie stop > 30 min.
 
 ### Not done
 
@@ -506,6 +507,7 @@
 4. Dir → Need → Cat → optional Mnn → Judge only after Sem gate + explicit MNN merge approval.
 5. M3.2c / RX P1 re-entry — only if **п.44** re-entry criteria are met. Do not activate `rx-otc-product-retrieval-dev`.
 6. Age remains audit-only (п.45). Do not write `attr_age_segment`.
+7. Keep n8n waves under **п.48** (no `batch_size=100`/`500` in one execution).
 
 ---
 
@@ -1736,3 +1738,194 @@ no commit/push.
 * Human labels on `label_norm_v4_1_*`.
 * Not: live Norm rewrite; hierarchy-dev Code node; prod; `attr_*` merge; overwrite `normalized_text`.
 
+---
+
+48. **n8n execution contract — one live run, chunks ≤ 10 (2026-08-31)**
+
+* **Статус:** **done** (ops / runners / docs). Prod Stage 2 business logic and hierarchy Sem cascade semantics — **не менялись**. Kill switch / Load stub / snapshot-off defaults — **не менялись**.
+* **Причина:** Merge `combineByPosition` + parallel LLM items; stacked minute-tick crons → host ~200% CPU / standby.
+
+#### Rules (canon)
+
+* One live execution per workflow (`running` / `waiting` / `new` → wait or stop).
+* LLM/Merge-parallel **chunk size ≤ 10**; default smoke **5**. Never `batch_size=100`/`500` in one execution.
+* Next chunk only after previous terminal.
+* Stop zombies older than **30 minutes** before a new run.
+* No `* * * * *` crons that perform HTTP/LLM.
+* Do not enable error-workflow autoresume while task runner is unhealthy.
+
+#### Delivered
+
+* Doc: `Categories/n8n_execution_contract.md`
+* Helper: `scripts/n8n_executions.py`
+* Cursor rule: `.cursor/rules/n8n-executions.mdc`
+* Runners: `run_workflow.py`, `run_hierarchy_workflow.py`, `wave100_chunked_run.py`, `wave_progress.py`, `run_batch_1000_resilient.py`
+* Cross-links in `stage2_workflow_contract.md`, `stage2_node_map.md`, `.env.example`
+
+#### Isolation / note
+
+* Contract applies to Stage 2, hierarchy-dev, ShortList, enrichment, bakeoff, ops bots.
+* Local WIP risk (2026-09-08): hierarchy-dev webhook `batch_size` cap may drift to **500** — restore to **≤ 10** before any live wave (see digest §6).
+
+#### Next
+
+* Keep using chunked runners for Wave-100/500.
+* Human review M5.1 / Sem rubric unchanged (п.47 / п.28).
+
+49. Актуализация статуса после Cursor review — 2026-09-08
+
+#### Подтверждённые изменения статуса
+
+1. **Finish Run стабилизирован в current Stage 2**
+   - После Phase 1 подтверждён runtime-прогон `run_id=9`:
+     - `classification_runs.status='finished'`;
+     - `total_count=5`;
+     - `success_count=1`;
+     - `finished_at` заполнен.
+   - Исторические запуски `run_id=7` и `run_id=8` были исправлены backfill-операцией.
+   - Проблема зависания новых запусков в статусе `running`, ранее отмеченная как риск, больше не является текущим блокером.
+   - Current Stage 2 (`classification-stage2-dev`) считать production-like стабильным и не изменять в рамках hierarchy-redesign.
+
+2. **Граница между current Stage 2 и hierarchy-redesign сохранена**
+   - Production-like workflow `classification-stage2-dev` остаётся неизменным.
+   - Hierarchy-разработка ведётся только в clone `classification-stage2-hierarchy-dev` (`o8sugljHYuUs7IEC`).
+   - Clone остаётся `active but safe`:
+     - Load содержит `WHERE false`;
+     - allowlist пустой;
+     - `hierarchy_experiment_enabled=false`;
+     - P1/Dir/Need/Cat/Mnn/Judge не выполняются;
+     - snapshot не обновляется.
+   - Active-статус clone допустим только для webhook registration / controlled testing.
+
+3. **B1–B3 и Sem-контур подтверждены**
+   - B1: additive dev-схема и `hierarchy_*` runtime settings применены.
+   - B2: hierarchy skeleton clone и empty smoke завершены.
+   - B3 Norm: product normalization включена в live path hierarchy-dev; dict normalization находится на canvas и намеренно не подключена до B4/Direction.
+   - B3 Sem: `Sem0 → Sem1 → Normalize Sem attrs → log-only` реализован.
+   - Sem использует:
+     - `prompt_sem0_v2`;
+     - `prompt_semantic_v3`;
+     - fixed dictionaries для route/form/age.
+   - Sem не выбирает `category_id`, работает snapshot-off и пишет только event log.
+   - Sem smoke S0/S1/S2 завершён; allowlist rollback и возврат к safe default подтверждены.
+
+4. **Главный текущий gate hierarchy-трека — Sem Wave-100 human rubric**
+   - Wave-100 выполнен в LLM-on / snapshot-off режиме.
+   - Переход к Wave-500/1000 и реализации Dir+ запрещён до ручной разметки Wave-100.
+   - Gate:
+     - вычислить `critical_error_rate`;
+     - критичные поля: `mnn`, `dosage_form`, `administration_route`;
+     - условие прохода: `critical_error_rate < 15%`.
+   - Нужны размеченные `label_*`, numerator/denominator, разбиение ошибок по полям, список критичных кейсов и итоговое решение `PASS` или `HOLD`.
+   - При `HOLD`: подготовить taxonomy дефектов и remediation-plan, не запускать Wave-500.
+   - При `PASS`: можно переходить к B4 `Direction + Need` в soft-mode.
+
+5. **Offline MNN enrichment остаётся изолированным**
+   - Подтверждён baseline Wave-500 v3 и enrichment `run_id=461`:
+     - 104 вызова;
+     - 86 accepted;
+     - 18 unresolved;
+     - MNN drugish: 82/83;
+     - null-MNN non-drug: 17;
+     - RX/OTC: 72/83;
+     - Age: 59/83.
+   - Результаты остаются offline/audit-only.
+   - Не выполнять merge в `attr_*`, live Sem, snapshot, `product_kind` или `product_type` без отдельного approval.
+
+6. **BAS/Other override policy v1 завершена offline**
+   - Из 18 null-MNN/non-drug кандидатов:
+     - BAS proposal: 12;
+     - Other proposal: 1 (`product_id=9197`);
+     - no proposal: 5 (`72`, `11272`, `45`, `19198`, `9941`).
+   - 13 товаров подтверждены для будущего исключения из drug-MNN enrichment/human queue.
+   - Контракт остаётся draft-only и не применяется к PostgreSQL, Sem, snapshot, `attr_*`, `product_kind` или `product_type`.
+   - Возможное применение queue-exclusion — только по отдельному explicit approval.
+
+7. **RX/OTC research закрыт до появления новых источников**
+   - Зафиксирован policy: `KEEP_RX_OTC_P2_SUPPORT_ONLY`.
+   - Не запускать `M3.2c`, batch `11+30` и Phase A.
+   - Не использовать RX/OTC как routing gate.
+   - P2 может оставаться только supporting/candidate signal и не должен выставлять `final_rx_otc_value`.
+   - Re-entry возможен только при одном из условий:
+     - доступный public GRLS/P1 источник без login/WAF;
+     - утверждённый MAH registry с достаточным покрытием;
+     - новый явно одобренный эксперимент с P2 как soft signal.
+
+8. **Age-policy валидирована, но не включается в live routing**
+   - Age threshold — отдельное поле `age_min_years`, integer 0–18.
+   - 10/12/14/15/16 лет и формулировка «детям и взрослым» → `universal`.
+   - `adults` допустим только при 18+ или явном adult-only evidence.
+   - `children-only` требует explicit pediatric-only evidence.
+   - Age остаётся offline/audit-only и не вливается в `attr_age_segment`, snapshot, Sem или routing без отдельного approval.
+
+9. **Norm v4.1 — отдельный quality gate**
+   - M5.0 не принят для n8n rollout.
+   - M5.1 выполнил remediation:
+     - исправлены pack structure;
+     - исправлен retrieval composite;
+     - добавлено manufacturer-prefix name recovery;
+     - используются только parallel fields `*_v4_1`;
+     - существующий `normalized_text` не перезаписывается.
+   - На размеченной выборке M5.0 defects:
+     - 8 resolved;
+     - 1 partially resolved (`product_id=54`, Гепарин; в source нет «амп.»);
+     - 0 still_open.
+   - Следующее действие: независимое human review sample N=50.
+   - До принятия решения не менять Norm node, n8n, PostgreSQL, `attr_*`, snapshot, `product_kind` и текущий `normalized_text`.
+
+10. **Execution contract обязателен для всех следующих экспериментов**
+    - Один live execution на один workflow.
+    - LLM/Merge chunks не больше 10.
+    - Зависшие executions дольше 30 минут останавливать и расследовать.
+    - Не создавать minute-tick HTTP/LLM cron-задачи.
+    - До явного разрешения сохранять:
+      - production Stage 2 без изменений;
+      - hierarchy clone snapshot-off;
+      - allowlist-подход;
+      - безопасный rollback к `WHERE false`;
+      - terminal-only snapshot policy.
+
+#### Ближайший порядок работы
+
+**P0 — Sem Wave-100 human rubric**
+1. Найти экспорт Wave-100 и подготовить/проверить колонки `label_*`.
+2. Провести ручную разметку 100 товаров по `mnn`, `dosage_form`, `administration_route`.
+3. Отделить critical errors от некритичных замечаний.
+4. Посчитать `critical_error_rate`, numerator/denominator и метрики по полям.
+5. Зафиксировать `PASS` или `HOLD`.
+6. При `HOLD` подготовить remediation-plan; Wave-500 не запускать.
+7. При `PASS` перейти к B4 design: Direction + Need soft-to-hard.
+
+**P1 — M5.1 Norm v4.1 independent review**
+1. Найти `mnn_norm_v4_1_remediation_human_review.csv`.
+2. Провести ручную проверку N=50.
+3. Проверить:
+   - сохранность лекарственного наименования;
+   - корректность дозировки, формы и упаковки;
+   - корректность роли производителя;
+   - пригодность retrieval query;
+   - наличие новых критичных ошибок относительно текущего Norm.
+4. Сформировать verdict: `accept for controlled integration` / `remediate` / `freeze`.
+5. Не внедрять v4.1 в n8n до отдельного approval.
+
+**P2 — B4 только после Sem PASS**
+1. Подготовить design note для Direction + Need.
+2. Подключить `Norm — Normalize Dict` в hierarchy-dev.
+3. Реализовать Direction как soft-stage:
+   - no final category;
+   - no snapshot;
+   - log + confidence + explanation + routing_hint;
+   - allowlist N=10–15.
+4. Реализовать Need как soft-stage.
+5. Выполнить smoke N=10, затем N=50.
+6. Проверить run/log/snapshot isolation в pgAdmin.
+7. Только после положительного smoke начинать Cat hard shortlist и optional Mnn.
+
+#### Отложенные направления
+
+- Не включать Telegram HITL для hierarchy до стабилизации Cat/Judge; текущий основной human path — Sheets batch acceptance.
+- Не применять M2 queue exclusion для 13 ID без explicit approval.
+- Не возобновлять RX/OTC M3.2c / Phase A без выполнения re-entry criteria.
+- Не включать Age в routing/`attr_age_segment` без explicit approval.
+- Не переносить offline MNN/enrichment результаты в live Sem, `attr_*` или snapshot без отдельного approval.
+- Не менять production `classification-stage2-dev` в ходе hierarchy-dev экспериментов.
