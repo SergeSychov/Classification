@@ -458,7 +458,7 @@
 
 ---
 
-## Hierarchy redesign progress (updated 2026-09-08)
+## Hierarchy redesign progress (updated 2026-09-09)
 
 Отдельный трек от current Stage 2. Канон: `redesign/20_MIGRATION_PLAN.md`, статус: `redesign/00_PROJECT_STATUS.md`, короткий roadmap: `redesign/29_SHORT_ROADMAP.md`, digest 20 дней: `redesign/31_CHANGES_2026-08-19_to_2026-09-08.md`.  
 **Prod Stage 2** (`classification-stage2-dev`, `BaBjEPi78taRj2G5`) — **не менялся**.
@@ -472,7 +472,7 @@
 * **B3 Norm** (Code-only) — **закрыта** ✅ (см. п.25).
 * **B3 Sem** (`semantic_primary`, log-only) — **закрыта в git** ✅ (см. п.26); Dir не подключён; snapshot не пишется.
 * **Sem smoke S0/S1/S2** — **закрыта** ✅ (см. п.27); reversible allowlist; rollback to safe default verified.
-* **Wave-100 Sem validation (v1)** — **done** (exec **19932**, N=100, pre-Sem0): LLM-on / snapshot-off; gate awaiting human labels.
+* **Wave-100 Sem validation (v1)** — **done** (exec **19932**, N=100, pre-Sem0): LLM-on / snapshot-off; human rubric **PASS** (п.51).
 * **Sem0 + Sem1 attr_profile policy v2** — **finalized** (см. п.29–30): `prompt_sem0_v2` / `prompt_semantic_v3`; Wave-100 rerun chunked 10×10; progress tooling; rollback verified. Sem0+Sem attr Norm **зафиксированы в git** (2026-08-31).
 * **Offline MNN identity gate Wave‑500 v3 + enrichment run 461 + human-review quality baseline** — **done** ✅ (см. **п.38**). MNN/RX/Age **не** влиты в live Sem / `attr_*`.
 * **Offline BAS/Other override policy v1 + human validation (M2 / M2.1)** — **done** ✅ (см. **п.39**). Audit-only; implementation contract draft **not applied**.
@@ -485,26 +485,29 @@
 * **M5.0 Norm v4 offline experiment** — **done** ✅ (см. **п.46**). Parallel fields only; current `normalized_text` not replaced. **Not accepted** for hierarchy-dev / n8n rollout.
 * **M5.1 Norm v4.1 offline remediation** — **done** ✅ (см. **п.47**). Pack structure + retrieval composite + manufacturer-prefix recovery; `*_v4_1` only.
 * **n8n execution contract** — **done** ✅ (см. **п.48**). One live exec / workflow; chunks ≤ 10; zombie stop > 30 min.
+* **M5.1 Norm v4.1 human review** — **done** ✅ (см. **п.50**). Verdict `accept_for_controlled_integration`; freeze `mnn_norm_v4_1_remediation_reviewed_v1.*`. **Not** wired to n8n yet.
+* **Wave-100 Sem human rubric (exec19932)** — **PASS** ✅ (см. **п.51**). `critical_error_rate=1/171≈0.58%`. Freeze `sem_wave100_report_exec19932_reviewed_v1.*`.
 
 ### Not done
 
-* Sem human rubric labeling для Wave-100 / Wave-500 (`critical_error_rate`).
+* Sem Wave-500 / policy_v2 re-label — **not started**; Wave-100 exec19932 **PASS** (п.51); Wave-500 not auto-started.
+* Controlled integration design/apply for Norm v4.1 in hierarchy-dev — **design only until explicit ask** (п.50).
 * Apply M2 implementation contract (queue filter) — **blocked** until explicit approval.
 * **M3.2c** 11+30 retrieval batch — **blocked / not scheduled** (no stable P1 route; re-entry in **п.44**).
 * Age merge into live Sem / `attr_age_segment` / routing — **blocked** until explicit approval (п.45).
-* Human review of Norm v4.1 sample + any live Norm v4.1 wiring — **not started** (п.47). M5.0 labels exist; M5.0 **not** accepted for live wiring.
 * Optional: SplitInBatches перед Sem0 (Wave-100/500 = chunked runner из‑за Merge/LLM parallel hang).
-* Dir / Need / Cat / optional Mnn cascade + Judge rewiring for hierarchy.
+* Dir / Need / Cat / optional Mnn cascade + Judge rewiring for hierarchy — **B4 soft design unlocked after п.51 PASS** (explicit ask).
 * Prod Stage 2 Load allowlist-exclude patch.
 * Telegram / HITL beyond Sheets for hierarchy — **not started**.
 * Dedicated **error-handling track** for hierarchy — **not planned in detail yet**.
+* Manufacturer Entity Resolution / Alias Dictionary v1 — parallel offline (п.50).
 
 ### Next short steps
 
-1. Human review of **M5.1** Norm v4.1 sample — offline labels only; no production Norm rewrite; no v4.0 rollout.
-2. Parallel Sem track: human rubric labeling Wave-100/500 (`critical_error_rate`).
-3. Optional later: apply M2 queue-exclusion contract for 13 IDs (explicit approval only).
-4. Dir → Need → Cat → optional Mnn → Judge only after Sem gate + explicit MNN merge approval.
+1. **B4 soft design** Direction+Need (explicit ask) — unlocked by Wave-100 exec19932 **PASS** (п.51).
+2. Optional: spot-check / transfer-note for policy_v2 Sem0+Sem1 export before Wave-500.
+3. Optional parallel: Norm v4.1 controlled-integration **design note** only (hierarchy-dev, parallel `*_v4_1`, allowlist 10–15) — no Code-node until explicit ask (п.50).
+4. Optional parallel: Manufacturer Alias Dictionary v1 (offline).
 5. M3.2c / RX P1 re-entry — only if **п.44** re-entry criteria are met. Do not activate `rx-otc-product-retrieval-dev`.
 6. Age remains audit-only (п.45). Do not write `attr_age_segment`.
 7. Keep n8n waves under **п.48** (no `batch_size=100`/`500` in one execution).
@@ -1887,28 +1890,11 @@ no commit/push.
 
 #### Ближайший порядок работы
 
-**P0 — Sem Wave-100 human rubric**
-1. Найти экспорт Wave-100 и подготовить/проверить колонки `label_*`.
-2. Провести ручную разметку 100 товаров по `mnn`, `dosage_form`, `administration_route`.
-3. Отделить critical errors от некритичных замечаний.
-4. Посчитать `critical_error_rate`, numerator/denominator и метрики по полям.
-5. Зафиксировать `PASS` или `HOLD`.
-6. При `HOLD` подготовить remediation-plan; Wave-500 не запускать.
-7. При `PASS` перейти к B4 design: Direction + Need soft-to-hard.
+**P0 — Sem Wave-100 human rubric** → **PASS 2026-09-09** for exec19932 (см. **п.51**). `critical_error_rate≈0.58%`. policy_v2 export still unlabeled.
 
-**P1 — M5.1 Norm v4.1 independent review**
-1. Найти `mnn_norm_v4_1_remediation_human_review.csv`.
-2. Провести ручную проверку N=50.
-3. Проверить:
-   - сохранность лекарственного наименования;
-   - корректность дозировки, формы и упаковки;
-   - корректность роли производителя;
-   - пригодность retrieval query;
-   - наличие новых критичных ошибок относительно текущего Norm.
-4. Сформировать verdict: `accept for controlled integration` / `remediate` / `freeze`.
-5. Не внедрять v4.1 в n8n до отдельного approval.
+**P1 — M5.1 Norm v4.1 independent review** → **done 2026-09-09** (см. **п.50**). Verdict: `accept_for_controlled_integration`. Wiring still blocked until explicit ask.
 
-**P2 — B4 только после Sem PASS**
+**P2 — B4 только после Sem PASS** — **unlocked** (exec19932 PASS); start only on explicit ask.
 1. Подготовить design note для Direction + Need.
 2. Подключить `Norm — Normalize Dict` в hierarchy-dev.
 3. Реализовать Direction как soft-stage:
@@ -1929,3 +1915,60 @@ no commit/push.
 - Не включать Age в routing/`attr_age_segment` без explicit approval.
 - Не переносить offline MNN/enrichment результаты в live Sem, `attr_*` или snapshot без отдельного approval.
 - Не менять production `classification-stage2-dev` в ходе hierarchy-dev экспериментов.
+
+---
+
+50. **M5.1 Norm v4.1 human review freeze (2026-09-09)**
+
+* **Статус:** **done** (offline / audit-only). Prod Stage 2 / hierarchy-dev Norm node / snapshot / `attr_*` / Sem live / PostgreSQL — **не менялись**.
+* **Verdict:** `accept_for_controlled_integration`.
+* **N:** 50. `critical_fail_count=0` → `critical_error_rate=0.0%`.
+* M5.0 identity=`no` rows (4) → v4.1 identity=`yes` (4/4). `product_id=54` remains `partially_resolved` (`source_data_issue`, no «амп.» in source) — not a v4.1 defect.
+* Hygiene in freeze: `yhes`→`yes` (1); 6× manufacturer `unclear`→`yes` (alias canonicalization out of scope).
+* Baseline `mnn_norm_v4_1_remediation_human_review.csv` **not overwritten**.
+
+#### Canonical artifacts
+
+* As-received labeled: `redesign/artifacts/mnn_norm_v4_1_remediation_human_review_labeled_2026-09-09.csv`
+* Freeze: `redesign/artifacts/mnn_norm_v4_1_remediation_reviewed_v1.csv`
+* Summary: `redesign/artifacts/mnn_norm_v4_1_remediation_reviewed_v1_summary.{md,json}`
+* Verdict note: `redesign/artifacts/mnn_norm_v4_1_human_review_verdict_2026-09-09.md`
+
+#### Allowed next (explicit ask only)
+
+* Design note «Norm v4.1 controlled integration» for hierarchy-dev (parallel `*_v4_1`, allowlist 10–15, snapshot-off). **Not** prod Norm rewrite / `normalized_text` overwrite / `attr_*`.
+
+#### Next
+
+* **P0** Sem Wave-100 rubric (п.49).
+* Parallel offline: Manufacturer Entity Resolution / Alias Dictionary v1.
+
+---
+
+51. **Wave-100 Sem human rubric — exec19932 PASS (2026-09-09)**
+
+* **Статус:** **done** (offline rubric). Prod / hierarchy-dev / snapshot / `attr_*` — **не менялись**.
+* **Source wave:** pre-Sem0 exec **19932** / hierarchy `run_id=307` (`sem_wave100_report_exec19932_pre_sem0.csv`).
+* **Not labeled:** policy_v2 Sem0+Sem1 export `sem_wave100_report.csv` (runs 317–326).
+* **Gate:** **PASS** — `critical_error_rate = 1/171 ≈ 0.58%` (< 15%).
+* **Formula:** `critical_errors` = `incorrect` + `missing_should_exist`; denominator = evidenced (`correct`+`incorrect`+`missing_should_exist`) on `mnn` / `dosage_form` / `administration_route`, excluding route+form for `cosmetic_hygiene` and `medical_device`+`hygiene_like`.
+* **Only critical error:** `product_id=26346` `dosage_form=фиточай` → `incorrect` (`vitamin_or_baa`).
+* **Hygiene:** 18× `unknown` → `unknown_acceptable` on critical labels; `product_kind` joined from policy_v2 by id for filter only.
+* Sem contract: `selected_category_id` empty; `semantic_validation_passed=true` 100/100; `next_action=direction_select`.
+
+#### Canonical artifacts
+
+* As-received: `redesign/artifacts/sem_wave100_report_exec19932_human_review_labeled_2026-09-09.csv`
+* Freeze: `redesign/artifacts/sem_wave100_report_exec19932_reviewed_v1.csv`
+* Summary: `redesign/artifacts/sem_wave100_report_exec19932_reviewed_v1_summary.{md,json}`
+* Verdict: `redesign/artifacts/sem_wave100_human_rubric_verdict_2026-09-09.md`
+
+#### Unlocks / does not unlock
+
+* Unlocks: B4 Direction+Need **soft design** after explicit ask.
+* Does **not** auto-start Wave-500; recommend policy_v2 spot-check or explicit transfer-of-gate note first.
+* Does **not** merge Sem attrs to live snapshot / `attr_*`.
+
+#### Next
+
+* Explicit ask → B4 soft design; optional policy_v2 spot-check; Norm v4.1 design remains optional parallel (п.50).

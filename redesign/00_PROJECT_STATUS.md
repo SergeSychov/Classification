@@ -1,7 +1,8 @@
 # Project status — classification redesign
 
-Updated: 2026-08-20
-Canonical migration design: [`20_MIGRATION_PLAN.md`](20_MIGRATION_PLAN.md)
+Updated: 2026-09-09  
+Canonical migration design: [`20_MIGRATION_PLAN.md`](20_MIGRATION_PLAN.md)  
+Last-20-days digest: [`31_CHANGES_2026-08-19_to_2026-09-08.md`](31_CHANGES_2026-08-19_to_2026-09-08.md)
 
 ## Architecture decision status
 
@@ -37,15 +38,24 @@ Canonical migration design: [`20_MIGRATION_PLAN.md`](20_MIGRATION_PLAN.md)
 
 **M5.1 offline Norm v4.1 remediation done** (2026-08-20): pack structure + retrieval composite + manufacturer-prefix name recovery on the same N=100, using labeled `mnn_norm_v4_experiment_human_reviewed.csv`. New parallel `*_v4_1` fields only; M5.0 files unchanged. M5.0 defects: **8 resolved / 1 partially_resolved (54 Гепарин, no амп. in source) / 0 still_open**. Journal **п.47**. **Not** wired to n8n.
 
-**Next main track (MNN offline):** human review of Norm v4.1 sample (50 rows). M3 remains `KEEP_RX_OTC_P2_SUPPORT_ONLY` / `DO_NOT_RUN_PHASE_A_YET`.
-**Parallel Sem:** Wave-100/500 rubric → `critical_error_rate` (п.28). Hierarchy remains snapshot-off / prod untouched.
+**M5.1 Norm v4.1 human review done** (2026-09-09): N=50; `critical_error_rate=0%`; verdict **`accept_for_controlled_integration`**. Freeze `mnn_norm_v4_1_remediation_reviewed_v1.*`. Journal **п.50**. Still **not** wired to Norm node / n8n / `normalized_text` / `attr_*`.
+
+**Wave-100 Sem human rubric PASS** (2026-09-09): exec19932 / run_id 307; `critical_error_rate=1/171≈0.58%`; gate **PASS**. Freeze `sem_wave100_report_exec19932_reviewed_v1.*`. Journal **п.51**. policy_v2 export still unlabeled; Wave-500 not auto-started.
+
+**n8n execution contract done** (2026-08-31): one live execution per workflow; LLM/Merge-parallel **chunk size ≤ 10**; zombie stop > 30 min; no minute-tick HTTP/LLM crons. Canon `Categories/n8n_execution_contract.md`; helper `scripts/n8n_executions.py`. Journal **п.48**.
+
+**Git consolidation** (2026-08-31): Sem0 + Sem attr Norm on hierarchy-dev, MNN catalog/tool-search/enrichment offline tooling + Wave-500 artifact dump — committed; still **not** merged to live `attr_*` / snapshot / Dir+.
+
+**Next main track:** B4 Direction+Need soft **design** (explicit ask) — unlocked by Wave-100 exec19932 **PASS** (п.51). Optional: policy_v2 spot-check before Wave-500; Norm v4.1 controlled-integration design; Manufacturer Alias Dictionary v1. M3 remains `KEEP_RX_OTC_P2_SUPPORT_ONLY` / `DO_NOT_RUN_PHASE_A_YET`. Hierarchy remains snapshot-off / prod untouched.
 
 | Track | Status |
 |-------|--------|
 | Current Stage 2 (`classification-stage2-dev`) | Implemented (production-like working pipeline) — **unchanged** |
-| Hierarchy cascade redesign | **§13 cleared**; **B1–B2 done**; **B3 Norm+Sem done**; **Sem smoke green**; Dir+ pending Wave-100+ |
-| Sem validation 100/500/1000 | Wave-100 **executed** (exec 19932); gate awaiting human rubric labeling for `critical_error_rate` |
+| Hierarchy cascade redesign | **§13 cleared**; **B1–B2 done**; **B3 Norm+Sem done** (Sem0→Sem1→attr Norm); **Sem smoke green**; Dir+ pending Wave-100+ |
+| Sem validation 100/500/1000 | Wave-100 exec19932 **PASS** (п.51, 0.58%); policy_v2 unlabeled; Wave-500 not started |
+| n8n ops contract | One live exec / workflow; chunks ≤ 10 — [`../Categories/n8n_execution_contract.md`](../Categories/n8n_execution_contract.md) |
 | Short roadmap | [`29_SHORT_ROADMAP.md`](29_SHORT_ROADMAP.md) |
+| 20-day digest | [`31_CHANGES_2026-08-19_to_2026-09-08.md`](31_CHANGES_2026-08-19_to_2026-09-08.md) |
 
 ---
 

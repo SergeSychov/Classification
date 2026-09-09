@@ -1,0 +1,191 @@
+{
+  "policy": "sem_wave100_human_rubric_gate_v1",
+  "date": "2026-09-09",
+  "source_wave": "exec19932_pre_sem0",
+  "run_id": "307",
+  "n": 100,
+  "baseline": "redesign/artifacts/sem_wave100_report_exec19932_pre_sem0.csv",
+  "not_labeled_wave": "sem_wave100_report.csv (policy_v2 Sem0+Sem1 chunked runs 317-326)",
+  "critical_attrs": [
+    "mnn",
+    "dosage_form",
+    "administration_route"
+  ],
+  "noncritical_filter": "administration_route+dosage_form excluded for cosmetic_hygiene and medical_device/hygiene_like",
+  "label_vocab_note": "reviewer used unknown; freeze maps unknown→unknown_acceptable",
+  "critical_errors": 1,
+  "evidenced_key_attr_cases": 171,
+  "critical_error_rate": 0.005847953216374269,
+  "gate": "PASS",
+  "gate_threshold": 0.15,
+  "by_attr": {
+    "mnn": {
+      "num": 0,
+      "den": 35,
+      "labels": {
+        "correct": 35,
+        "not_applicable": 50,
+        "unknown_acceptable": 15
+      },
+      "rate": 0.0
+    },
+    "dosage_form": {
+      "num": 1,
+      "den": 69,
+      "labels": {
+        "correct": 68,
+        "not_applicable": 10,
+        "unknown_acceptable": 1,
+        "incorrect": 1
+      },
+      "rate": 0.014492753623188406
+    },
+    "administration_route": {
+      "num": 0,
+      "den": 67,
+      "labels": {
+        "correct": 67,
+        "not_applicable": 12,
+        "unknown_acceptable": 1
+      },
+      "rate": 0.0
+    }
+  },
+  "skipped_noncritical_route_form_cells": 40,
+  "errors": [
+    {
+      "product_id": "26346",
+      "attr": "dosage_form",
+      "label": "incorrect",
+      "attr_value": "фиточай",
+      "product_kind": "vitamin_or_baa",
+      "normalized_text": "АЛТАЙ №7 ЗДОРОВЫЕ СОСУДЫ С МЕЛИССОЙ ФИТОЧАЙ Ф/П 2Г №20 | АЛТАЙСКИЙ КЕДР ООО | АЛТАЙСКИЙ КЕДР ООО"
+    }
+  ],
+  "hygiene_applied": [
+    {
+      "product_id": "2351",
+      "field": "label_mnn",
+      "from": "unknown",
+      "to": "unknown_acceptable"
+    },
+    {
+      "product_id": "2351",
+      "field": "label_dosage_form",
+      "from": "unknown",
+      "to": "unknown_acceptable"
+    },
+    {
+      "product_id": "2398",
+      "field": "label_administration_route",
+      "from": "unknown",
+      "to": "unknown_acceptable"
+    },
+    {
+      "product_id": "3763",
+      "field": "label_mnn",
+      "from": "unknown",
+      "to": "unknown_acceptable"
+    },
+    {
+      "product_id": "7080",
+      "field": "label_mnn",
+      "from": "unknown",
+      "to": "unknown_acceptable"
+    },
+    {
+      "product_id": "9335",
+      "field": "label_mnn",
+      "from": "unknown",
+      "to": "unknown_acceptable"
+    },
+    {
+      "product_id": "10526",
+      "field": "label_mnn",
+      "from": "unknown",
+      "to": "unknown_acceptable"
+    },
+    {
+      "product_id": "11504",
+      "field": "label_mnn",
+      "from": "unknown",
+      "to": "unknown_acceptable"
+    },
+    {
+      "product_id": "12919",
+      "field": "label_administration_route",
+      "from": "unknown",
+      "to": "unknown_acceptable"
+    },
+    {
+      "product_id": "13653",
+      "field": "label_mnn",
+      "from": "unknown",
+      "to": "unknown_acceptable"
+    },
+    {
+      "product_id": "14162",
+      "field": "label_mnn",
+      "from": "unknown",
+      "to": "unknown_acceptable"
+    },
+    {
+      "product_id": "20477",
+      "field": "label_mnn",
+      "from": "unknown",
+      "to": "unknown_acceptable"
+    },
+    {
+      "product_id": "21183",
+      "field": "label_mnn",
+      "from": "unknown",
+      "to": "unknown_acceptable"
+    },
+    {
+      "product_id": "21563",
+      "field": "label_mnn",
+      "from": "unknown",
+      "to": "unknown_acceptable"
+    },
+    {
+      "product_id": "22701",
+      "field": "label_mnn",
+      "from": "unknown",
+      "to": "unknown_acceptable"
+    },
+    {
+      "product_id": "22891",
+      "field": "label_mnn",
+      "from": "unknown",
+      "to": "unknown_acceptable"
+    },
+    {
+      "product_id": "23155",
+      "field": "label_mnn",
+      "from": "unknown",
+      "to": "unknown_acceptable"
+    },
+    {
+      "product_id": "25424",
+      "field": "label_mnn",
+      "from": "unknown",
+      "to": "unknown_acceptable"
+    }
+  ],
+  "sem_contract": {
+    "selected_category_id_non_empty": 0,
+    "semantic_validation_passed_true": 100,
+    "decision_status": "pending_fallback",
+    "next_action": "direction_select"
+  },
+  "secondary_labels_mostly_blank": true,
+  "artifacts": {
+    "as_received": "redesign/artifacts/sem_wave100_report_exec19932_human_review_labeled_2026-09-09.csv",
+    "freeze_v1": "redesign/artifacts/sem_wave100_report_exec19932_reviewed_v1.csv"
+  },
+  "isolation": [
+    "offline rubric freeze only",
+    "no hierarchy-dev / prod / attr_* / snapshot writes",
+    "does not auto-approve Wave-500 without explicit ask"
+  ]
+}

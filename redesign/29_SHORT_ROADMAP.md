@@ -1,9 +1,10 @@
 # Hierarchy redesign — short roadmap
 
-Updated: 2026-08-20
+Updated: 2026-09-09
 Status board: [`00_PROJECT_STATUS.md`](00_PROJECT_STATUS.md)  
 Migration design: [`20_MIGRATION_PLAN.md`](20_MIGRATION_PLAN.md)  
-Journal pointer: [`../Categories/stage2_workflow_plan.md`](../Categories/stage2_workflow_plan.md) (section *Hierarchy redesign progress*; Wave-100 gate = п.28; offline MNN baseline = **п.38**; BAS/Other override = **п.39**; RX/OTC retriever design = **п.40**; M3.2a skeleton = **п.41**; M3.2a runtime smoke = **п.42**; M3.2b one-item live = **п.43**; M3 closeout = **п.44**; M4 Age pilot = **п.45**; Norm v4 experiment = **п.46**; Norm v4.1 remediation = **п.47**)
+20-day digest: [`31_CHANGES_2026-08-19_to_2026-09-08.md`](31_CHANGES_2026-08-19_to_2026-09-08.md)  
+Journal pointer: [`../Categories/stage2_workflow_plan.md`](../Categories/stage2_workflow_plan.md) (section *Hierarchy redesign progress*; Wave-100 gate = п.28 / **PASS п.51**; offline MNN baseline = **п.38**; BAS/Other override = **п.39**; RX/OTC retriever design = **п.40**; M3.2a skeleton = **п.41**; M3.2a runtime smoke = **п.42**; M3.2b one-item live = **п.43**; M3 closeout = **п.44**; M4 Age pilot = **п.45**; Norm v4 experiment = **п.46**; Norm v4.1 remediation = **п.47**; n8n execution contract = **п.48**; M5.1 human review = **п.50**)
 
 ## Current baseline (done)
 
@@ -34,7 +35,7 @@ Naming: **B3 = Norm + Sem** (done; Sem smoke green → Wave-100 gate open).
 | **1a** | **B3 Norm** (Code-only) | Explicit ask | Product + Dict Code nodes; no SQL/LLM; Load stub intact | `28_B3_NORM_PLAN` + hierarchy WF |
 | **1b** | **B3 Sem** `semantic_primary` | Explicit ask | no `category_id`; log `semantic_primary`; terminal-only; Load=0 → `finished_empty` | journal п.26 + Sem nodes |
 | **1c** | Sem smoke S0/S1/S2 | Explicit ask | allowlist reversible; offline+live soft-continue; rollback safe | journal п.27 + `redesign/artifacts/sem_smoke_*` |
-| **2** | Sem validation wave **100** (first **LLM-on**, **snapshot-off**; gate on semantic attrs, not category) | Wave-100 executed; gate def journal п.28; `critical_error_rate` awaiting human rubric labels | Allowlist N=100; rubric on attrs; compute `critical_error_rate < 15%` on `mnn` / `dosage_form` / `administration_route` | `sem_wave100_*` export + allowlist |
+| **2** | Sem validation wave **100** (first **LLM-on**, **snapshot-off**; gate on semantic attrs, not category) | Wave-100 exec19932 **PASS** (п.51); policy_v2 unlabeled | Allowlist N=100; rubric on attrs; `critical_error_rate < 15%` on `mnn` / `dosage_form` / `administration_route` | `sem_wave100_*` + `sem_wave100_report_exec19932_reviewed_v1.*` |
 | **3** | Sem validation **500 / 1000** | Wave-100 gate pass | Metrics non-worse | Wave reports |
 | **4** | Dir + Need soft-to-hard | Sem V3 gate | Membership / `soft_override` | Cascade smoke notes |
 | **5** | Cat hard + optional Mnn | Dir/Need smoke | Hard category shortlist; Mnn skip-empty OK | Cascade smoke notes |
@@ -56,6 +57,8 @@ Naming: **B3 = Norm + Sem** (done; Sem smoke green → Wave-100 gate open).
 | **M4** | Age contract + evidence policy (pilot validated) | **done** (2026-08-19) | Offline/audit-only; min years integer 0–18 separate from segment; 12/14/15/16/10 + child+adult → universal; adults only 18+; children-only 0/40 in this sample; no `attr_*` / snapshot / routing | journal **п.45**; `mnn_age_threshold_reconciliation_reviewed_v1_1.*`; `m4_age_threshold_reconciliation_reviewed_contract_v1_1.md` |
 | **M5** | Norm v4 experiment (mfr/pack dedupe) | **done** (2026-08-19, offline) | N=100 review v2; mfr dups 100/100 deduped; pack dups 14/14; current `normalized_text` not replaced; **not accepted** for n8n rollout | journal **п.46**; `mnn_norm_v4_experiment_*`; [`m5_norm_v4_design.md`](m5_norm_v4_design.md) |
 | **M5.1** | Norm v4.1 pack + retrieval + name-role remediation | **done** (2026-08-20, offline) | Parallel `*_v4_1` only; M5.0 files unchanged; 8/9 labeled defects resolved, 54 partially_resolved; no Norm/n8n/DB/`attr_*` | journal **п.47**; `mnn_norm_v4_1_remediation_*`; [`m5_norm_v4_1_remediation_design.md`](m5_norm_v4_1_remediation_design.md) |
+| **M5.1 HR** | Independent human review N=50 | **done** (2026-09-09) | `critical_error_rate=0%`; verdict `accept_for_controlled_integration`; freeze only; still no n8n wiring | journal **п.50**; `mnn_norm_v4_1_remediation_reviewed_v1.*`; `mnn_norm_v4_1_human_review_verdict_2026-09-09.md` |
+| **Ops** | n8n one-live-exec + chunks ≤ 10 | **done** (2026-08-31) | No overlapping runs; no `batch_size=100`/`500` for LLM/Merge waves; zombie stop > 30 min | journal **п.48**; [`../Categories/n8n_execution_contract.md`](../Categories/n8n_execution_contract.md) |
 
 ---
 
@@ -70,8 +73,10 @@ Naming: **B3 = Norm + Sem** (done; Sem smoke green → Wave-100 gate open).
 
 ## Next action
 
-1. Human review of **M5.1** Norm v4.1 sample (`mnn_norm_v4_1_remediation_human_review.csv`) — still no snapshot / `attr_*` / live Norm rewrite. M5.0 is not accepted for wiring.
-2. Parallel Sem track: human rubric labeling for Wave-100/500 → `critical_error_rate`. Keep hierarchy in safe default. **Dir+** after Sem V3 gate + explicit MNN merge approval.
-3. Optional later: apply M2 queue-exclusion contract for 13 IDs — only with explicit approval.
-4. M3.2c / RX P1 re-entry — only if journal **п.44** re-entry criteria are met. Policy remains **`KEEP_RX_OTC_P2_SUPPORT_ONLY`**.
-5. Age remains audit-only (п.45). Do not merge into `attr_age_segment` / routing until explicit approval.
+1. **B4 soft design** Direction+Need (explicit ask) — unlocked by Wave-100 exec19932 **PASS** (п.51). Still snapshot-off / allowlist / no prod.
+2. Optional before Wave-500: spot-check or transfer-note for policy_v2 Sem0+Sem1 export (`sem_wave100_report.csv`).
+3. Optional parallel: Norm v4.1 controlled-integration **design note** (hierarchy-dev, parallel `*_v4_1`, allowlist 10–15) — no Code-node / no prod until explicit ask (п.50).
+4. Optional parallel: Manufacturer Entity Resolution / Alias Dictionary v1 (offline).
+5. Optional later: apply M2 queue-exclusion contract for 13 IDs — only with explicit approval.
+6. M3.2c / RX P1 re-entry — only if journal **п.44** re-entry criteria are met. Policy remains **`KEEP_RX_OTC_P2_SUPPORT_ONLY`**.
+7. Age remains audit-only (п.45). Do not merge into `attr_age_segment` / routing until explicit approval.

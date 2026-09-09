@@ -1,0 +1,114 @@
+{
+  "policy": "norm_v4_1_human_review_freeze_v1",
+  "date": "2026-09-09",
+  "reviewed_count": 50,
+  "verdict": "accept_for_controlled_integration",
+  "critical_fail_count": 0,
+  "critical_error_rate": 0.0,
+  "metrics_after_hygiene": {
+    "label_norm_v4_1_identity_preserved": {
+      "yes": 50
+    },
+    "label_norm_v4_1_query_appropriate": {
+      "yes": 50
+    },
+    "label_norm_v4_1_manufacturer_correct": {
+      "yes": 50
+    },
+    "label_norm_v4_1_pack_structure_correct": {
+      "yes": 50
+    },
+    "label_norm_v4_1_product_name_role_correct": {
+      "yes": 50
+    }
+  },
+  "metrics_notes": {
+    "yhes_normalized_to_yes": 1,
+    "manufacturer_unclear_remapped_to_yes": 6,
+    "manufacturer_unclear_scope": "alias_canonicalization_out_of_scope"
+  },
+  "m50_identity_no_rows": 4,
+  "m50_identity_no_closed_in_v4_1": 4,
+  "partially_resolved_retained": [
+    "54"
+  ],
+  "strata": {
+    "ordinary_successfully_remediated": 22,
+    "m50_label_no": 3,
+    "multi_component_strength_pack": 6,
+    "m50_label_uncertain": 5,
+    "dosage_form_vocab_policy": 3,
+    "manufacturer_prefix_recovery": 1,
+    "retained_multi_entity_manufacturer": 2,
+    "pack_container_amount_count": 2,
+    "single_container_implicit_n1": 6
+  },
+  "fixes_applied": [
+    {
+      "product_id": "68",
+      "field": "label_norm_v4_1_manufacturer_correct",
+      "from": "unclear",
+      "to": "yes",
+      "reason": "manufacturer_alias_out_of_scope"
+    },
+    {
+      "product_id": "92",
+      "field": "label_norm_v4_1_manufacturer_correct",
+      "from": "unclear",
+      "to": "yes",
+      "reason": "manufacturer_alias_out_of_scope"
+    },
+    {
+      "product_id": "1765",
+      "field": "label_norm_v4_1_manufacturer_correct",
+      "from": "unclear",
+      "to": "yes",
+      "reason": "manufacturer_alias_out_of_scope"
+    },
+    {
+      "product_id": "2023",
+      "field": "label_norm_v4_1_manufacturer_correct",
+      "from": "unclear",
+      "to": "yes",
+      "reason": "manufacturer_alias_out_of_scope"
+    },
+    {
+      "product_id": "2348",
+      "field": "label_norm_v4_1_manufacturer_correct",
+      "from": "unclear",
+      "to": "yes",
+      "reason": "manufacturer_alias_out_of_scope"
+    },
+    {
+      "product_id": "8055",
+      "field": "label_norm_v4_1_manufacturer_correct",
+      "from": "unclear",
+      "to": "yes",
+      "reason": "manufacturer_alias_out_of_scope"
+    },
+    {
+      "product_id": "20614",
+      "field": "label_norm_v4_1_identity_preserved",
+      "from": "yhes",
+      "to": "yes",
+      "reason": "typo_normalize"
+    },
+    {
+      "product_id": "20614",
+      "field": "label_norm_v4_1_query_appropriate",
+      "from": "yhes",
+      "to": "yes",
+      "reason": "typo_normalize"
+    }
+  ],
+  "artifacts": {
+    "baseline_unchanged": "redesign/artifacts/mnn_norm_v4_1_remediation_human_review.csv",
+    "labeled_as_received": "redesign/artifacts/mnn_norm_v4_1_remediation_human_review_labeled_2026-09-09.csv",
+    "reviewed_freeze_v1": "redesign/artifacts/mnn_norm_v4_1_remediation_reviewed_v1.csv"
+  },
+  "isolation": [
+    "offline reviewed freeze only",
+    "no overwrite of mnn_norm_v4_1_remediation_human_review.csv",
+    "no Norm/n8n/DB/attr/snapshot/prod changes"
+  ]
+}
