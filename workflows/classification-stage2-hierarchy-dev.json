@@ -32,7 +32,8 @@
           "name": "Postgres account"
         }
       },
-      "notes": "pending + needs_llm/no_match; primary shortlist only; LIMIT=batch_size"
+      "notes": "pending + needs_llm/no_match; primary shortlist only; LIMIT=batch_size | B4.1-Safety: alwaysOutputData for empty/non-empty gate after Load",
+      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -305,17 +306,17 @@
     },
     {
       "parameters": {
-        "jsCode": "// Sem — Prepare Log (hierarchy-specific, B3 Sem).\n// stage=semantic_primary; selected_category_id=null;\n// decision_status=pending_fallback; next_action=direction_select.\n// Does NOT prepare snapshot upsert.\n\nfunction sqlText(value) {\n  if (value === undefined || value === null) return null;\n  const s = String(value).trim();\n  return s === '' ? null : s;\n}\n\nfunction sqlNumber(value) {\n  if (value === undefined || value === null || value === '') return null;\n  const n = Number(value);\n  return Number.isFinite(n) ? n : null;\n}\n\nfunction sqlBoolean(value) {\n  if (value === undefined || value === null || value === '') return null;\n  if (typeof value === 'boolean') return value;\n  if (typeof value === 'number') return value !== 0;\n  if (typeof value === 'string') {\n    const v = value.trim().toLowerCase();\n    if (['true', '1', 'yes', 'y'].includes(v)) return true;\n    if (['false', '0', 'no', 'n'].includes(v)) return false;\n  }\n  return null;\n}\n\nfunction sqlJson(value) {\n  if (value === undefined || value === null || value === '') return null;\n  return value;\n}\n\nreturn items.map((item, index) => {\n  const j = item.json || {};\n  const C = j.constants || {};\n\n  const stage =\n    sqlText(j.stage) ||\n    (C.stage && C.stage.semantic_primary) ||\n    'semantic_primary';\n  const decisionStatus =\n    sqlText(j.decision_status) ||\n    (C.decision_status && C.decision_status.pending_fallback) ||\n    'pending_fallback';\n  const nextAction =\n    sqlText(j.next_action) ||\n    (C.next_action && C.next_action.direction_select) ||\n    'direction_select';\n  const actorType = sqlText(j.actor_type) || 'llm';\n  const actorName = sqlText(j.actor_name) || 'deepseek-chat';\n  const workflowVersion = sqlText(j.workflow_version) || 'stage2_hierarchy_v1';\n  const promptVersion = sqlText(j.prompt_version) || 'prompt_semantic_v2';\n\n  const inputPayload = {\n    product_id: sqlNumber(j.product_id),\n    product_raw_id: sqlNumber(j.product_raw_id),\n    run_id: sqlNumber(j.run_id),\n    stage,\n    workflow_version: workflowVersion,\n    prompt_version: promptVersion,\n    normalized_text: sqlText(j.normalized_text),\n    combined_text: sqlText(j.combined_text),\n    normalize_meta: sqlJson(j.normalize_meta),\n    norm_warnings: sqlJson(j.norm_warnings),\n    norm_mnn_product: sqlText(j.norm_mnn_product),\n    product_type_guess: sqlText(j.product_type_guess),\n    rule_top_category_id: sqlNumber(j.rule_top_category_id),\n    rule_top_score: sqlNumber(j.rule_top_score),\n    shortlist_json: sqlJson(j.shortlist_json),\n  };\n\n  const outputPayload = {\n    semantic_attrs: sqlJson(j.semantic_attrs),\n    semantic_confidence: sqlNumber(j.semantic_confidence),\n    semantic_explanation: sqlText(j.semantic_explanation),\n    semantic_raw_json: sqlJson(j.semantic_raw_json),\n    semantic_validation_passed: sqlBoolean(j.semantic_validation_passed),\n    semantic_reject_reason: sqlText(j.semantic_reject_reason),\n    selected_category_id: null,\n    decision_status: decisionStatus,\n    next_action: nextAction,\n    routing_hint: sqlJson(j.routing_hint),\n    cascade_trace: sqlJson(j.cascade_trace),\n  };\n\n  const status =\n    sqlText(j.log_status) ||\n    (j.semantic_validation_passed === true\n      ? 'success'\n      : j.semantic_reject_reason\n        ? 'rejected'\n        : 'needs_review');\n\n  const productClassificationLogInsert = {\n    run_id: sqlNumber(j.run_id),\n    product_id: sqlNumber(j.product_id),\n    product_raw_id: sqlNumber(j.product_raw_id),\n    stage,\n    actor_type: actorType,\n    actor_name: actorName,\n    status,\n    input_payload: sqlJson(inputPayload),\n    output_payload: sqlJson(outputPayload),\n    selected_category_id: null,\n    confidence: sqlNumber(j.semantic_confidence),\n    explanation: sqlText(j.semantic_explanation),\n    validation_passed: sqlBoolean(j.semantic_validation_passed),\n    error_message: sqlText(j.semantic_reject_reason),\n    workflow_version: workflowVersion,\n    prompt_version: promptVersion,\n    decision_status: decisionStatus,\n    next_action: nextAction,\n    routing_hint: sqlJson(j.routing_hint),\n  };\n\n  return {\n    json: {\n      ...j,\n      stage,\n      decision_status: decisionStatus,\n      next_action: nextAction,\n      selected_category_id: null,\n      product_classification_log_insert: productClassificationLogInsert,\n    },\n    pairedItem: { item: index },\n  };\n});\n"
+        "jsCode": "// Sem — Prepare Log (hierarchy-specific, B3 Sem + B4.1 Direction soft log shaping).\n// Sem path defaults: stage=semantic_primary; selected_category_id=null;\n// decision_status=pending_fallback; next_action=direction_select.\n// Direction path: stage/actor/status/confidence from item (set by Dir — Static Post-process).\n// Does NOT prepare snapshot upsert. Never writes category_id.\n\nfunction sqlText(value) {\n  if (value === undefined || value === null) return null;\n  const s = String(value).trim();\n  return s === '' ? null : s;\n}\n\nfunction sqlNumber(value) {\n  if (value === undefined || value === null || value === '') return null;\n  const n = Number(value);\n  return Number.isFinite(n) ? n : null;\n}\n\nfunction sqlBoolean(value) {\n  if (value === undefined || value === null || value === '') return null;\n  if (typeof value === 'boolean') return value;\n  if (typeof value === 'number') return value !== 0;\n  if (typeof value === 'string') {\n    const v = value.trim().toLowerCase();\n    if (['true', '1', 'yes', 'y'].includes(v)) return true;\n    if (['false', '0', 'no', 'n'].includes(v)) return false;\n  }\n  return null;\n}\n\nfunction sqlJson(value) {\n  if (value === undefined || value === null || value === '') return null;\n  return value;\n}\n\nreturn items.map((item, index) => {\n  const j = item.json || {};\n  const C = j.constants || {};\n  const isDirection = sqlText(j.stage) === 'direction_select' || j.direction_static === true;\n\n  const stage =\n    sqlText(j.stage) ||\n    (C.stage && C.stage.semantic_primary) ||\n    'semantic_primary';\n  const decisionStatus =\n    sqlText(j.decision_status) ||\n    (C.decision_status && C.decision_status.pending_fallback) ||\n    'pending_fallback';\n  const nextAction =\n    sqlText(j.next_action) ||\n    (C.next_action && C.next_action.direction_select) ||\n    'direction_select';\n  const actorType = sqlText(j.actor_type) || (isDirection ? 'system' : 'llm');\n  const actorName = sqlText(j.actor_name) || (isDirection ? 'direction-static-stub' : 'deepseek-chat');\n  const workflowVersion = sqlText(j.workflow_version) || 'stage2_hierarchy_v1';\n  const promptVersion = sqlText(j.prompt_version) || 'prompt_semantic_v2';\n\n  const inputPayload = {\n    product_id: sqlNumber(j.product_id),\n    product_raw_id: sqlNumber(j.product_raw_id),\n    run_id: sqlNumber(j.run_id),\n    stage,\n    workflow_version: workflowVersion,\n    prompt_version: promptVersion,\n    normalized_text: sqlText(j.normalized_text),\n    combined_text: sqlText(j.combined_text),\n    normalize_meta: sqlJson(j.normalize_meta),\n    norm_warnings: sqlJson(j.norm_warnings),\n    norm_mnn_product: sqlText(j.norm_mnn_product),\n    product_type_guess: sqlText(j.product_type_guess),\n    rule_top_category_id: sqlNumber(j.rule_top_category_id),\n    rule_top_score: sqlNumber(j.rule_top_score),\n    shortlist_json: sqlJson(j.shortlist_json),\n    direction_prepare_payload: isDirection ? sqlJson(j.direction_prepare_payload) : null,\n    direction_candidate_scope: isDirection ? sqlJson(j.direction_candidate_scope) : null\n  };\n\n  const outputPayload = {\n    semantic_attrs: sqlJson(j.semantic_attrs),\n    semantic_confidence: sqlNumber(j.semantic_confidence),\n    semantic_explanation: sqlText(j.semantic_explanation),\n    semantic_raw_json: sqlJson(j.semantic_raw_json),\n    semantic_validation_passed: sqlBoolean(j.semantic_validation_passed),\n    semantic_reject_reason: sqlText(j.semantic_reject_reason),\n    selected_category_id: null,\n    decision_status: decisionStatus,\n    next_action: nextAction,\n    routing_hint: sqlJson(j.routing_hint),\n    cascade_trace: sqlJson(j.cascade_trace),\n    // Direction soft fields (JSON only — no schema change)\n    direction_candidate: isDirection ? (j.direction_candidate ?? null) : null,\n    direction_candidate_id_or_code: isDirection ? (j.direction_candidate_id_or_code ?? null) : null,\n    direction_confidence: isDirection ? sqlNumber(j.direction_confidence) : null,\n    direction_explanation: isDirection ? sqlText(j.direction_explanation) : null,\n    direction_evidence: isDirection ? sqlJson(j.direction_evidence) : null,\n    direction_validation_passed: isDirection ? sqlBoolean(j.direction_validation_passed) : null,\n    direction_reject_reason: isDirection ? sqlText(j.direction_reject_reason) : null,\n    stop_reason: isDirection ? sqlText(j.stop_reason) : null,\n    direction_static: isDirection ? true : null\n  };\n\n  const confidence = isDirection\n    ? sqlNumber(j.direction_confidence ?? j.confidence)\n    : sqlNumber(j.semantic_confidence);\n  const explanation = isDirection\n    ? sqlText(j.direction_explanation ?? j.explanation)\n    : sqlText(j.semantic_explanation);\n  const validationPassed = isDirection\n    ? sqlBoolean(j.direction_validation_passed ?? j.validation_passed)\n    : sqlBoolean(j.semantic_validation_passed);\n  const errorMessage = isDirection\n    ? sqlText(j.direction_reject_reason ?? j.reject_reason)\n    : sqlText(j.semantic_reject_reason);\n\n  const status =\n    sqlText(j.log_status) ||\n    (isDirection\n      ? (validationPassed === false ? 'rejected' : 'skipped_static')\n      : (j.semantic_validation_passed === true\n          ? 'success'\n          : j.semantic_reject_reason\n            ? 'rejected'\n            : 'needs_review'));\n\n  const productClassificationLogInsert = {\n    run_id: sqlNumber(j.run_id),\n    product_id: sqlNumber(j.product_id),\n    product_raw_id: sqlNumber(j.product_raw_id),\n    stage,\n    actor_type: actorType,\n    actor_name: actorName,\n    status,\n    input_payload: sqlJson(inputPayload),\n    output_payload: sqlJson(outputPayload),\n    selected_category_id: null,\n    confidence,\n    explanation,\n    validation_passed: validationPassed,\n    error_message: errorMessage,\n    workflow_version: workflowVersion,\n    prompt_version: promptVersion,\n    decision_status: decisionStatus,\n    next_action: nextAction,\n    routing_hint: sqlJson(j.routing_hint),\n  };\n\n  return {\n    json: {\n      ...j,\n      stage,\n      decision_status: decisionStatus,\n      next_action: nextAction,\n      selected_category_id: null,\n      product_classification_log_insert: productClassificationLogInsert,\n    },\n    pairedItem: { item: index },\n  };\n});\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2720,
+        2860,
         -1296
       ],
       "id": "20dea5a9-e45f-4208-bfdc-8cbc5f2e95bc",
       "name": "Sem — Prepare Log",
-      "notes": "Hierarchy Sem log-only; selected_category_id=null; no snapshot"
+      "notes": "Hierarchy Sem log-only; selected_category_id=null; no snapshot | B4.1-Direction: direction_* JSON log shaping; selected_category_id always null"
     },
     {
       "parameters": {
@@ -495,7 +496,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "insert into classification_runs (\n    run_type,\n    workflow_name,\n    workflow_version,\n    rules_version,\n    primary_model_name,\n    primary_model_version,\n    prompt_version,\n    status,\n    batch_size,\n    metadata\n)\nvalues (\n    'stage2_hierarchy_v1',\n    'classification-stage2-hierarchy-dev',\n    'stage2_hierarchy_v1',\n    'rule_engine_v1',\n    'deepseek-chat',\n    'v1',\n    'prompt_hierarchy_skeleton_v0',\n    'running',\n    {{ Number($json.batch_size) || 5 }},\n    '{{ JSON.stringify({ trigger: $json.trigger || \"manual\", skeleton: \"b2\" }).replace(/'/g, \"''\") }}'::jsonb\n)\nreturning id, run_type, workflow_name, workflow_version, started_at, batch_size;",
+        "query": "insert into classification_runs (\n    run_type,\n    workflow_name,\n    workflow_version,\n    rules_version,\n    primary_model_name,\n    primary_model_version,\n    prompt_version,\n    status,\n    batch_size,\n    metadata\n)\nvalues (\n    'stage2_hierarchy_v1',\n    'classification-stage2-hierarchy-dev',\n    'stage2_hierarchy_v1',\n    'rule_engine_v1',\n    'deepseek-chat',\n    'v1',\n    'prompt_hierarchy_skeleton_v0',\n    'running',\n    {{ Number($json.effective_batch_size) || Number($json.batch_size) || 5 }},\n    '{{ JSON.stringify({ trigger: $json.trigger || \"manual\", skeleton: \"b2\", requested_batch_size: ($json.requested_batch_size === undefined ? null : $json.requested_batch_size), effective_batch_size: (Number($json.effective_batch_size) || Number($json.batch_size) || 5), batch_cap_version: $json.batch_cap_version || \"live_llm_batch_cap_v1\" }).replace(/'/g, \"''\") }}'::jsonb\n)\nreturning id, run_type, workflow_name, workflow_version, started_at, batch_size;",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
@@ -512,11 +513,11 @@
           "name": "Postgres account"
         }
       },
-      "notes": "INSERT classification_runs, metadata.trigger"
+      "notes": "INSERT classification_runs, metadata.trigger | B4.1-Safety: batch_size from effective_batch_size; metadata stores requested/effective/cap_version"
     },
     {
       "parameters": {
-        "jsCode": "const run = $('Run — Create Run').first().json;\nconst runId = run.id;\n\nreturn items.map((item, index) => ({\n  json: {\n    ...item.json,\n    run_id: runId,\n    run_meta: {\n      run_type: run.run_type,\n      workflow_name: run.workflow_name,\n      workflow_version: run.workflow_version,\n      started_at: run.started_at\n    }\n  },\n  pairedItem: index\n}));"
+        "jsCode": "const run = $('Run — Create Run').first().json;\nconst runId = run.id;\nlet cap = {};\ntry {\n  cap = $('Run — Apply Batch Cap').first().json || {};\n} catch (e) {\n  cap = {};\n}\n\n// TEMPORARY N1-T one-shot arm — must match Cap; restore to false on rollback.\nconst N1_T_ONE_SHOT_ARMED = false;\n\nreturn items.map((item, index) => {\n  const j = item.json || {};\n  let initHint = {};\n  try {\n    const initJson = $('Run — Init Constants').first().json || {};\n    if (initJson.routing_hint && typeof initJson.routing_hint === 'object' && !Array.isArray(initJson.routing_hint)) {\n      initHint = initJson.routing_hint;\n    }\n  } catch (e) {\n    initHint = {};\n  }\n  const prevHint = (j.routing_hint && typeof j.routing_hint === 'object' && !Array.isArray(j.routing_hint))\n    ? j.routing_hint\n    : {};\n  const capHint = (cap.routing_hint && typeof cap.routing_hint === 'object' && !Array.isArray(cap.routing_hint))\n    ? cap.routing_hint\n    : {};\n  const mergedHintBase = {\n    ...initHint,\n    ...capHint,\n    ...prevHint\n  };\n  const prevN1 = (mergedHintBase.n1_t && typeof mergedHintBase.n1_t === 'object' && !Array.isArray(mergedHintBase.n1_t))\n    ? mergedHintBase.n1_t\n    : {};\n\n  let n1_t;\n  let requestedMeta = cap.requested_batch_size ?? null;\n  let effectiveMeta = cap.effective_batch_size ?? run.batch_size;\n  if (N1_T_ONE_SHOT_ARMED === true) {\n    requestedMeta = 1;\n    effectiveMeta = 1;\n    n1_t = {\n      ...prevN1,\n      enabled: true,\n      operator_lock: true,\n      product_id: 55,\n      product_raw_id: 55,\n      requested_batch_size: 1,\n      effective_batch_size: 1,\n      fixture_version: 'n1_presem_stub_v1',\n      workflow_id: 'o8sugljHYuUs7IEC',\n      load_mode: 'mode_c_exact_id',\n      test_mode: 'n1_presem_smoke',\n      test_synthetic_sem: false,\n      llm_called: null\n    };\n  } else {\n    n1_t = {\n      enabled: false,\n      operator_lock: false,\n      product_id: 55,\n      product_raw_id: 55,\n      requested_batch_size: null,\n      effective_batch_size: null,\n      fixture_version: 'n1_presem_stub_v1',\n      workflow_id: 'o8sugljHYuUs7IEC',\n      load_mode: 'mode_c_exact_id',\n      test_mode: 'n1_presem_smoke',\n      test_synthetic_sem: false,\n      llm_called: null,\n      ...prevN1,\n      enabled: false,\n      operator_lock: false\n    };\n  }\n\n  return {\n    json: {\n      ...j,\n      run_id: runId,\n      run_meta: {\n        run_type: run.run_type,\n        workflow_name: run.workflow_name,\n        workflow_version: run.workflow_version,\n        started_at: run.started_at,\n        requested_batch_size: requestedMeta,\n        effective_batch_size: effectiveMeta,\n        batch_cap_version: cap.batch_cap_version || 'live_llm_batch_cap_v1'\n      },\n      routing_hint: {\n        ...mergedHintBase,\n        n1_t\n      }\n    },\n    pairedItem: index\n  };\n});\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -620,7 +621,7 @@
     },
     {
       "parameters": {
-        "jsCode": "return items.map((item, index) => {\n  const constants = {\n    stage: {\n      normalize: 'normalize',\n      semantic_primary: 'semantic_primary',\n      direction_candidates: 'direction_candidates',\n      direction_select: 'direction_select',\n      need_shortlist: 'need_shortlist',\n      need_select: 'need_select',\n      category_shortlist: 'category_shortlist',\n      category_select: 'category_select',\n      mnn_shortlist: 'mnn_shortlist',\n      mnn_select: 'mnn_select',\n      judge: 'judge',\n      human_review: 'human_review'\n    },\n    decision_status: {\n      classified: 'classified',\n      pending_fallback: 'pending_fallback',\n      needs_human_review: 'needs_human_review',\n      error: 'error'\n    },\n    final_source: {\n      hierarchy_cascade: 'hierarchy_cascade',\n      judge: 'judge',\n      human: 'human',\n      system: 'system',\n      pending: 'pending'\n    },\n    next_action: {\n      none: 'none',\n      direction_select: 'direction_select',\n      need_shortlist: 'need_shortlist',\n      need_select: 'need_select',\n      category_shortlist: 'category_shortlist',\n      category_select: 'category_select',\n      mnn_shortlist: 'mnn_shortlist',\n      mnn_select: 'mnn_select',\n      judge: 'judge',\n      human_review: 'human_review'\n    },\n    actor_type: {\n      llm: 'llm',\n      human: 'human',\n      system: 'system'\n    },\n    log_status: {\n      success: 'success',\n      needs_review: 'needs_review',\n      rejected: 'rejected',\n      error: 'error'\n    },\n    thresholds: {\n      min_soft_ok: 0.50,\n      min_category_ok: 0.60,\n      min_judge_ok: 0.60,\n      borderline_low: 0.40,\n      direction_soft_top_n: 8,\n      need_hard_top_n: 12,\n      category_hard_top_n: 10,\n      mnn_soft_top_n: 8\n    },\n    model: {\n      primary_actor_name: 'deepseek-chat',\n      cascade_actor_name: 'deepseek-chat',\n      judge_actor_name: 'qwen/qwen3.5-flash-02-23'\n    }\n  };\n\n  return {\n    json: {\n      ...item.json,\n      constants\n    },\n    pairedItem: index\n  };\n});"
+        "jsCode": "return items.map((item, index) => {\n  const constants = {\n    stage: {\n      normalize: 'normalize',\n      semantic_primary: 'semantic_primary',\n      direction_candidates: 'direction_candidates',\n      direction_select: 'direction_select',\n      need_shortlist: 'need_shortlist',\n      need_select: 'need_select',\n      category_shortlist: 'category_shortlist',\n      category_select: 'category_select',\n      mnn_shortlist: 'mnn_shortlist',\n      mnn_select: 'mnn_select',\n      judge: 'judge',\n      human_review: 'human_review'\n    },\n    decision_status: {\n      classified: 'classified',\n      pending_fallback: 'pending_fallback',\n      needs_human_review: 'needs_human_review',\n      error: 'error'\n    },\n    final_source: {\n      hierarchy_cascade: 'hierarchy_cascade',\n      judge: 'judge',\n      human: 'human',\n      system: 'system',\n      pending: 'pending'\n    },\n    next_action: {\n      none: 'none',\n      direction_select: 'direction_select',\n      need_shortlist: 'need_shortlist',\n      need_select: 'need_select',\n      category_shortlist: 'category_shortlist',\n      category_select: 'category_select',\n      mnn_shortlist: 'mnn_shortlist',\n      mnn_select: 'mnn_select',\n      judge: 'judge',\n      human_review: 'human_review'\n    },\n    actor_type: {\n      llm: 'llm',\n      human: 'human',\n      system: 'system'\n    },\n    log_status: {\n      success: 'success',\n      needs_review: 'needs_review',\n      rejected: 'rejected',\n      error: 'error'\n    },\n    thresholds: {\n      min_soft_ok: 0.50,\n      min_category_ok: 0.60,\n      min_judge_ok: 0.60,\n      borderline_low: 0.40,\n      direction_soft_top_n: 8,\n      need_hard_top_n: 12,\n      category_hard_top_n: 10,\n      mnn_soft_top_n: 8\n    },\n    model: {\n      primary_actor_name: 'deepseek-chat',\n      cascade_actor_name: 'deepseek-chat',\n      judge_actor_name: 'qwen/qwen3.5-flash-02-23'\n    }\n  };\n\n  // TEMPORARY N1-T one-shot arm — must match Cap; restore to false on rollback.\n  const N1_T_ONE_SHOT_ARMED = false;\n\n  let cap = {};\n  try {\n    cap = $('Run — Apply Batch Cap').first().json || {};\n  } catch (e) {\n    cap = {};\n  }\n  const j = item.json || {};\n  const prevHint = (j.routing_hint && typeof j.routing_hint === 'object' && !Array.isArray(j.routing_hint))\n    ? j.routing_hint\n    : ((cap.routing_hint && typeof cap.routing_hint === 'object' && !Array.isArray(cap.routing_hint))\n      ? cap.routing_hint\n      : {});\n  const prevN1 = (prevHint.n1_t && typeof prevHint.n1_t === 'object' && !Array.isArray(prevHint.n1_t))\n    ? prevHint.n1_t\n    : {};\n  const capN1 = (cap.routing_hint && cap.routing_hint.n1_t && typeof cap.routing_hint.n1_t === 'object' && !Array.isArray(cap.routing_hint.n1_t))\n    ? cap.routing_hint.n1_t\n    : {};\n\n  let n1_t;\n  if (N1_T_ONE_SHOT_ARMED === true) {\n    n1_t = {\n      ...prevN1,\n      ...capN1,\n      enabled: true,\n      operator_lock: true,\n      product_id: 55,\n      product_raw_id: 55,\n      requested_batch_size: 1,\n      effective_batch_size: 1,\n      fixture_version: 'n1_presem_stub_v1',\n      workflow_id: 'o8sugljHYuUs7IEC',\n      load_mode: 'mode_c_exact_id',\n      test_mode: 'n1_presem_smoke',\n      test_synthetic_sem: false,\n      llm_called: null\n    };\n  } else {\n    n1_t = {\n      enabled: false,\n      operator_lock: false,\n      product_id: 55,\n      product_raw_id: 55,\n      requested_batch_size: null,\n      effective_batch_size: null,\n      fixture_version: 'n1_presem_stub_v1',\n      workflow_id: 'o8sugljHYuUs7IEC',\n      load_mode: 'mode_c_exact_id',\n      test_mode: 'n1_presem_smoke',\n      test_synthetic_sem: false,\n      llm_called: null,\n      ...prevN1,\n      ...capN1,\n      enabled: false,\n      operator_lock: false\n    };\n  }\n\n  return {\n    json: {\n      ...j,\n      constants,\n      routing_hint: {\n        ...prevHint,\n        n1_t\n      }\n    },\n    pairedItem: index\n  };\n});\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1393,17 +1394,17 @@
     {
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const run = $('Run — Create Run').first().json;\nif (!run?.id) {\n  throw new Error('Run — Create Run did not return classification_runs.id');\n}\n// B2 skeleton: always emit one closer item; cascade/LLM path is disconnected.\nreturn [{\n  json: {\n    id: Number(run.id),\n    skeleton_empty: true,\n    product_count: items.length\n  }\n}];"
+        "jsCode": "const run = $('Run — Create Run').first().json;\nif (!run?.id) {\n  throw new Error('Run — Create Run did not return classification_runs.id');\n}\n// B4.1-Safety: only on empty Load branch (mutually exclusive with Sem/log Close path).\nreturn [{\n  json: {\n    id: Number(run.id),\n    skeleton_empty: true,\n    product_count: 0,\n    empty_batch: true\n  }\n}];\n"
       },
       "id": "b49bbc31-fcce-4272-a437-d23933c4d624",
       "name": "Shell — Ensure Empty Fin",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -24,
+        240,
         -1076
       ],
-      "notes": "B2 skeleton: parallel to Load; close run as finished_empty without cascade/LLM"
+      "notes": "B4.1-Safety: empty-only closer; must not run for N>0"
     },
     {
       "parameters": {
@@ -1439,7 +1440,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $input.first().json.body || $input.first().json || {};\nconst batchRaw = Number(body.batch_size);\nconst batchSize = Number.isFinite(batchRaw) && batchRaw > 0\n  ? Math.min(Math.trunc(batchRaw), 10)\n  : 5;\n\nreturn [{\n  json: {\n    trigger: 'webhook',\n    batch_size: batchSize\n  }\n}];"
+        "jsCode": "const body = $input.first().json.body || $input.first().json || {};\n\n// B4.1-Safety: do not clamp here — Run — Apply Batch Cap is the single policy gate.\nreturn [{\n  json: {\n    trigger: 'webhook',\n    body,\n    requested_batch_size: body.batch_size\n  }\n}];\n"
       },
       "id": "522754a4-655a-44f5-b8b7-f42fb3a61d33",
       "name": "In — Webhook Start",
@@ -1448,7 +1449,8 @@
       "position": [
         -544,
         -1456
-      ]
+      ],
+      "notes": "B4.1-Safety: forwards raw requested_batch_size; cap applied in Run — Apply Batch Cap"
     },
     {
       "parameters": {
@@ -1463,6 +1465,206 @@
       "id": "56e827a7-a713-4715-bd83-17648a2d8a78",
       "name": "Norm — Normalize Sem attrs",
       "notes": "Normalize administration_route / dosage_form / age_segment to fixed dictionaries. See sem_attr_dictionaries.md"
+    },
+    {
+      "parameters": {
+        "jsCode": "const MAX_LIVE_LLM_BATCH = 10;\nconst DEFAULT_LIVE_LLM_BATCH = 5;\nconst BATCH_CAP_VERSION = 'live_llm_batch_cap_v1';\n\n// TEMPORARY N1-T one-shot arm for product 55 ONLY.\n// MUST be restored to false by separately approved rollback after one approved N1-T execution.\n// Do not push/run without owner approval. Do not leave armed.\nconst N1_T_ONE_SHOT_ARMED = false;\n\nconst j = $input.first().json || {};\n\nfunction parseRequested(v) {\n  if (v === undefined || v === null || v === '') return null;\n  if (typeof v === 'boolean') return null;\n  if (typeof v === 'number') {\n    if (!Number.isFinite(v) || !Number.isInteger(v) || v <= 0) return null;\n    return v;\n  }\n  if (typeof v === 'string') {\n    const t = v.trim();\n    if (!/^[0-9]+$/.test(t)) return null; // rejects decimals, signs, non-numeric\n    const n = Number(t);\n    if (!Number.isInteger(n) || n <= 0) return null;\n    return n;\n  }\n  return null;\n}\n\nconst raw = (j.requested_batch_size !== undefined)\n  ? j.requested_batch_size\n  : (j.batch_size !== undefined ? j.batch_size : (j.body && j.body.batch_size));\n\nlet requested = parseRequested(raw);\nlet effective = requested == null\n  ? DEFAULT_LIVE_LLM_BATCH\n  : Math.min(requested, MAX_LIVE_LLM_BATCH);\n\nconst prevHint = (j.routing_hint && typeof j.routing_hint === 'object' && !Array.isArray(j.routing_hint))\n  ? j.routing_hint\n  : {};\nconst prevN1 = (prevHint.n1_t && typeof prevHint.n1_t === 'object' && !Array.isArray(prevHint.n1_t))\n  ? prevHint.n1_t\n  : {};\n\nlet n1_t;\nif (N1_T_ONE_SHOT_ARMED === true) {\n  // All-or-nothing: batch=1 and full G3 arm together.\n  requested = 1;\n  effective = 1;\n  n1_t = {\n    ...prevN1,\n    enabled: true,\n    operator_lock: true,\n    product_id: 55,\n    product_raw_id: 55,\n    requested_batch_size: 1,\n    effective_batch_size: 1,\n    fixture_version: 'n1_presem_stub_v1',\n    workflow_id: 'o8sugljHYuUs7IEC',\n    load_mode: 'mode_c_exact_id',\n    test_mode: 'n1_presem_smoke',\n    test_synthetic_sem: false,\n    llm_called: null\n  };\n} else {\n  n1_t = {\n    enabled: false,\n    operator_lock: false,\n    product_id: 55,\n    product_raw_id: 55,\n    requested_batch_size: null,\n    effective_batch_size: null,\n    fixture_version: 'n1_presem_stub_v1',\n    workflow_id: 'o8sugljHYuUs7IEC',\n    load_mode: 'mode_c_exact_id',\n    test_mode: 'n1_presem_smoke',\n    test_synthetic_sem: false,\n    llm_called: null,\n    ...prevN1,\n    enabled: false,\n    operator_lock: false\n  };\n}\n\nreturn [{\n  json: {\n    ...j,\n    trigger: j.trigger || 'manual',\n    requested_batch_size: requested,\n    effective_batch_size: effective,\n    batch_size: effective,\n    batch_cap_version: BATCH_CAP_VERSION,\n    routing_hint: {\n      ...prevHint,\n      n1_t\n    }\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -480,
+        -1456
+      ],
+      "id": "8f672cc4-1644-4f03-867f-8cd9cdbada2c",
+      "name": "Run — Apply Batch Cap",
+      "notes": "B4.1-Safety: MAX_LIVE_LLM_BATCH=10, DEFAULT=5, batch_cap_version=live_llm_batch_cap_v1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const run = $('Run — Create Run').first().json;\nif (!run?.id) {\n  throw new Error('Run — Create Run did not return classification_runs.id');\n}\n\nconst incoming = $input.all();\nconst products = incoming.filter((item) => {\n  const id = item.json?.product_id;\n  return id !== undefined && id !== null && id !== '';\n});\n\nif (products.length === 0) {\n  return [{\n    json: {\n      empty_batch: true,\n      skeleton_empty: true,\n      id: Number(run.id),\n      run_id: Number(run.id),\n      product_count: 0,\n      batch_size: run.batch_size\n    }\n  }];\n}\n\nreturn products.map((item, index) => ({\n  json: {\n    ...item.json,\n    empty_batch: false,\n    product_count: products.length\n  },\n  pairedItem: item.pairedItem !== undefined ? item.pairedItem : index\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        16,
+        -1296
+      ],
+      "id": "da921c01-6da0-48ca-bb06-503eb96097f1",
+      "name": "Load — Empty Branch Gate",
+      "notes": "B4.1-Safety: empty if no product_id; else pass product items"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "92191d07-ec4d-49d1-92cf-f8be93f890c3",
+              "leftValue": "={{ $json.empty_batch }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        48,
+        -1184
+      ],
+      "id": "0fbeea2e-e11b-404d-865e-033f526bd46f",
+      "name": "Load — Empty?",
+      "notes": "B4.1-Safety: true=empty→Empty Fin; false=non-empty→Attach"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Dir — Candidate Builder (B4.1-Direction static)\n// Does NOT load categories_dict. Stub scope only.\nreturn items.map((item, index) => {\n  const j = item.json || {};\n  const direction_candidate_scope = {\n    scope_type: 'direction',\n    candidate_scope_status: 'not_loaded_static',\n    candidate_count: 0,\n    candidates: [],\n    selection_policy: 'rule_first_scope_then_llm_or_null',\n    source: 'categories_dict_future',\n    exclusion_reasons: [],\n    static_note: 'proposed/static stub — not real category data'\n  };\n  return {\n    json: {\n      ...j,\n      direction_candidate_scope,\n      direction_static: true\n    },\n    pairedItem: item.pairedItem !== undefined ? item.pairedItem : { item: index }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2580,
+        -1296
+      ],
+      "id": "cec23bda-417e-4bb6-92d1-abb336d7ad9f",
+      "name": "Dir — Candidate Builder",
+      "notes": "B4.1-Direction static: stub candidate_scope not_loaded_static; no SQL/dict load"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Dir — Prepare Payload (B4.1-Direction static)\n// No AI Agent / DeepSeek / HTTP. Future-fixture payload shape only.\nreturn items.map((item, index) => {\n  const j = item.json || {};\n  const scope = j.direction_candidate_scope || {\n    scope_type: 'direction',\n    candidate_scope_status: 'not_loaded_static',\n    candidate_count: 0,\n    candidates: [],\n    selection_policy: 'rule_first_scope_then_llm_or_null',\n    source: 'categories_dict_future',\n    exclusion_reasons: []\n  };\n\n  const product_context = {\n    run_id: j.run_id ?? null,\n    product_id: j.product_id ?? null,\n    product_raw_id: j.product_raw_id ?? null,\n    normalized_text: j.normalized_text ?? null,\n    product_kind: j.product_kind ?? null,\n    product_family: j.product_family ?? null,\n    attr_profile: j.attr_profile ?? null,\n    medical_device_profile: j.medical_device_profile ?? null,\n    attr_mnn: j.attr_mnn ?? null,\n    attr_dosage_form: j.attr_dosage_form ?? null,\n    attr_administration_route: j.attr_administration_route ?? null\n  };\n\n  const semantic_context = {\n    semantic_attrs: j.semantic_attrs ?? null,\n    semantic_confidence: j.semantic_confidence ?? null,\n    semantic_validation_passed: j.semantic_validation_passed ?? null,\n    semantic_reject_reason: j.semantic_reject_reason ?? null,\n    semantic_explanation: j.semantic_explanation ?? null,\n    decision_status: j.decision_status ?? null,\n    next_action: j.next_action ?? null,\n    cascade_trace: j.cascade_trace ?? null,\n    workflow_version: j.workflow_version ?? null,\n    prompt_version: j.prompt_version ?? null\n  };\n\n  const direction_prepare_payload = {\n    stage: 'direction_select',\n    product_context,\n    semantic_context,\n    candidate_scope: scope,\n    requested_output_contract: {\n      direction_candidate: 'string|null',\n      candidate_id_or_code: 'string|null',\n      confidence: 'number 0..1',\n      explanation: 'string',\n      evidence: ['string']\n    },\n    constraints: {\n      candidate_must_be_from_scope_or_null: true,\n      null_allowed: true,\n      no_category_id: true,\n      no_rx_otc_hard_gate: true,\n      no_age_hard_gate: true,\n      no_inference_beyond_supplied_scope: true\n    },\n    static_mode: true\n  };\n\n  return {\n    json: {\n      ...j,\n      direction_prepare_payload\n    },\n    pairedItem: item.pairedItem !== undefined ? item.pairedItem : { item: index }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2660,
+        -1296
+      ],
+      "id": "1edb0934-734f-49b1-bef2-c212daf0ced2",
+      "name": "Dir — Prepare Payload",
+      "notes": "B4.1-Direction static: future fixture payload; no LLM"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Dir — Static Post-process (B4.1-Direction)\n// Non-executing: no model call. Accepts optional injected direction_raw_response for future fixtures.\n// Empty static scope + no mock → null candidate, validation_passed=true, reject_reason=static_scope_not_loaded.\n// Never invents a direction. Never sets category_id / selected_category_id.\n\nfunction asObject(value) {\n  if (value && typeof value === 'object' && !Array.isArray(value)) return value;\n  return null;\n}\n\nfunction parseRaw(raw) {\n  if (raw === undefined || raw === null || raw === '') return { ok: false, reason: 'invalid_json', value: null };\n  if (typeof raw === 'object') return { ok: true, reason: null, value: raw };\n  if (typeof raw === 'string') {\n    try {\n      const parsed = JSON.parse(raw);\n      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {\n        return { ok: true, reason: null, value: parsed };\n      }\n      return { ok: false, reason: 'invalid_json', value: null };\n    } catch (e) {\n      return { ok: false, reason: 'invalid_json', value: null };\n    }\n  }\n  return { ok: false, reason: 'invalid_json', value: null };\n}\n\nfunction scopeValues(scope) {\n  const list = Array.isArray(scope?.candidates) ? scope.candidates : [];\n  const values = [];\n  for (const c of list) {\n    if (c === null || c === undefined) continue;\n    if (typeof c === 'string' || typeof c === 'number') {\n      values.push(String(c));\n      continue;\n    }\n    if (typeof c === 'object') {\n      for (const k of ['direction', 'name', 'value', 'id', 'code', 'candidate_id_or_code']) {\n        if (c[k] !== undefined && c[k] !== null && String(c[k]).trim() !== '') {\n          values.push(String(c[k]));\n        }\n      }\n    }\n  }\n  return values;\n}\n\nreturn items.map((item, index) => {\n  const j = item.json || {};\n  const scope = asObject(j.direction_candidate_scope) || {\n    scope_type: 'direction',\n    candidate_scope_status: 'not_loaded_static',\n    candidate_count: 0,\n    candidates: [],\n    selection_policy: 'rule_first_scope_then_llm_or_null',\n    source: 'categories_dict_future',\n    exclusion_reasons: []\n  };\n\n  const status = scope.candidate_scope_status || 'not_loaded_static';\n  const candidates = Array.isArray(scope.candidates) ? scope.candidates : [];\n  const allowed = scopeValues(scope);\n  const hasMock = j.direction_raw_response !== undefined && j.direction_raw_response !== null && j.direction_raw_response !== '';\n\n  let direction_candidate = null;\n  let candidate_id_or_code = null;\n  let confidence = null;\n  let explanation = null;\n  let evidence = [];\n  let validation_passed = true;\n  let reject_reason = null;\n  let log_status = 'skipped_static';\n\n  if (!hasMock) {\n    // Static empty / not-loaded scope: intentional null, no invention.\n    direction_candidate = null;\n    validation_passed = true;\n    reject_reason = (status === 'not_loaded_static' || candidates.length === 0)\n      ? 'static_scope_not_loaded'\n      : 'static_no_mock_response';\n    explanation = 'Direction static stub: no model call; candidate scope not loaded.';\n    confidence = 0;\n    log_status = 'skipped_static';\n  } else {\n    const parsed = parseRaw(j.direction_raw_response);\n    if (!parsed.ok) {\n      direction_candidate = null;\n      validation_passed = false;\n      reject_reason = 'invalid_json';\n      explanation = 'Direction response was not valid JSON object.';\n      confidence = 0;\n      log_status = 'rejected';\n    } else {\n      const raw = parsed.value || {};\n      // Forbid category fields even if present in mock.\n      if (raw.category_id !== undefined || raw.final_category_id !== undefined || raw.final_source !== undefined) {\n        direction_candidate = null;\n        validation_passed = false;\n        reject_reason = 'category_id_forbidden';\n        explanation = 'Direction must not emit category_id / final_category_id / final_source.';\n        confidence = 0;\n        log_status = 'rejected';\n      } else {\n        const cand = raw.direction_candidate;\n        direction_candidate = (cand === undefined || cand === null || cand === '') ? null : String(cand);\n        candidate_id_or_code = raw.candidate_id_or_code == null || raw.candidate_id_or_code === ''\n          ? null\n          : String(raw.candidate_id_or_code);\n        const confNum = Number(raw.confidence);\n        confidence = Number.isFinite(confNum) ? confNum : null;\n        explanation = raw.explanation == null ? null : String(raw.explanation);\n        evidence = Array.isArray(raw.evidence) ? raw.evidence.map((x) => String(x)) : [];\n\n        if (confidence === null || confidence < 0 || confidence > 1) {\n          direction_candidate = null;\n          validation_passed = false;\n          reject_reason = 'invalid_confidence';\n          explanation = explanation || 'confidence must be a number in [0,1]';\n          confidence = 0;\n          log_status = 'rejected';\n        } else if (direction_candidate !== null && (!explanation || !String(explanation).trim())) {\n          direction_candidate = null;\n          validation_passed = false;\n          reject_reason = 'empty_explanation';\n          explanation = 'non-null direction_candidate requires non-empty explanation';\n          log_status = 'rejected';\n        } else if (direction_candidate !== null) {\n          const inScope = allowed.includes(direction_candidate)\n            || (candidate_id_or_code !== null && allowed.includes(candidate_id_or_code));\n          if (status === 'not_loaded_static' || candidates.length === 0 || !inScope) {\n            direction_candidate = null;\n            candidate_id_or_code = null;\n            validation_passed = false;\n            reject_reason = 'candidate_outside_scope';\n            explanation = 'selected direction is not in supplied candidate_scope';\n            log_status = 'rejected';\n          } else {\n            validation_passed = true;\n            reject_reason = null;\n            log_status = 'success';\n          }\n        } else {\n          // explicit null candidate from mock\n          validation_passed = true;\n          reject_reason = null;\n          explanation = explanation || 'null direction_candidate accepted';\n          log_status = 'success';\n        }\n      }\n    }\n  }\n\n  const routing_hint = {\n    ...(asObject(j.routing_hint) || {}),\n    direction_soft: true,\n    direction_candidate,\n    candidate_id_or_code,\n    candidate_scope_status: status,\n    candidate_count: candidates.length,\n    stop_reason: 'need_not_implemented_static',\n    static_mode: true\n  };\n\n  const cascade_trace = Array.isArray(j.cascade_trace) ? j.cascade_trace.slice() : [];\n  cascade_trace.push({\n    stage: 'direction_select',\n    direction_candidate,\n    validation_passed,\n    reject_reason,\n    static_mode: true,\n    stop_reason: 'need_not_implemented_static'\n  });\n\n  return {\n    json: {\n      ...j,\n      stage: 'direction_select',\n      actor_type: 'system',\n      actor_name: 'direction-static-stub',\n      log_status,\n      decision_status: 'pending_fallback',\n      next_action: 'need_select',\n      stop_reason: 'need_not_implemented_static',\n      direction_candidate,\n      direction_candidate_id_or_code: candidate_id_or_code,\n      direction_confidence: confidence,\n      direction_explanation: explanation,\n      direction_evidence: evidence,\n      direction_validation_passed: validation_passed,\n      direction_reject_reason: reject_reason,\n      // Prefer Direction fields for shared log keys when stage=direction_select\n      confidence,\n      explanation,\n      validation_passed,\n      reject_reason,\n      selected_category_id: null,\n      // Explicitly do not set category_id\n      routing_hint,\n      cascade_trace\n    },\n    pairedItem: item.pairedItem !== undefined ? item.pairedItem : { item: index }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2740,
+        -1296
+      ],
+      "id": "492fac9e-42c7-4d4c-9b2d-fff2d4ae43fb",
+      "name": "Dir — Static Post-process",
+      "notes": "B4.1-Direction static stub/post-process; null-over-invention; stop before Need"
+    },
+    {
+      "parameters": {
+        "content": "## Direction soft (B4.1 static)\n\n**Live intended:** Sem Route `direction_select` → Candidate Builder → Prepare Payload → Static Post-process → Prepare Log → Insert Log → Fin\n\n- No LLM / Agent / DeepSeek\n- candidate_scope_status=`not_loaded_static`\n- null over invention; no category_id\n- stop_reason=`need_not_implemented_static`\n- Snapshot off; Load WHERE false unchanged",
+        "height": 320,
+        "width": 360,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2560,
+        -1640
+      ],
+      "id": "97a7aa0f-8d78-44ec-a116-9249c118d0d5",
+      "name": "Sticky — Direction soft B4.1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// N1-T — Gate Eval (B4.3B-T). Fail-closed predicate; never throws on unarmed items.\n// Mirrors scripts/hierarchy_nodes/n1_t_gate_v1.js\n\nconst EXPECTED_PRODUCT_ID = 55;\nconst EXPECTED_PRODUCT_RAW_ID = 55;\nconst EXPECTED_WORKFLOW_ID = 'o8sugljHYuUs7IEC';\nconst EXPECTED_FIXTURE_VERSION = 'n1_presem_stub_v1';\nconst EXPECTED_LOAD_MODE = 'mode_c_exact_id';\nconst REAL_SEM_PROMPT_VERSIONS = new Set([\n  'prompt_sem0_v2',\n  'prompt_semantic_v3',\n  'prompt_semantic_v2'\n]);\n\nfunction isPlainObject(value) {\n  return value !== null && typeof value === 'object' && !Array.isArray(value);\n}\n\nfunction strictTrue(value) {\n  return value === true;\n}\n\nfunction strictNumEq(value, expected) {\n  return typeof value === 'number' && Number.isFinite(value) && value === expected;\n}\n\nfunction coerceFiniteNumber(value) {\n  if (typeof value === 'number' && Number.isFinite(value)) return value;\n  return null;\n}\n\nfunction hasOwn(obj, key) {\n  return Object.prototype.hasOwnProperty.call(obj, key);\n}\n\nfunction hasRealSemOrLlmEvidence(j) {\n  if (!isPlainObject(j)) return true;\n  if (j.llm_called === true) return true;\n  if (typeof j.llm_raw_output_text === 'string' && j.llm_raw_output_text.trim() !== '') return true;\n  if (j.output !== undefined && j.output !== null && j.output !== '') return true;\n  if (j.text !== undefined && j.text !== null && j.text !== '') {\n    if (j.test_synthetic_sem !== true) return true;\n  }\n  if (j.response !== undefined && j.response !== null && j.response !== '') return true;\n  if (typeof j.prompt_version === 'string' && REAL_SEM_PROMPT_VERSIONS.has(j.prompt_version)) return true;\n  if (j.stage === 'semantic_primary' || j.stage === 'product_kind_select') return true;\n  if (j.semantic_raw_json !== undefined && j.semantic_raw_json !== null) return true;\n  const n1 = isPlainObject(j.routing_hint) && isPlainObject(j.routing_hint.n1_t) ? j.routing_hint.n1_t : null;\n  if (n1 && n1.llm_called === true) return true;\n  return false;\n}\n\nfunction evaluateN1TGate(j) {\n  if (!isPlainObject(j)) return false;\n  const hint = j.routing_hint;\n  if (!isPlainObject(hint)) return false;\n  const n1 = hint.n1_t;\n  if (!isPlainObject(n1)) return false;\n  if (!strictTrue(n1.enabled)) return false;\n  if (!strictTrue(n1.operator_lock)) return false;\n  if (!strictNumEq(n1.product_id, EXPECTED_PRODUCT_ID)) return false;\n  if (!strictNumEq(n1.product_raw_id, EXPECTED_PRODUCT_RAW_ID)) return false;\n  if (!strictNumEq(coerceFiniteNumber(j.product_id), EXPECTED_PRODUCT_ID)) return false;\n  if (!strictNumEq(coerceFiniteNumber(j.product_raw_id), EXPECTED_PRODUCT_RAW_ID)) return false;\n  if (!strictNumEq(n1.requested_batch_size, 1)) return false;\n  if (!strictNumEq(n1.effective_batch_size, 1)) return false;\n  const meta = isPlainObject(j.run_meta) ? j.run_meta : {};\n  const itemRequested = hasOwn(j, 'requested_batch_size') && j.requested_batch_size !== undefined\n    ? j.requested_batch_size\n    : meta.requested_batch_size;\n  const itemEffective = hasOwn(j, 'effective_batch_size') && j.effective_batch_size !== undefined\n    ? j.effective_batch_size\n    : (meta.effective_batch_size !== undefined ? meta.effective_batch_size : j.batch_size);\n  if (!strictNumEq(coerceFiniteNumber(itemRequested), 1)) return false;\n  if (!strictNumEq(coerceFiniteNumber(itemEffective), 1)) return false;\n  if (n1.workflow_id !== EXPECTED_WORKFLOW_ID) return false;\n  if (n1.fixture_version !== EXPECTED_FIXTURE_VERSION) return false;\n  if (n1.load_mode !== EXPECTED_LOAD_MODE) return false;\n  if (coerceFiniteNumber(j.run_id) === null) return false;\n  if (!strictNumEq(coerceFiniteNumber(j.product_count), 1)) return false;\n  if (hasRealSemOrLlmEvidence(j)) return false;\n  return true;\n}\n\nreturn items.map((item, index) => {\n  const j = item.json || {};\n  const pass = evaluateN1TGate(j);\n  return {\n    json: {\n      ...j,\n      n1_t_gate_pass: pass === true\n    },\n    pairedItem: item.pairedItem !== undefined ? item.pairedItem : { item: index }\n  };\n});\n"
+      },
+      "id": "450f46d1-b7aa-46b3-9f7a-8fac9cd037cd",
+      "name": "N1-T — Gate Eval",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        -944
+      ],
+      "notes": "B4.3B-T: fail-closed G3 predicate → n1_t_gate_pass. Default unarmed → false."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "35d08c22-062f-4118-909a-151548b40f5f",
+              "leftValue": "={{ $json.n1_t_gate_pass }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "87144f6f-f53d-4edb-b7ab-8a89d3156ddc",
+      "name": "N1-T — Gate IF",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1480,
+        -944
+      ],
+      "notes": "B4.3B-T: true[0]→Stub Emit; false[1]→Sem0 Build (original path). Fail-closed."
+    },
+    {
+      "parameters": {
+        "jsCode": "// N1-T — Stub Emit (B4.3B-T). Defensive G3 revalidation; throw if unarmed.\n// Mirrors scripts/hierarchy_nodes/n1_t_stub_emit_v1.js + n1_t_gate_v1.js\n\nconst EXPECTED_PRODUCT_ID = 55;\nconst EXPECTED_PRODUCT_RAW_ID = 55;\nconst EXPECTED_WORKFLOW_ID = 'o8sugljHYuUs7IEC';\nconst EXPECTED_FIXTURE_VERSION = 'n1_presem_stub_v1';\nconst EXPECTED_LOAD_MODE = 'mode_c_exact_id';\nconst REAL_SEM_PROMPT_VERSIONS = new Set([\n  'prompt_sem0_v2',\n  'prompt_semantic_v3',\n  'prompt_semantic_v2'\n]);\n\nfunction isPlainObject(value) {\n  return value !== null && typeof value === 'object' && !Array.isArray(value);\n}\n\nfunction strictTrue(value) {\n  return value === true;\n}\n\nfunction strictNumEq(value, expected) {\n  return typeof value === 'number' && Number.isFinite(value) && value === expected;\n}\n\nfunction coerceFiniteNumber(value) {\n  if (typeof value === 'number' && Number.isFinite(value)) return value;\n  return null;\n}\n\nfunction hasOwn(obj, key) {\n  return Object.prototype.hasOwnProperty.call(obj, key);\n}\n\nfunction hasRealSemOrLlmEvidence(j) {\n  if (!isPlainObject(j)) return true;\n  if (j.llm_called === true) return true;\n  if (typeof j.llm_raw_output_text === 'string' && j.llm_raw_output_text.trim() !== '') return true;\n  if (j.output !== undefined && j.output !== null && j.output !== '') return true;\n  if (j.text !== undefined && j.text !== null && j.text !== '') {\n    if (j.test_synthetic_sem !== true) return true;\n  }\n  if (j.response !== undefined && j.response !== null && j.response !== '') return true;\n  if (typeof j.prompt_version === 'string' && REAL_SEM_PROMPT_VERSIONS.has(j.prompt_version)) return true;\n  if (j.stage === 'semantic_primary' || j.stage === 'product_kind_select') return true;\n  if (j.semantic_raw_json !== undefined && j.semantic_raw_json !== null) return true;\n  const n1 = isPlainObject(j.routing_hint) && isPlainObject(j.routing_hint.n1_t) ? j.routing_hint.n1_t : null;\n  if (n1 && n1.llm_called === true) return true;\n  return false;\n}\n\nfunction evaluateN1TGate(j) {\n  if (!isPlainObject(j)) return false;\n  const hint = j.routing_hint;\n  if (!isPlainObject(hint)) return false;\n  const n1 = hint.n1_t;\n  if (!isPlainObject(n1)) return false;\n  if (!strictTrue(n1.enabled)) return false;\n  if (!strictTrue(n1.operator_lock)) return false;\n  if (!strictNumEq(n1.product_id, EXPECTED_PRODUCT_ID)) return false;\n  if (!strictNumEq(n1.product_raw_id, EXPECTED_PRODUCT_RAW_ID)) return false;\n  if (!strictNumEq(coerceFiniteNumber(j.product_id), EXPECTED_PRODUCT_ID)) return false;\n  if (!strictNumEq(coerceFiniteNumber(j.product_raw_id), EXPECTED_PRODUCT_RAW_ID)) return false;\n  if (!strictNumEq(n1.requested_batch_size, 1)) return false;\n  if (!strictNumEq(n1.effective_batch_size, 1)) return false;\n  const meta = isPlainObject(j.run_meta) ? j.run_meta : {};\n  const itemRequested = hasOwn(j, 'requested_batch_size') && j.requested_batch_size !== undefined\n    ? j.requested_batch_size\n    : meta.requested_batch_size;\n  const itemEffective = hasOwn(j, 'effective_batch_size') && j.effective_batch_size !== undefined\n    ? j.effective_batch_size\n    : (meta.effective_batch_size !== undefined ? meta.effective_batch_size : j.batch_size);\n  if (!strictNumEq(coerceFiniteNumber(itemRequested), 1)) return false;\n  if (!strictNumEq(coerceFiniteNumber(itemEffective), 1)) return false;\n  if (n1.workflow_id !== EXPECTED_WORKFLOW_ID) return false;\n  if (n1.fixture_version !== EXPECTED_FIXTURE_VERSION) return false;\n  if (n1.load_mode !== EXPECTED_LOAD_MODE) return false;\n  if (coerceFiniteNumber(j.run_id) === null) return false;\n  if (!strictNumEq(coerceFiniteNumber(j.product_count), 1)) return false;\n  if (hasRealSemOrLlmEvidence(j)) return false;\n  return true;\n}\n\nreturn items.map((item, index) => {\n  const j = item.json || {};\n  if (!evaluateN1TGate(j)) {\n    throw new Error('N1-T Stub Emit refused: G3 operator lock not fully satisfied (fail-closed; no synthetic Sem)');\n  }\n  const existingHint = isPlainObject(j.routing_hint) ? j.routing_hint : {};\n  const existingN1T = isPlainObject(existingHint.n1_t) ? existingHint.n1_t : {};\n  return {\n    json: {\n      ...j,\n      test_mode: 'n1_presem_smoke',\n      test_synthetic_sem: true,\n      test_fixture_version: 'n1_presem_stub_v1',\n      llm_called: false,\n      semantic_validation_passed: true,\n      semantic_reject_reason: null,\n      semantic_confidence: null,\n      semantic_attrs: {},\n      attr_mnn: null,\n      attr_dosage_form: null,\n      attr_administration_route: null,\n      decision_status: 'pending_fallback',\n      next_action: 'direction_select',\n      selected_category_id: null,\n      direction_static: true,\n      stage: 'direction_select',\n      workflow_version: 'hierarchy_n1_presem_smoke_v1',\n      prompt_version: 'test_stub_no_llm_v1',\n      routing_hint: {\n        ...existingHint,\n        n1_t: {\n          ...existingN1T,\n          test_synthetic_sem: true,\n          llm_called: false\n        }\n      }\n    },\n    pairedItem: item.pairedItem !== undefined ? item.pairedItem : { item: index }\n  };\n});\n"
+      },
+      "id": "5dfd6765-2530-40d8-b8f7-07c5597130a3",
+      "name": "N1-T — Stub Emit",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        -1100
+      ],
+      "notes": "B4.3B-T test-only synthetic Sem→Route. Throws if G3 not fully armed. No LLM."
+    },
+    {
+      "parameters": {
+        "content": "## N1-T pre-Sem seam (B4.3B-T)\n\n**Local only / test topology**\n\nLimit → Gate Eval → Gate IF\n- false → original Sem0/Sem1\n- true → Stub Emit → Sem Route → Dir static → log-only\n\nG3 default: `routing_hint.n1_t.enabled=false`\nLoad stays `WHERE false`. Do not arm/push/run without owner approval.",
+        "height": 320,
+        "width": 420,
+        "color": 5
+      },
+      "id": "6ee7dfb0-e3ae-44ee-9afa-7a40d277c584",
+      "name": "Sticky — N1-T pre-Sem seam",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1240,
+        -1280
+      ]
     }
   ],
   "connections": {
@@ -1470,7 +1672,7 @@
       "main": [
         [
           {
-            "node": "Run — Create Run",
+            "node": "Run — Apply Batch Cap",
             "type": "main",
             "index": 0
           }
@@ -1481,7 +1683,7 @@
       "main": [
         [
           {
-            "node": "Load — Attach Run ID",
+            "node": "Load — Empty Branch Gate",
             "type": "main",
             "index": 0
           }
@@ -1492,7 +1694,7 @@
       "main": [
         [
           {
-            "node": "Sem0 — Build Prompt",
+            "node": "N1-T — Gate Eval",
             "type": "main",
             "index": 0
           }
@@ -1664,11 +1866,6 @@
         [
           {
             "node": "Load — Select Batch",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Shell — Ensure Empty Fin",
             "type": "main",
             "index": 0
           }
@@ -2128,7 +2325,7 @@
       "main": [
         [
           {
-            "node": "Run — Create Run",
+            "node": "Run — Apply Batch Cap",
             "type": "main",
             "index": 0
           }
@@ -2221,7 +2418,7 @@
       "main": [
         [
           {
-            "node": "Sem — Prepare Log",
+            "node": "Dir — Candidate Builder",
             "type": "main",
             "index": 0
           }
@@ -2318,6 +2515,119 @@
       ]
     },
     "Norm — Normalize Sem attrs": {
+      "main": [
+        [
+          {
+            "node": "Sem — Route",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run — Apply Batch Cap": {
+      "main": [
+        [
+          {
+            "node": "Run — Create Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load — Empty Branch Gate": {
+      "main": [
+        [
+          {
+            "node": "Load — Empty?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load — Empty?": {
+      "main": [
+        [
+          {
+            "node": "Shell — Ensure Empty Fin",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Load — Attach Run ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dir — Candidate Builder": {
+      "main": [
+        [
+          {
+            "node": "Dir — Prepare Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dir — Prepare Payload": {
+      "main": [
+        [
+          {
+            "node": "Dir — Static Post-process",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dir — Static Post-process": {
+      "main": [
+        [
+          {
+            "node": "Sem — Prepare Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "N1-T — Gate Eval": {
+      "main": [
+        [
+          {
+            "node": "N1-T — Gate IF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "N1-T — Gate IF": {
+      "main": [
+        [
+          {
+            "node": "N1-T — Stub Emit",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sem0 — Build Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "N1-T — Stub Emit": {
       "main": [
         [
           {

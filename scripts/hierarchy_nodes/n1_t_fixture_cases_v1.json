@@ -1,0 +1,41 @@
+{
+  "fixture_version": "n1_presem_stub_v1",
+  "workflow_id": "o8sugljHYuUs7IEC",
+  "approved_product_id": 55,
+  "base_armed_item": {
+    "product_id": 55,
+    "product_raw_id": 55,
+    "product_count": 1,
+    "run_id": 9001,
+    "combined_text": "БИСОМОР 2,5мг N30 таб. покрытые пленочной оболочкой Эдж Фарма Прайвет | Эдж Фарма Прайвет Лимитед | N30",
+    "requested_batch_size": 1,
+    "effective_batch_size": 1,
+    "batch_size": 1,
+    "run_meta": {
+      "run_type": "stage2_hierarchy_v1",
+      "workflow_name": "classification-stage2-hierarchy-dev",
+      "workflow_version": "stage2_hierarchy_v1",
+      "requested_batch_size": 1,
+      "effective_batch_size": 1,
+      "batch_cap_version": "live_llm_batch_cap_v1"
+    },
+    "routing_hint": {
+      "prior_key": "keep-me",
+      "n1_t": {
+        "enabled": true,
+        "operator_lock": true,
+        "product_id": 55,
+        "product_raw_id": 55,
+        "requested_batch_size": 1,
+        "effective_batch_size": 1,
+        "fixture_version": "n1_presem_stub_v1",
+        "workflow_id": "o8sugljHYuUs7IEC",
+        "load_mode": "mode_c_exact_id",
+        "test_mode": "n1_presem_smoke",
+        "test_synthetic_sem": false,
+        "llm_called": null
+      }
+    }
+  },
+  "safe_load_sql": "-- B2 skeleton stub: never drain pending pool\nSELECT\n  NULL::bigint AS product_id,\n  NULL::bigint AS product_raw_id\nWHERE false;"
+}

@@ -1972,3 +1972,230 @@ no commit/push.
 #### Next
 
 * Explicit ask → B4 soft design; optional policy_v2 spot-check; Norm v4.1 design remains optional parallel (п.50).
+
+---
+
+### 52. Sem policy_v2 transfer-of-gate spot-check — PASS (2026-09-10)
+
+#### Цель
+
+Проверить, не ухудшили ли Sem0 + Sem1 policy_v2 критичные semantic attributes
+относительно ранее валидированного pre-Sem0 Wave-100 baseline.
+
+Проверка выполнена строго offline/read-only, по уже существующему policy_v2 export:
+
+- source: `redesign/artifacts/sem_wave100_report.csv`;
+- source SHA256: `9c535194b40479884e0b4e07bcb184865ba66cdf6f01096dd093d1c53a6930e4`;
+- policy_v2 hierarchy runs: `317–326`;
+- размер source wave: N=100;
+- reviewed risk-oriented sample: N=20;
+- runtime, n8n, PostgreSQL, SQL, prompts, settings, workflow и production не менялись.
+
+#### Integrity
+
+- reviewed input: N=20;
+- unique `product_id`: 20;
+- sample совпадает с manifest и transfer report;
+- `product_id=26346` включён как обязательный regression fixture;
+- duplicate IDs: 0;
+- blank/invalid review labels: 0;
+- допустимые label values: `correct`, `incorrect`, `unknown`, `not_applicable`;
+- `reviewer` / `reviewed_at` пусты: documentation hygiene warning, non-blocking.
+
+#### Gate results
+
+Основной row-level показатель:
+
+```text
+critical_error_rate = 0 / 15 = 0.0%
+```
+
+- reviewed items: 20;
+- evidenced items: 15;
+- insufficient-evidence items: 5:
+  - `254`;
+  - `1347`;
+  - `1423`;
+  - `5597`;
+  - `8248`;
+- critical-error items: 0;
+- transfer verdict: `TRANSFER_PASS`.
+
+Attr-case results:
+
+| Attribute | Critical errors / evidenced | Error rate |
+|---|---:|---:|
+| `attr_mnn` | 0 / 5 | 0% |
+| `attr_dosage_form` | 0 / 15 | 0% |
+| `attr_administration_route` | 0 / 15 | 0% |
+
+`unknown` и `not_applicable` не считались critical error.
+Один товар с несколькими потенциальными ошибками должен считаться только один раз
+в row-level numerator; в данном sample таких critical rows не выявлено.
+
+#### Regression fixture 26346
+
+- pre-Sem0: `attr_dosage_form='фиточай'`, human label=`incorrect`;
+- policy_v2: `attr_dosage_form='фильтр-пакет'`;
+- human label policy_v2: `correct`;
+- итог: `resolved`.
+
+Для товара `26346`:
+
+- MNN корректно `not_applicable` в рамках current BAA/non-drug policy;
+- `фильтр-пакет` подтверждается исходным товарным текстом;
+- route не показал ложного лекарственного routing assumption;
+- глобальная policy A/B/C по `phytotea` / non-standard presentation остаётся `TO_CONFIRM`
+  для будущего B4, хотя конкретный regression fixture успешно пройден.
+
+#### Administration route canonicalization
+
+Выявленные варианты route, например:
+
+```text
+внутрь
+перорально
+орально
+Внутрь
+Внутривенно
+внутримышечно
+наружно
+```
+
+считаются string-level / legacy vocabulary drift, а не semantic error,
+если их смысл соответствует товару.
+
+- Статус: non-blocking technical debt.
+- Не влияет на `TRANSFER_PASS`.
+- Не считать разницу регистра, языка или синонимичную форму route как `incorrect`.
+- Будущая работа: отдельный controlled-vocabulary/canonicalization design,
+  без изменения текущих `attr_administration_route`, prompts, Code nodes,
+  schema или mappings на данном шаге.
+
+#### Созданные evidence artifacts
+
+- `redesign/artifacts/sem_policy_v2_transfer_sample_manifest_v1.csv`;
+- `redesign/artifacts/sem_policy_v2_transfer_report_v1.csv`;
+- `redesign/artifacts/sem_policy_v2_transfer_human_review_template_v1.csv`;
+- `redesign/artifacts/sem_policy_v2_transfer_sample_build_v1.md`;
+- `redesign/artifacts/sem_policy_v2_transfer_review_metrics_v1.csv`;
+- `redesign/artifacts/sem_policy_v2_transfer_review_defects_v1.csv`;
+- `redesign/artifacts/sem_policy_v2_transfer_review_summary_v1.md`;
+- `redesign/artifacts/sem_policy_v2_transfer_review_summary_v1.json`;
+- `redesign/artifacts/sem_policy_v2_transfer_verdict_v1.md`;
+- `redesign/artifacts/sem_policy_v2_transfer_route_canonicalization_backlog_v1.md`.
+
+#### Decision and allowed next step
+
+`TRANSFER_PASS` подтверждает, что policy_v2 не показал критичной деградации
+на проверенном risk-oriented sample по MNN, dosage form и administration route.
+
+Разрешено:
+
+1. Перейти к `B4.0 verify`:
+   - read-only fresh export hierarchy-dev;
+   - read-only проверка актуального log/schema contract;
+   - подтверждение snapshot-off;
+   - подтверждение Load=`WHERE false`;
+   - подтверждение allowlist / kill switch;
+   - подтверждение stop seam после Need soft;
+   - проверка prompt-version drift перед любым новым runtime execution.
+2. Подготовить отдельный design-only документ по route canonicalization.
+
+Не разрешено этим пунктом:
+
+- запускать Wave-500 / Wave-1000 автоматически;
+- выполнять B4 runtime;
+- добавлять/подключать Direction или Need ноды;
+- включать allowlist/Load;
+- изменять snapshot, `attr_*`, prompts, workflows, DB/schema;
+- менять production `classification-stage2-dev`;
+- считать policy_v2 spot-check глобальной статистической оценкой всей Wave-100/500.
+
+### B4.3B-T — N1-T candidate eligibility (2026-09-12)
+
+* **Selected candidate:** `products_prepared.id = 55` — «БИСОМОР 2,5мг N30 таб. покрытые пленочной оболочкой», manufacturer: «Эдж Фарма Прайвет Лимитед».
+* **Read-only scope:** Sections 3, 5 and 6 of `sql/b4_3b_t_n1_readonly_eligibility_package_v1.sql`, with `:approved_product_id = 55`; completed through existing remote `psql` read-only path, exit code `0`, no side effects.
+* **Evidence:** prepared/raw/product_classification cardinality is `1`; `product_raw_id = 55`; `combined_text` is present (length `131`); one `primary_rules` rule shortlist exists; no open `classification_review_queue` entry; no hierarchy-dev log for this product in the previous 30 days; no production Stage 2 log hit in the previous 24 hours; exact-ID Sem-smoke-family source returned exactly one row.
+* **Decision:** `ELIGIBILITY_PASS_WITH_OPERATIONAL_PREFLIGHT_REQUIRED`.
+* **Interpretation:** product 55 is eligible only as the future exact-ID candidate for the N1-T no-LLM log-only topology test. This is not authorization to implement or push the T1 seam, change the Mode C Load, alter settings/allowlists, execute n8n, call an LLM, write to the DB, or perform rollback.
+* **Operational preflight requirement:** before any future N1-T execution, separately verify n8n hierarchy-dev is idle and investigate the observed 21 stale `classification_runs` rows with `status='running'` and `finished_at IS NULL`. No cleanup or status update is authorized by this decision.
+
+### B4.3B-T — local T1 pre-Sem seam implementation (2026-09-12)
+
+* **Scope:** local-only implementation for future N1-T no-LLM non-empty smoke with approved candidate `products_prepared.id = 55` / `product_raw_id = 55`. No n8n push/import/activation/execution, DB/SQL/settings access, Mode C Load patch, LLM/HTTP call, production workflow change, Git remote change or canonical-plan edit was performed as part of this implementation.
+* **Workflow artifact:** `workflows/classification-stage2-hierarchy-dev.json`; workflow ID remains `o8sugljHYuUs7IEC`.
+* **Baseline / post-patch SHA-256:** `5edddf050b1bdeb06518527403a8e9d7861b520f2d45db37410400fac0b0df9e` → `db2cb0a75d90950161b977ab9abd4f72fa7d9eedfd6dab4aa9810ae66042aa80`.
+* **Implemented topology:** direct connection `Load — Limit Batch → Sem0 — Build Prompt` was replaced locally with `Load — Limit Batch → N1-T — Gate Eval → N1-T — Gate IF`; IF true output `0` routes to `N1-T — Stub Emit → Sem — Route`, and false output `1` routes to the unchanged `Sem0 — Build Prompt` path.
+* **New nodes:** `N1-T — Gate Eval` (fail-closed G3 predicate), `N1-T — Gate IF`, `N1-T — Stub Emit`, and a test-only sticky note. `Run — Apply Batch Cap`, `Run — Init Constants` and `Load — Attach Run ID` now carry/re-attach `routing_hint.n1_t`.
+* **Default safety:** G3 is unarmed by default: `routing_hint.n1_t.enabled=false` and `operator_lock=false`. Missing, malformed or inconsistent context routes false. Cap policy remains max `10`, default `5`; this patch does not force batch size `1`.
+* **Load invariant:** `Load — Select Batch` remains byte-for-byte the safe empty stub `SELECT NULL::bigint AS product_id, NULL::bigint AS product_raw_id WHERE false;`. No Mode C SQL, settings/allowlist or `hierarchy_experiment_enabled` bypass was introduced.
+* **Stub contract:** only a future fully armed G3 condition for exact product/raw ID `55`, batch `1`, fixture `n1_presem_stub_v1`, workflow ID `o8sugljHYuUs7IEC`, valid `run_id`, `product_count=1`, and no real Sem markers can enter the synthetic path. Stub preserves context with `...item.json`, writes test markers under `routing_hint.n1_t`, sets only test-safe semantic null fields and cannot emit final category/snapshot fields.
+* **Static isolation:** BFS/static graph checks confirmed the true branch reaches `Sem — Route → Direction static → Sem — Prepare Log → DB — Insert Log → Fin — Merge Barrier[1] → Fin — Pick Run → Fin — Close Run`, with no path to Sem0/Sem1 Agents, DeepSeek/HTTP, Snapshot/Upsert, `categories_dict`, Need, Category, MNN, Judge or human review. No additional Close Run path was added.
+* **Tests:** `node --test scripts/n1_t_fixture_harness.test.mjs` — `24 PASS / 0 FAIL`. Coverage includes unarmed/failing G3 cases, exact ID/raw ID/batch/version/run checks, real-Sem-marker rejection, synthetic-field restrictions, context preservation, product `26346` rejection, workflow graph isolation, Load SQL equality, prompt authority and single-Close invariant.
+* **Decision:** `LOCAL_T1_STATIC_IMPLEMENTATION_PASS`.
+* **Next gate:** owner review of the exact local diff. A temporary Mode C exact-ID Load patch for product 55 remains a separate approval, as do Mode A settings (only if later retained), n8n push, fresh-pull acceptance, operational idle/zombie preflight, one N1-T execution and rollback.
+
+### B4.3B-T — local Mode C exact-ID Load SQL (2026-09-12)
+
+* **Scope:** local-only temporary replacement of `Load — Select Batch` SQL for future N1-T no-LLM non-empty smoke with approved candidate `products_prepared.id = 55` / `product_raw_id = 55`. No G3 arming, batch-size forcing, n8n push/import/activation/execution, DB/SQL execution, settings/allowlist change, LLM/HTTP call, production workflow change, Git remote change or rollback apply was performed.
+* **Workflow artifact:** `workflows/classification-stage2-hierarchy-dev.json`; workflow ID remains `o8sugljHYuUs7IEC`; node `Load — Select Batch` (`fd82e788-b629-4698-b558-1c47e1aac90a`) only.
+* **Baseline / post-patch SHA-256:** `db2cb0a75d90950161b977ab9abd4f72fa7d9eedfd6dab4aa9810ae66042aa80` → `56630cfe15e8da9bbf06065366cbe37d34dce3c6784f7608ea22869f88052df8`.
+* **Design basis:** `MODE_C_DESIGN_READY_NO_SETTINGS` — Sem-smoke-family join without `pipeline_settings` / allowlist / `hierarchy_experiment_enabled`.
+* **Applied local SQL (not executed):** `product_classification` ⋈ `classification_shortlist` with literal `p.product_id = 55`, `p.product_raw_id = 55`, Sem-smoke eligibility predicates, `ORDER BY p.product_id, s.id`, hard `LIMIT 1`; returns rule/shortlist/`combined_text` columns needed downstream.
+* **Rollback payload (not applied):** byte-for-byte B2 stub `SELECT NULL::bigint AS product_id, NULL::bigint AS product_raw_id WHERE false;`.
+* **Patch boundary:** only `parameters.query` on Load; T1 seam, Cap/Init/Attach, prompts/Agents, connections, node count (`94`) and inactive local metadata unchanged; G3 remains default-unarmed (`enabled=false`, `operator_lock=false`).
+* **Tests:** `node --test scripts/n1_t_fixture_harness.test.mjs scripts/mode_c_load_static.test.mjs` — `36 PASS / 0 FAIL`.
+* **Residual hazard:** Mode C + unarmed G3 still routes false → Sem0/Sem1 LLM; this patch must not be pushed or run until a separate G3 arming approval and later gates.
+* **Decision:** `LOCAL_MODE_C_SQL_IMPLEMENTATION_PASS`.
+* **Next gate:** owner review of the exact local Mode C SQL diff; then separately a one-shot G3 arming (and batch=`1`) design/implementation approval before any n8n push, fresh-pull accept, idle/zombie preflight, one N1-T execution or rollback.
+
+### B4.3B-T — local one-shot G3 arming (2026-09-12)
+
+* **Scope:** local-only Strategy A temporary one-shot G3 arming for future N1-T no-LLM non-empty smoke with approved candidate `products_prepared.id = 55` / `product_raw_id = 55`. No n8n push/import/activation/execution, DB/SQL/settings/allowlist change, Mode C SQL edit, Gate/Stub/edge change, LLM/HTTP call, production workflow change, Git remote change or rollback apply was performed.
+* **Workflow artifact:** `workflows/classification-stage2-hierarchy-dev.json`; workflow ID remains `o8sugljHYuUs7IEC`.
+* **Baseline / post-patch SHA-256:** `56630cfe15e8da9bbf06065366cbe37d34dce3c6784f7608ea22869f88052df8` → `c331ee552e2ed089aab858b8ad2c94d645213c6d17091a914434d2c88e5b15f4`.
+* **Design basis:** `G3_ARMING_DESIGN_READY` — Cap/Init/Attach literal arm; CLI Manual `{}` / pinData path rejected as infeasible.
+* **Arming constant:** `const N1_T_ONE_SHOT_ARMED = true` in `Run — Apply Batch Cap`, `Run — Init Constants` and `Load — Attach Run ID`, with explicit temporary/rollback warnings; not read from Manual/webhook/DB/env/settings.
+* **Armed behavior:** Cap atomically forces `requested_batch_size` / `effective_batch_size` / `batch_size = 1` and full `routing_hint.n1_t` (`enabled=true`, `operator_lock=true`, product/raw `55`, fixture `n1_presem_stub_v1`, workflow ID `o8sugljHYuUs7IEC`, `load_mode=mode_c_exact_id`). Init/Attach propagate/re-attach the armed stamp and `run_meta` batch `1` after Create Run / Load wipes; they do not force false while armed.
+* **Unarmed branch retained:** when `N1_T_ONE_SHOT_ARMED === false`, Cap remains max `10` / default `5` and stamps force `enabled=false` / `operator_lock=false` (rollback path).
+* **Patch boundary:** only Cap/Init/Attach Code bodies (+ sticky `Sticky — N1-T ONE-SHOT ARMED`); Mode C Load SQL byte-identical; T1 Gate Eval/IF/Stub ids and edges unchanged; Sem0/Sem1 prompts remain `prompt_sem0_v2` / `prompt_semantic_v3`; Snapshot/LLM isolation and single Close path unchanged; node count `95`.
+* **Hermetic proof:** Cap→Attach simulation for product `55` with `product_count=1` and finite `run_id` satisfies `n1_t_gate_v1` and Stub (`next_action=direction_select`, test-only markers, no final fields).
+* **Tests:** `node --test scripts/n1_t_fixture_harness.test.mjs scripts/mode_c_load_static.test.mjs` — `41 PASS / 0 FAIL`.
+* **Rollback target (not applied):** restore Cap/Init/Attach (+ remove armed sticky) to post-Mode-C unarmed SHA `56630cfe15e8da9bbf06065366cbe37d34dce3c6784f7608ea22869f88052df8`; Mode C SQL stays until a separate Load rollback.
+* **Decision:** `LOCAL_G3_ONE_SHOT_ARMING_IMPLEMENTATION_PASS`.
+* **Next gate:** owner review of the exact local armed diff; then separately decide whether to prepare the n8n push package. Do not push/run until push approval, fresh-pull accept, idle/zombie preflight, one CLI Manual-equivalent N1-T execution approval and later rollback approvals.
+
+### B4.3B-T — N1-T push + post-push fresh-pull accept (2026-09-12)
+
+* **Scope:** owner-approved one push of the local armed N1-T package to hierarchy-dev, then one fresh pull for static acceptance. No activation, no N1-T execution, no DB/SQL/settings, no LLM/HTTP, no G3/Load rollback.
+* **Workflow:** `classification-stage2-hierarchy-dev` / `o8sugljHYuUs7IEC`.
+* **Push:** `python3 scripts/push_workflow.py classification-stage2-hierarchy-dev`; approved local armed source SHA-256 `c331ee552e2ed089aab858b8ad2c94d645213c6d17091a914434d2c88e5b15f4`; remote `updatedAt=2026-09-12T16:48:37.282Z`; live executions before/after push `0`.
+* **Fresh pull:** `python3 scripts/pull_workflow.py classification-stage2-hierarchy-dev` (exit `0`); pulled export canonical sort-key SHA-256 matches approved armed source `612aa38ecda192a6cefdbacc4df6b01cddf92603e0b4d16e667d85ef69e5e0d6`; raw bytes differ only by trailing newline (serialization-only).
+* **Remote package verified on pull:** Mode C exact-ID Load (`product_id`/`product_raw_id` `55`, hard `LIMIT 1`, no settings/allowlist); G3 `N1_T_ONE_SHOT_ARMED = true` in Cap/Init/Attach with batch `1`; T1 Gate Eval → IF true→Stub→Sem Route / false→Sem0; Sem0/Sem1 prompts `prompt_sem0_v2` / `prompt_semantic_v3`; true branch log-only Close, no Sem Agents/Snapshot path.
+* **Inactive but armed:** workflow remains **inactive** (`active=false` at push; pulled export omits `active` by pull sanitize). It is **deliberately armed and runtime-capable** (Mode C + G3 one-shot) pending operational idle/zombie preflight and a separate one-run approval. Do not leave this state without a planned rollback.
+* **Decision:** `POST_PUSH_STATIC_ACCEPT_PASS`.
+* **Next gate:** operational preflight only (idle / stale `classification_runs` investigation); does **not** authorize N1-T execution, activation, or rollback.
+
+### B4.3B-T — N1-T operational preflight (Product 55, 2026-09-12)
+
+* **Scope:** read-only operational preflight for future one CLI Manual-equivalent N1-T no-LLM smoke on `products_prepared.id = 55` / `product_raw_id = 55`. No N1-T execution, activation, push/pull, DB/settings writes, LLM/HTTP, stale-run cleanup, or G3/Load rollback.
+* **Combined path:** initial package returned procedural `N1_T_OPERATIONAL_PREFLIGHT_BLOCKED` (aborted on nonexistent `product_classification_log.payload`); residual schema-aware SELECT-only package then passed as `N1_T_OPERATIONAL_PREFLIGHT_RESIDUAL_PASS`. Together they form the combined operational verdict below.
+* **n8n (initial):** workflow `classification-stage2-hierarchy-dev` / `o8sugljHYuUs7IEC` inactive (`active=false`); `updatedAt` still `2026-09-12T16:48:37.282Z`; live executions `0`; post-push hierarchy executions `0`; one-live-run rule satisfied.
+* **Stale runs (initial):** 21 DB rows with `status='running'` and `finished_at IS NULL` inventoried (20 hierarchy-dev historical Sem-smoke + 1 offline MNN enrichment); **0** linked to product 55 via `latest_run_id` or logs; no live n8n concurrency. Cleanup not authorized.
+* **Mode C / product 55 (initial):** predicate count before `LIMIT` = `1`; identity `55/55`; `combined_text` length `131`; open review queue `0`; `latest_run_id=46` (historical crashed Stage 2 LLM, not hierarchy).
+* **Residual gap closed:** no N1-T markers in product-55 logs (`input_payload`/`output_payload`/`routing_hint` + text fields); post-push shortlist create/update `0` (still one `primary_rules`/`rule_shortlist` row); post-push hierarchy-dev `classification_runs` `0`; snapshot unchanged (`needs_human_review` / `no_match`, `final_category_id` null, `updated_at` pre-push, no N1-T markers).
+* **Decision:** `N1_T_OPERATIONAL_PREFLIGHT_PASS`.
+* **Next gate:** separate explicit **one-run approval** for exactly one CLI Manual-equivalent N1-T execution (no retry). This PASS does **not** authorize that run, activation, or rollback.
+
+### B4.3B-T — N1-T runtime smoke FAIL (Product 55, 2026-09-12)
+
+* **Authorization:** exactly one inactive CLI Manual-equivalent run (`n8n execute --id=o8sugljHYuUs7IEC` via `docker exec` + `N8N_RUNNERS_BROKER_PORT=15679`); input `{}`; no activation/webhook; **no retry**.
+* **Runtime IDs:** n8n execution **`42880`** (`cli`, `success`, `2026-09-12T17:36:34.040Z`→`17:36:45.748Z`); DB `classification_runs.id` **`476`** (`finished_empty`, batch `1`, Close once). Workflow remained **`active=false`**; `updatedAt` unchanged (`2026-09-12T16:48:37.282Z`).
+* **Verdict:** `N1_T_RUNTIME_FAIL_GATE_FALSE` (consequence: Sem0/Sem1/DeepSeek lit; Stub dark).
+* **Root cause:** Gate Eval returned `n1_t_gate_pass=false` despite armed `routing_hint.n1_t` (`enabled`/`operator_lock` true, product/raw stamp `55`, batch `1`). Item fields `product_id`, `product_raw_id`, and `run_id` arrived as **strings** from Load/Create Run (`"55"`, `"476"`), while `n1_t_gate_v1` / Gate Eval `coerceFiniteNumber` accepts only `typeof number` → fail-closed → Gate IF false[1] → Sem0/Sem1 LLM path. Local mirror of the captured item also evaluates `false`.
+* **Observed path:** Load 1× product `55` → Gate false → Sem0/Sem Agents + DeepSeek → Direction static → one log (`product_classification_log.id=5984`, `prompt_version=prompt_semantic_v3`, **no** N1-T stub markers) → one Close. Stub Emit **not** executed.
+* **Containment (confirmed):** `product_classification.latest_run_id` still **`46`**; no snapshot/`updated_at` change for product 55; no new shortlist row; no review-queue row; Snapshot/Upsert nodes dark; no second authorized attempt.
+* **Adjacent note:** exec `42879` / run `475` (~17:31) exists outside this authorized attempt; not a retry of `42880`.
+* **Decision:** `N1_T_RUNTIME_FAIL_GATE_FALSE`.
+* **Hard stop:** **no further N1-T execution** (CLI/webhook/Manual/UI) until a separately approved **remediation** (and any required re-preflight / one-run re-approval). G3/Load rollback and stop/remediation actions are **not** authorized by this journal entry.
