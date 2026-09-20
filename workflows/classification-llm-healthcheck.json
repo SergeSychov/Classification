@@ -1,0 +1,219 @@
+{
+  "name": "classification-llm-healthcheck",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## LLM Healthcheck (Stage 2)\n\nКанон: `Categories/n8n_execution_contract.md` § LLM provider healthcheck.\n\n1. Probe **DeepSeek** via LangChain Agent (`lmChatDeepSeek`) — тот же путь, что P1/2A/2B.\n2. On fail → probe **Qwen** via Polza (`lmChatOpenAi`, модель Judge).\n3. Output: `llm_provider` = `deepseek`|`qwen`, `ok` bool, `error`.\n\nВызывается **один раз на chunk** из `classification-stage2-dev` перед Load batch.",
+        "height": 280,
+        "width": 520
+      },
+      "id": "hc-note-1",
+      "name": "NOTE — LLM Healthcheck",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [48, 48]
+    },
+    {
+      "parameters": {},
+      "id": "hc-exec-trigger",
+      "name": "HC — Execute Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [160, 400]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "classification-llm-healthcheck",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "hc-webhook",
+      "name": "HC — Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [160, 560],
+      "webhookId": "classification-llm-healthcheck-v1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const started = new Date().toISOString();\nreturn [{\n  json: {\n    probe_started_at: started,\n    deepseek_model: 'deepseek-v4-flash',\n    qwen_model: 'qwen/qwen3.5-flash-02-23@reasoning_effort=none',\n    prompt_system: 'Reply with exactly the word OK. No other text.',\n    prompt_user: 'healthcheck',\n  },\n}];"
+      },
+      "id": "hc-prepare",
+      "name": "HC — Prepare",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [400, 480]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt_user }}",
+        "options": {
+          "systemMessage": "={{ $json.prompt_system }}"
+        }
+      },
+      "id": "hc-ds-agent",
+      "name": "HC — DeepSeek Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [640, 400],
+      "onError": "continueRegularOutput",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "model": "deepseek-v4-flash",
+        "options": {
+          "temperature": 0
+        }
+      },
+      "id": "hc-ds-lm",
+      "name": "HC — DeepSeek LM",
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "position": [640, 600],
+      "credentials": {
+        "deepSeekApi": {
+          "id": "xyaJwQg88odvtCfC",
+          "name": "DeepSeek account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const prep = $('HC — Prepare').first().json || {};\nconst item = $input.first().json || {};\nconst raw = item.output ?? item.text ?? item.response ?? item.content ?? null;\nconst errMsg = item.error?.message || item.error || (typeof item.message === 'string' ? item.message : null);\nconst rawText = raw == null ? null : String(raw).trim();\nconst looksOk = !!rawText && !/forbidden|not supported|401|403|country|region|territory/i.test(rawText + ' ' + String(errMsg || ''));\nconst deepseekOk = looksOk && !errMsg;\nconst error = deepseekOk\n  ? null\n  : String(errMsg || item.description || (rawText ? 'deepseek_agent_empty' : 'deepseek_agent_failed')).slice(0, 500);\n\nreturn [{\n  json: {\n    ...prep,\n    deepseek_ok: deepseekOk,\n    deepseek_error: error,\n    deepseek_raw: rawText ? rawText.slice(0, 200) : null,\n  },\n}];"
+      },
+      "id": "hc-ds-result",
+      "name": "HC — DeepSeek Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "ds-ok",
+              "leftValue": "={{ $json.deepseek_ok }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "hc-if-ds",
+      "name": "HC — DeepSeek OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1120, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "const j = $input.first().json || {};\nreturn [{\n  json: {\n    ok: true,\n    llm_provider: 'deepseek',\n    model: j.deepseek_model || 'deepseek-v4-flash',\n    error: null,\n    deepseek_ok: true,\n    qwen_ok: null,\n    probed_at: new Date().toISOString(),\n    probe_started_at: j.probe_started_at || null,\n  },\n}];"
+      },
+      "id": "hc-out-ds",
+      "name": "HC — Out DeepSeek",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1360, 288]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt_user }}",
+        "options": {
+          "systemMessage": "={{ $json.prompt_system }}"
+        }
+      },
+      "id": "hc-qw-agent",
+      "name": "HC — Qwen Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [1360, 560],
+      "onError": "continueRegularOutput",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "id",
+          "value": "qwen/qwen3.5-flash-02-23@reasoning_effort=none"
+        },
+        "responsesApiEnabled": false,
+        "options": {
+          "temperature": 0
+        }
+      },
+      "id": "hc-qw-lm",
+      "name": "HC — Polza Qwen LM",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [1360, 760],
+      "credentials": {
+        "openAiApi": {
+          "id": "YFMznqpi3SeJdYod",
+          "name": "Polza account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const prep = $('HC — DeepSeek Result').first().json || {};\nconst item = $input.first().json || {};\nconst raw = item.output ?? item.text ?? item.response ?? item.content ?? null;\nconst errMsg = item.error?.message || item.error || (typeof item.message === 'string' ? item.message : null);\nconst rawText = raw == null ? null : String(raw).trim();\nconst qwenOk = !!rawText && !errMsg;\nconst qwenError = qwenOk\n  ? null\n  : String(errMsg || (rawText ? 'qwen_agent_empty' : 'qwen_agent_failed')).slice(0, 500);\n\nconst ok = qwenOk;\nreturn [{\n  json: {\n    ok,\n    llm_provider: ok ? 'qwen' : 'none',\n    model: ok ? (prep.qwen_model || 'qwen/qwen3.5-flash-02-23@reasoning_effort=none') : null,\n    error: ok\n      ? null\n      : `deepseek=${prep.deepseek_error || 'fail'}; qwen=${qwenError}`,\n    deepseek_ok: !!prep.deepseek_ok,\n    deepseek_error: prep.deepseek_error || null,\n    qwen_ok: qwenOk,\n    qwen_error: qwenError,\n    qwen_raw: rawText ? rawText.slice(0, 200) : null,\n    probed_at: new Date().toISOString(),\n    probe_started_at: prep.probe_started_at || null,\n  },\n}];"
+      },
+      "id": "hc-out-qw",
+      "name": "HC — Out Qwen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1600, 560]
+    }
+  ],
+  "connections": {
+    "HC — Execute Trigger": {
+      "main": [[{ "node": "HC — Prepare", "type": "main", "index": 0 }]]
+    },
+    "HC — Webhook": {
+      "main": [[{ "node": "HC — Prepare", "type": "main", "index": 0 }]]
+    },
+    "HC — Prepare": {
+      "main": [[{ "node": "HC — DeepSeek Agent", "type": "main", "index": 0 }]]
+    },
+    "HC — DeepSeek LM": {
+      "ai_languageModel": [[{ "node": "HC — DeepSeek Agent", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "HC — DeepSeek Agent": {
+      "main": [[{ "node": "HC — DeepSeek Result", "type": "main", "index": 0 }]]
+    },
+    "HC — DeepSeek Result": {
+      "main": [[{ "node": "HC — DeepSeek OK?", "type": "main", "index": 0 }]]
+    },
+    "HC — DeepSeek OK?": {
+      "main": [
+        [{ "node": "HC — Out DeepSeek", "type": "main", "index": 0 }],
+        [{ "node": "HC — Qwen Agent", "type": "main", "index": 0 }]
+      ]
+    },
+    "HC — Polza Qwen LM": {
+      "ai_languageModel": [[{ "node": "HC — Qwen Agent", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "HC — Qwen Agent": {
+      "main": [[{ "node": "HC — Out Qwen", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

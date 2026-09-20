@@ -1,5 +1,11 @@
 **Выполненные задачи (Stage 2 классификатора аптечных товаров)**
 
+### LLM provider healthcheck + DeepSeek→Qwen failover (2026-09-20)
+
+* Согласованное ops-требование (не «результаты пилота»): при недоступности DeepSeek (Agent 403 geo) — контрактный healthcheck перед каждым chunk и failover на Qwen/Polza.
+* Субворкфлоу `classification-llm-healthcheck`; Stage 2: `Run — LLM Healthcheck` → `Run — Apply LLM Provider`; P1/2A/2B `Provider Switch` + `*— AI Agent Qwen` / `*— Polza`.
+* Канон: `Categories/n8n_execution_contract.md` rule 8, `Categories/stage2_workflow_contract.md` §8, `Categories/llm_provider_healthcheck.md`. Пороги 0.40/0.60 и hierarchy live не менялись.
+
 1. **Введение run-tracking и run_meta**
 
 * Добавлена таблица `classification_runs` как сущность запуска Stage 2. [file:1]

@@ -266,17 +266,39 @@ n8n не поддерживает вложенные sub-workflow без `Execut
 
 ## 8. LLM-модели
 
-### DeepSeek (P1, 2A, 2B)
+### LLM provider healthcheck (обязательно перед каждым chunk)
+
+Перед `Load — Select Batch` Stage 2 вызывает субворкфлоу **`classification-llm-healthcheck`** (`Run — LLM Healthcheck` → `Run — Apply LLM Provider`).
+
+| Поле | Значение |
+|------|----------|
+| `llm_provider` | `deepseek` \| `qwen` |
+| `ok` | `true` только если выбран usable provider |
+| `error` | reason при fail / текст DeepSeek error при failover |
+
+**Политика:** сначала probe DeepSeek через **LangChain Agent** (`lmChatDeepSeek`, модель как у P1 — не HTTP-only: HTTP может быть 200 при 403 Agent). On fail → probe **Qwen / Polza** (как Judge). Если оба fail — `Run — Apply LLM Provider` abort'ит chunk. `llm_provider` прокидывается в items (`Load — Attach Run ID` / `run_meta`) и выбирает Agent path в P1/2A/2B (`*— Provider Switch`).
+
+Канон исполнения: `Categories/n8n_execution_contract.md` rule 8; краткий doc: `Categories/llm_provider_healthcheck.md`.
+
+### DeepSeek (P1, 2A, 2B) — primary
 
 | Нода | Подключена к | Модель | Credential |
 |------|--------------|--------|------------|
-| **P1 — DeepSeek** | `P1 — AI Agent` | `deepseek-v4-flash` (или актуальная в n8n) | DeepSeek account |
-| **2A — DeepSeek** | `2A — AI Agent` | та же | DeepSeek account |
-| **2B — DeepSeek** | `2B — AI Agent` | та же | DeepSeek account |
+| **Shared — DeepSeek** / P1 | `P1 — AI Agent` | `deepseek-v4-flash` | DeepSeek account |
+| **Shared — DeepSeek1** | `2A — AI Agent` | та же | DeepSeek account |
+| **Shared — DeepSeek2** | `2B — AI Agent` | та же | DeepSeek account |
 
 **Правило:** одна физическая модель и один credential, но **три отдельные** Chat Model ноды — по одной под каждым Agent. Так канвас читается без длинных связей между swimlanes. Запрещено снова объединять P1/2A/2B в одну shared-ноду.
 
-Judge **не** использует DeepSeek — только Polza / Qwen (см. ниже).
+### Qwen / Polza failover (P1, 2A, 2B) — когда healthcheck → `qwen`
+
+| Нода | Подключена к | Модель | Credential |
+|------|--------------|--------|------------|
+| **P1 — Polza** | `P1 — AI Agent Qwen` | `qwen/qwen3.5-flash-02-23@reasoning_effort=none` | Polza account |
+| **2A — Polza** | `2A — AI Agent Qwen` | та же | Polza account |
+| **2B — Polza** | `2B — AI Agent Qwen` | та же | Polza account |
+
+Judge **всегда** использует Polza / Qwen (ниже) и не зависит от healthcheck provider для выбора модели.
 
 ### Polza.ai (Judge)
 
@@ -299,8 +321,10 @@ Judge **не** использует DeepSeek — только Polza / Qwen (см
 | In — Webhook Start | Code | `batch_size` из body (1–10, дефолт 5). Большие волны — только чанками, см. `Categories/n8n_execution_contract.md` |
 | Run — Create Run | Postgres | INSERT `classification_runs`, статус `running` |
 | Run — Init Constants | Code | Словарь `constants` (стадии, пороги, модели) |
+| Run — LLM Healthcheck | Execute Workflow | Субворкфлоу `classification-llm-healthcheck` — probe DeepSeek→Qwen |
+| Run — Apply LLM Provider | Code | Записывает `llm_provider` / abort если `ok=false` |
 | Load — Select Batch | Postgres | Товары `pending` + primary shortlist; `LIMIT = batch_size` |
-| Load — Attach Run ID | Code | `run_id`, `run_meta` на каждый item |
+| Load — Attach Run ID | Code | `run_id`, `run_meta`, `llm_provider` на каждый item |
 | Load — Limit Batch | Limit | Страховочный лимит до `batch_size` |
 
 ### P1 — Primary LLM
@@ -309,8 +333,11 @@ Judge **не** использует DeepSeek — только Polza / Qwen (см
 |------|-----|------------|
 | P1 — Build Prompt | Code | Промпт + `deepseek_body`, политика shortlist |
 | P1 — LLM Prepare | Code | `context`, `prompt_system` / `prompt_user` |
-| P1 — AI Agent | AI Agent | Вызов LLM → JSON `category_id`, `confidence`, `explanation` |
-| P1 — DeepSeek | Chat Model | Модель для P1 Agent |
+| P1 — Provider Switch | Switch | `llm_provider=qwen` → Qwen Agent; иначе DeepSeek Agent |
+| P1 — AI Agent | AI Agent | DeepSeek path → JSON `category_id`, `confidence`, `explanation` |
+| P1 — AI Agent Qwen | AI Agent | Failover path (Polza/Qwen) |
+| Shared — DeepSeek | Chat Model | Модель для P1 Agent (DeepSeek) |
+| P1 — Polza | Chat Model | Модель для P1 Agent Qwen |
 | P1 — Merge LLM | Merge | Context + ответ LLM |
 | P1 — Post-process | Code | Валидация, `llm_*`, routing, snapshot/log payload |
 | P1 — Route | Switch | `fallback_2a` → 2A; иначе → DB |

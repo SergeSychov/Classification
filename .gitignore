@@ -18,3 +18,4 @@ redesign/artifacts/_catalog_cache/
 redesign/artifacts/*.pid
 redesign/artifacts/*_console.log
 redesign/artifacts/*_run.log
+.env
