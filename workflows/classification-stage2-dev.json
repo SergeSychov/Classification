@@ -260,7 +260,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const run = $('Run — Create Run').first().json;\nconst runId = run.id;\n\nreturn items.map((item, index) => ({\n  json: {\n    ...item.json,\n    run_id: runId,\n    run_meta: {\n      run_type: run.run_type,\n      workflow_name: run.workflow_name,\n      workflow_version: run.workflow_version,\n      started_at: run.started_at\n    }\n  },\n  pairedItem: index\n}));"
+        "jsCode": "const run = $('Run — Create Run').first().json;\nconst runId = run.id;\nconst health = $('Run — Apply LLM Provider').first().json || {};\nconst llmProvider = health.llm_provider || null;\nconst llmModel = health.llm_model || null;\n\nreturn items.map((item, index) => ({\n  json: {\n    ...item.json,\n    run_id: runId,\n    llm_provider: llmProvider,\n    llm_model: llmModel,\n    llm_health: {\n      ok: health.ok,\n      llm_provider: llmProvider,\n      model: llmModel,\n      deepseek_ok: health.deepseek_ok,\n      qwen_ok: health.qwen_ok,\n      probed_at: health.probed_at,\n      error: health.error || null,\n    },\n    run_meta: {\n      run_type: run.run_type,\n      workflow_name: run.workflow_name,\n      workflow_version: run.workflow_version,\n      started_at: run.started_at,\n      llm_provider: llmProvider,\n      llm_model: llmModel,\n    }\n  },\n  pairedItem: index\n}));\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -281,11 +281,11 @@
       ],
       "id": "1cd002b4-6726-4e8f-b3fa-7d44aa1399b0",
       "name": "Fin — Merge Barrier",
-      "notes": "append: Upsert + Insert"
+      "notes": "append: Upsert + Insert (pulses vary; Fin — Pick Run gates on upserts)"
     },
     {
       "parameters": {
-        "jsCode": "const run = $('Run — Create Run').first().json;\n\nif (!run?.id) {\n  throw new Error('Run — Create Run did not return classification_runs.id');\n}\n\nconst runId = Number(run.id);\nconst expectedRaw = run.batch_size ?? run.metadata?.batch_size;\nconst expected = Number(expectedRaw);\nconst staticData = $getWorkflowStaticData('global');\nconst key = `fin_close_count_${runId}`;\n\nif (!Number.isFinite(expected) || expected <= 0) {\n  // No reliable batch size — close once per barrier completion (legacy).\n  return [{ json: { id: runId } }];\n}\n\nstaticData[key] = Number(staticData[key] || 0) + 1;\nif (staticData[key] < expected) {\n  return [];\n}\n\ndelete staticData[key];\nreturn [{ json: { id: runId, closed_after: expected } }];\n"
+        "jsCode": "const run = $('Run — Create Run').first().json;\n\nif (!run?.id) {\n  throw new Error('Run — Create Run did not return classification_runs.id');\n}\n\nconst runId = Number(run.id);\nconst staticData = $getWorkflowStaticData('global');\nconst closedKey = `fin_closed_${runId}`;\nconst seenKey = `fin_products_seen_${runId}`;\nconst legacyKey = `fin_close_count_${runId}`;\n\nif (legacyKey in staticData) {\n  delete staticData[legacyKey];\n}\n\nif (staticData[closedKey]) {\n  return [];\n}\n\nconst batchRaw = Number(run.batch_size ?? run.metadata?.batch_size);\nlet target = Number.isFinite(batchRaw) && batchRaw > 0 ? Math.trunc(batchRaw) : 0;\ntry {\n  const loaded = $('Load — Limit Batch').all().length;\n  if (loaded > 0) target = loaded;\n} catch (e) {\n  // Keep batch_size from Create Run.\n}\n\nif (target <= 0) {\n  staticData[closedKey] = true;\n  delete staticData[seenKey];\n  return [{ json: { id: runId, closed_after: 0, target: 0 } }];\n}\n\n// Accumulate unique product_ids from Merge Barrier pulses.\n// Do NOT use $('DB — Upsert Snapshot').all() — parallel item linking\n// often hides sibling upserts, so the set never reaches target.\nconst seen = new Set(\n  Array.isArray(staticData[seenKey]) ? staticData[seenKey].map(String) : []\n);\nfor (const item of $input.all()) {\n  const pid = item.json?.product_id;\n  if (pid !== undefined && pid !== null && String(pid) !== '') {\n    seen.add(String(pid));\n  }\n}\nstaticData[seenKey] = Array.from(seen);\n\nif (seen.size < target) {\n  return [];\n}\n\nstaticData[closedKey] = true;\ndelete staticData[seenKey];\nreturn [{\n  json: {\n    id: runId,\n    closed_after: seen.size,\n    target,\n  },\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -294,7 +294,8 @@
         880
       ],
       "id": "ba71dcc0-3aab-48f6-9299-60e9733777ce",
-      "name": "Fin — Pick Run"
+      "name": "Fin — Pick Run",
+      "notes": "Close once: unique product_id seen via Merge pulses >= loaded batch (staticData set; not Upsert.$all)"
     },
     {
       "parameters": {
@@ -1089,6 +1090,323 @@
       ],
       "onError": "continueRegularOutput",
       "notes": "Export Sheets A/B + Telegram links/balances"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "AS3d7jZXevM1K3n5"
+        },
+        "options": {}
+      },
+      "id": "9f653a24-d2a7-48b5-8e11-dbd7afd9b2e6",
+      "name": "Run — LLM Healthcheck",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -80,
+        -1296
+      ],
+      "notes": "Probe DeepSeek Agent then Polza/Qwen before each chunk"
+    },
+    {
+      "parameters": {
+        "jsCode": "const health = $input.first().json || {};\nconst ok = health.ok === true;\nconst provider = String(health.llm_provider || '').toLowerCase();\nif (!ok || (provider !== 'deepseek' && provider !== 'qwen')) {\n  throw new Error(\n    'LLM healthcheck failed: no usable provider. ' +\n    'deepseek_ok=' + String(health.deepseek_ok) +\n    ' qwen_ok=' + String(health.qwen_ok) +\n    ' error=' + String(health.error || 'unknown')\n  );\n}\nconst constants = ($('Run — Init Constants').first().json || {}).constants || {};\nreturn [{\n  json: {\n    ...($('Run — Init Constants').first().json || {}),\n    ok: true,\n    llm_provider: provider,\n    llm_model: health.model || null,\n    deepseek_ok: health.deepseek_ok,\n    qwen_ok: health.qwen_ok,\n    probed_at: health.probed_at || null,\n    error: health.error || null,\n    constants: {\n      ...constants,\n      llm_provider: provider,\n      llm_model: health.model || null,\n    },\n  },\n}];\n"
+      },
+      "id": "df89961d-0925-47c9-9ecc-c6eba072dd8c",
+      "name": "Run — Apply LLM Provider",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        48,
+        -1296
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## LLM Healthcheck\n\nПеред Load batch: probe DeepSeek→Qwen.\n`llm_provider` прокидывается в items.",
+        "height": 160,
+        "width": 320
+      },
+      "id": "be974773-2ae1-4cef-b5d0-a37d9fcc9beb",
+      "name": "📥 Setup — LLM Health",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -120,
+        -1520
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c87acbde-6161-4730-bf04-941b65c1b377",
+                    "leftValue": "={{ $json.llm_provider }}",
+                    "rightValue": "qwen",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "qwen"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "5d731235-a5fb-4588-b34f-e0b0dd20f7d3",
+      "name": "P1 — Provider Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -288,
+        -96
+      ],
+      "notes": "out[0]=qwen (Polza) | out[1]=deepseek (fallback)"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt_user }}",
+        "options": {
+          "systemMessage": "={{ $json.prompt_system }}"
+        }
+      },
+      "id": "2ac896af-2ce7-41ea-a243-0c468cf02699",
+      "name": "P1 — AI Agent Qwen",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -112,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "id",
+          "value": "qwen/qwen3.5-flash-02-23@reasoning_effort=none"
+        },
+        "responsesApiEnabled": false,
+        "options": {
+          "responseFormat": "json_object",
+          "temperature": 0.2
+        }
+      },
+      "id": "6c384d8c-d238-4df2-96e5-cf1570b7e8bd",
+      "name": "P1 — Polza",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -112,
+        176
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "YFMznqpi3SeJdYod",
+          "name": "Polza account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "2ad4c873-fdf0-409c-8c8c-5ce7d01348c9",
+                    "leftValue": "={{ $json.llm_provider }}",
+                    "rightValue": "qwen",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "qwen"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "c6e029f6-5be6-420a-b78e-72bd43fabd7b",
+      "name": "2A — Provider Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        560,
+        1120
+      ],
+      "notes": "out[0]=qwen (Polza) | out[1]=deepseek (fallback)"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt_user }}",
+        "options": {
+          "systemMessage": "={{ $json.prompt_system }}"
+        }
+      },
+      "id": "4fe11e5a-c330-4316-9be6-174eda017119",
+      "name": "2A — AI Agent Qwen",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        656,
+        1184
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "id",
+          "value": "qwen/qwen3.5-flash-02-23@reasoning_effort=none"
+        },
+        "responsesApiEnabled": false,
+        "options": {
+          "responseFormat": "json_object",
+          "temperature": 0.2
+        }
+      },
+      "id": "82afe454-8120-4ab4-b0a1-4fa8f908e8b1",
+      "name": "2A — Polza",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        656,
+        1344
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "YFMznqpi3SeJdYod",
+          "name": "Polza account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "fdfb34ba-0c0f-4e58-81d8-e61d6ad33ff0",
+                    "leftValue": "={{ $json.llm_provider }}",
+                    "rightValue": "qwen",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "qwen"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "6f7f895d-ffac-4dfd-88a7-dad058e968ec",
+      "name": "2B — Provider Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        608,
+        2336
+      ],
+      "notes": "out[0]=qwen (Polza) | out[1]=deepseek (fallback)"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt_user }}",
+        "options": {
+          "systemMessage": "={{ $json.prompt_system }}"
+        }
+      },
+      "id": "dcc34f26-01fc-4e9b-8552-20af5fb8fedf",
+      "name": "2B — AI Agent Qwen",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        720,
+        2224
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "id",
+          "value": "qwen/qwen3.5-flash-02-23@reasoning_effort=none"
+        },
+        "responsesApiEnabled": false,
+        "options": {
+          "responseFormat": "json_object",
+          "temperature": 0.2
+        }
+      },
+      "id": "7b38081d-baed-4304-a85d-d4797ff09876",
+      "name": "2B — Polza",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        720,
+        2384
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "YFMznqpi3SeJdYod",
+          "name": "Polza account"
+        }
+      }
     }
   ],
   "connections": {
@@ -1184,7 +1502,7 @@
       "main": [
         [
           {
-            "node": "P1 — AI Agent",
+            "node": "P1 — Provider Switch",
             "type": "main",
             "index": 0
           },
@@ -1310,7 +1628,7 @@
       "main": [
         [
           {
-            "node": "Load — Select Batch",
+            "node": "Run — LLM Healthcheck",
             "type": "main",
             "index": 0
           }
@@ -1383,7 +1701,7 @@
       "main": [
         [
           {
-            "node": "2A — AI Agent",
+            "node": "2A — Provider Switch",
             "type": "main",
             "index": 0
           },
@@ -1576,7 +1894,7 @@
       "main": [
         [
           {
-            "node": "2B — AI Agent",
+            "node": "2B — Provider Switch",
             "type": "main",
             "index": 0
           },
@@ -1739,6 +2057,148 @@
     "Fin — Close Run": {
       "main": [
         []
+      ]
+    },
+    "Run — LLM Healthcheck": {
+      "main": [
+        [
+          {
+            "node": "Run — Apply LLM Provider",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run — Apply LLM Provider": {
+      "main": [
+        [
+          {
+            "node": "Load — Select Batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P1 — Provider Switch": {
+      "main": [
+        [
+          {
+            "node": "P1 — AI Agent Qwen",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "P1 — AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P1 — AI Agent Qwen": {
+      "main": [
+        [
+          {
+            "node": "P1 — Merge LLM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P1 — Polza": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "P1 — AI Agent Qwen",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2A — Provider Switch": {
+      "main": [
+        [
+          {
+            "node": "2A — AI Agent Qwen",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "2A — AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2A — AI Agent Qwen": {
+      "main": [
+        [
+          {
+            "node": "2A — Merge LLM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2A — Polza": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "2A — AI Agent Qwen",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2B — Provider Switch": {
+      "main": [
+        [
+          {
+            "node": "2B — AI Agent Qwen",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "2B — AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2B — AI Agent Qwen": {
+      "main": [
+        [
+          {
+            "node": "2B — Merge LLM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2B — Polza": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "2B — AI Agent Qwen",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
       ]
     }
   },
