@@ -281,11 +281,11 @@
       ],
       "id": "1cd002b4-6726-4e8f-b3fa-7d44aa1399b0",
       "name": "Fin — Merge Barrier",
-      "notes": "append: Upsert + Insert"
+      "notes": "append: Upsert + Insert (pulses vary; Fin — Pick Run gates on upserts)"
     },
     {
       "parameters": {
-        "jsCode": "const run = $('Run — Create Run').first().json;\n\nif (!run?.id) {\n  throw new Error('Run — Create Run did not return classification_runs.id');\n}\n\nconst runId = Number(run.id);\nconst expectedRaw = run.batch_size ?? run.metadata?.batch_size;\nconst expected = Number(expectedRaw);\nconst staticData = $getWorkflowStaticData('global');\nconst key = `fin_close_count_${runId}`;\n\nif (!Number.isFinite(expected) || expected <= 0) {\n  // No reliable batch size — close once per barrier completion (legacy).\n  return [{ json: { id: runId } }];\n}\n\nstaticData[key] = Number(staticData[key] || 0) + 1;\nif (staticData[key] < expected) {\n  return [];\n}\n\ndelete staticData[key];\nreturn [{ json: { id: runId, closed_after: expected } }];\n"
+        "jsCode": "const run = $('Run — Create Run').first().json;\n\nif (!run?.id) {\n  throw new Error('Run — Create Run did not return classification_runs.id');\n}\n\nconst runId = Number(run.id);\nconst staticData = $getWorkflowStaticData('global');\nconst closedKey = `fin_closed_${runId}`;\nconst legacyKey = `fin_close_count_${runId}`;\n\n// Drop legacy invocation counter (was flaky under Merge coalescing).\nif (legacyKey in staticData) {\n  delete staticData[legacyKey];\n}\n\n// Idempotent: late Insert Log / Merge pulses must not close twice.\nif (staticData[closedKey]) {\n  return [];\n}\n\nconst loaded = $('Load — Limit Batch').all().length;\nconst batchRaw = Number(run.batch_size ?? run.metadata?.batch_size);\nconst target = loaded > 0\n  ? loaded\n  : (Number.isFinite(batchRaw) && batchRaw > 0 ? Math.trunc(batchRaw) : 0);\n\nif (target <= 0) {\n  staticData[closedKey] = true;\n  return [{ json: { id: runId, closed_after: 0, target: 0 } }];\n}\n\n// Close when every loaded product has been upserted — independent of how many\n// times Fin — Merge Barrier coalesces Upsert+Insert pulses.\nconst upsertedIds = new Set();\nfor (const item of $('DB — Upsert Snapshot').all()) {\n  const pid = item.json?.product_id;\n  if (pid !== undefined && pid !== null && String(pid) !== '') {\n    upsertedIds.add(String(pid));\n  }\n}\n\nif (upsertedIds.size < target) {\n  return [];\n}\n\nstaticData[closedKey] = true;\nreturn [{\n  json: {\n    id: runId,\n    closed_after: upsertedIds.size,\n    target,\n  },\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -294,7 +294,8 @@
         880
       ],
       "id": "ba71dcc0-3aab-48f6-9299-60e9733777ce",
-      "name": "Fin — Pick Run"
+      "name": "Fin — Pick Run",
+      "notes": "Close once when unique Upsert product_ids >= loaded batch (not Merge pulse count)"
     },
     {
       "parameters": {

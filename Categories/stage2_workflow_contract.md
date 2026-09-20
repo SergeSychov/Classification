@@ -394,8 +394,8 @@ Judge **всегда** использует Polza / Qwen (ниже) и не за
 | DB — Prepare Log | Code | `product_classification_log_insert` |
 | DB — Upsert Snapshot | Postgres | Upsert `product_classification` |
 | DB — Insert Log | Postgres | Insert `product_classification_log` |
-| Fin — Merge Barrier | Merge | Barrier: Upsert + Insert |
-| Fin — Pick Run | Code | Один item с `run_id` |
+| Fin — Merge Barrier | Merge | Barrier: Upsert + Insert (число pulse’ов нестабильно) |
+| Fin — Pick Run | Code | Один close на run: unique `product_id` из `DB — Upsert Snapshot` ≥ loaded batch (не счётчик Merge/staticData) |
 | Fin — Close Run | Postgres | Закрытие `classification_runs` + stats |
 
 **Паттерн записи:** при эскалации (fallback/judge) — сначала **log** стадии; при завершении товара — **snapshot + log**.
