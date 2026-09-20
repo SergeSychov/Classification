@@ -21,6 +21,7 @@ LLM stages use Merge `combineByPosition` and run **all items in the batch in par
 5. **No polling crons that do HTTP/LLM work every minute.** Schedule real work at the needed wall-clock time (or on an explicit command). Minute-tick “check if it’s 09:00” is forbidden — it stacks executions when Merge/HTTP hang.
 6. **Do not enable error-workflow autoresume** (`drug-mnn-enrichment-autoresume` pattern) while the n8n task runner is unhealthy. Autoresume after `runner became unresponsive` multiplies load.
 7. **Do not list executions with `status=new`** on this n8n — the filter is ignored and returns the last 50 runs of any status. Do not call `/executions?includeData=true` from inside a workflow. Watchdogs: `status=running` only, or just `executionTimeout`.
+8. **LLM provider healthcheck before every Stage 2 chunk.** Each Stage 2 / `run_workflow.py` execution must probe providers **once at chunk start** (sub-workflow `classification-llm-healthcheck`) before Load batch / LLM fan-out. Primary = DeepSeek (LangChain Agent path, same as P1/2A/2B). On fail → failover to **Qwen via Polza** (same credential/model family as Judge). Output fields: `llm_provider` ∈ {`deepseek`,`qwen`}, `ok` bool, `error`. If both fail → abort the chunk (do not start P1). Routing of P1/2A/2B Agents follows `llm_provider` for that chunk. Do not skip the probe between sequential chunks. Details: `Categories/stage2_workflow_contract.md` § LLM provider healthcheck, `Categories/llm_provider_healthcheck.md`.
 
 ---
 
