@@ -7,7 +7,6 @@ __pycache__/
 workflows/.classification-stage2-dev.smoke-backup.json
 
 logs/
-
 # Raw external-search evidence and transient run state
 redesign/artifacts/*searxng_raw.jsonl
 redesign/artifacts/*_raw.jsonl
@@ -18,4 +17,3 @@ redesign/artifacts/_catalog_cache/
 redesign/artifacts/*.pid
 redesign/artifacts/*_console.log
 redesign/artifacts/*_run.log
-.env
