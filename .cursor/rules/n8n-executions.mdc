@@ -14,3 +14,4 @@ Canon: `Categories/n8n_execution_contract.md`. Helper: `scripts/n8n_executions.p
 - Stop executions stuck > 30 minutes before starting another run.
 - No `* * * * *` crons that perform HTTP/LLM. Schedule wall-clock time or an explicit command.
 - Do not enable error-workflow autoresume while the task runner is unhealthy.
+- Before every Stage 2 chunk: run `classification-llm-healthcheck` (rule 8). Primary DeepSeek Agent; on fail → Qwen/Polza. See `Categories/llm_provider_healthcheck.md`.

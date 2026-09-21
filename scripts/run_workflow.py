@@ -89,6 +89,19 @@ def ensure_active(workflow_id: str) -> None:
     api_request("POST", f"/api/v1/workflows/{workflow_id}/activate", {})
 
 
+def ensure_healthcheck_ready(timeout_sec: int) -> None:
+    """Stage 2 embeds LLM healthcheck per chunk; keep sub-workflow idle+active."""
+    hc_id_path = ROOT / "workflows" / "classification-llm-healthcheck.id"
+    if not hc_id_path.exists():
+        print("[run] WARN: classification-llm-healthcheck.id missing", flush=True)
+        return
+    hc_id = hc_id_path.read_text(encoding="utf-8").strip()
+    stopped = nx.ensure_idle_then_allow_trigger(hc_id, timeout_sec=min(120, timeout_sec))
+    if stopped:
+        print(f"[run] stopped stale healthcheck executions: {stopped}", flush=True)
+    ensure_active(hc_id)
+
+
 def parse_started_at(value: str) -> float:
     return datetime.fromisoformat(value.replace("Z", "+00:00")).timestamp()
 
@@ -145,6 +158,7 @@ def main() -> int:
     stopped = nx.ensure_idle_then_allow_trigger(workflow_id, timeout_sec=args.timeout)
     if stopped:
         print(f"[run] stopped stale executions: {stopped}", flush=True)
+    ensure_healthcheck_ready(args.timeout)
     ensure_active(workflow_id)
 
     started_before = time.time()
