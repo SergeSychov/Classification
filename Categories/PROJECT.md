@@ -11,7 +11,9 @@ Production-like агент классификации аптечных това�
 | `Categories/category_recognition_customer.md` | Краткий процесс + схема + тексты промптов для заказчика |
 | `Categories/stage2_workflow_plan.md` | Журнал выполненных задач и roadmap |
 | `Categories/stage2_workflow_contract.md` | Контракт workflow для разработки |
-| `Categories/n8n_execution_contract.md` | Одни live execution на workflow; чанки ≤ 10; стоп зомби |
+| `Categories/n8n_execution_contract.md` | Одни live execution на workflow; чанки ≤ 10; стоп зомби; rule 8 LLM healthcheck |
+| `Categories/llm_provider_healthcheck.md` | Контракт субворкфлоу DeepSeek → Qwen failover |
+| `docs/` | Снимок Project Context (план, пилот, схема, промпты) — зеркало для внешнего читателя |
 | `Categories/agent_balance_bot_task.md` | ТЗ доработки `agent-balance-bot` (09:00 + команда) |
 | `Categories/stage2_node_map.md` | Карта процесса и нод — справочник для заказчика |
 | `Categories/multi_agent_plan.md` | План мультиагентной разработки в Cursor |
